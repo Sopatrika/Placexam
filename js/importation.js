@@ -50,7 +50,7 @@ function conversionExcel(file, inputId) {
     
     const reader = new FileReader();// FileReader est un outil natif du navigateur pour lire les fichiers locaux
 
-    reader.onload = (e) => {
+    reader.onload = (e) => { //Lorsqu'un fichier arrive
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheetName = workbook.SheetNames[0];
@@ -60,7 +60,7 @@ function conversionExcel(file, inputId) {
         
         const headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0];// On extrait la première ligne pour avoir le nom des colonne
 
-        if (inputId === "import_etudiants") { // Aiguillage selon le bouton sur lequel on a cliqué
+        if (inputId === "import_etudiants") { // selon le bouton sur lequel on a cliqué
             selection_colonnes(headers, rawData, file.name); // On lance le menu de mapping pour les étudiants
         } 
         else if (inputId === "import_salles") {
