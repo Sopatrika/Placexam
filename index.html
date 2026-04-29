@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Outil de placement aléatoire des étudiants dans les salles d'examens" />
+    <title>Placexam</title>
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+    <!------ Entête ----->
+    <header></header>
+
+    <!-------------- Menu déroulant gauche -------------->
+    <div class="menu_listes">
+        <div class="menu_deroulant_gauche">
+            <div class="titre_menu">Mes listes</div>
+            <div class="btn-sections-menu">
+                <div class="btn-section-menu" data-sec="etu_sec">
+                    Etudiants
+                </div>
+                <div class="btn-section-menu" data-sec="salle_sec">
+                    Salles
+                </div>
+                <div class="btn-section-menu" data-sec="salle_matieres">
+                    Matières
+                </div>
+                <div class="btn-section-menu" data-sec="salle_matieres">
+                    Historique des placements
+                </div>
+            </div>
+            <!-- Sections principales -->
+            <section class="etu_sec">
+                <ul class="menu_ul">
+                    <li data-name="listes_etu1">
+                        <div class="nom_element">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20.5613 10.7815C20.8422 11.0628 21 11.444 21 11.8415C21 12.239 20.8422 12.6203 20.5613 12.9015L14.9053 18.5605C14.6239 18.8419 14.2423 19 13.8443 19C13.4464 19 13.0647 18.8419 12.7833 18.5605C12.5019 18.2791 12.3438 17.8975 12.3438 17.4995C12.3438 17.1016 12.5019 16.7199 12.7833 16.4385L15.8793 13.3415H4.34432C3.9465 13.3415 3.56497 13.1835 3.28366 12.9022C3.00236 12.6209 2.84432 12.2393 2.84432 11.8415C2.84432 11.4437 3.00236 11.0622 3.28366 10.7809C3.56497 10.4996 3.9465 10.3415 4.34432 10.3415H15.8793L12.7833 7.24552C12.644 7.10619 12.5335 6.94078 12.4581 6.75873C12.3827 6.57668 12.3438 6.38157 12.3438 6.18452C12.3438 5.98747 12.3827 5.79236 12.4581 5.61031C12.5335 5.42826 12.644 5.26285 12.7833 5.12352C12.9227 4.98419 13.0881 4.87366 13.2701 4.79826C13.4522 4.72285 13.6473 4.68404 13.8443 4.68404C14.0414 4.68404 14.2365 4.72285 14.4185 4.79826C14.6006 4.87366 14.766 4.98419 14.9053 5.12352L20.5613 10.7815Z" fill="#FBFDFF"/>
+                            </svg>
+                            <span>listes_etu1</span></div>
+                        <div class="ul_icons">
+                            <svg class="trash_element" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M5.33333 9.33333H26.6667M13.3333 14.6667V22.6667M18.6667 14.6667V22.6667M6.66666 9.33333L7.99999 25.3333C7.99999 26.0406 8.28095 26.7189 8.78104 27.219C9.28114 27.719 9.95942 28 10.6667 28H21.3333C22.0406 28 22.7188 27.719 23.2189 27.219C23.719 26.7189 24 26.0406 24 25.3333L25.3333 9.33333M12 9.33333V5.33333C12 4.97971 12.1405 4.64057 12.3905 4.39052C12.6406 4.14048 12.9797 4 13.3333 4H18.6667C19.0203 4 19.3594 4.14048 19.6095 4.39052C19.8595 4.64057 20 4.97971 20 5.33333V9.33333" stroke="#FBFDFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <svg class="rename_element" width="40" height="40" viewBox="0 0 50 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M31.25 24.3333L22.9167 32.6667H43.75V24.3333H31.25ZM25.125 5.97915L6.25 24.8541V32.6667H14.0625L32.9375 13.7916L25.125 5.97915ZM38.9792 7.74998C39.7917 6.93748 39.7917 5.58332 38.9792 4.81248L34.1042 -0.0625169C33.7138 -0.45054 33.1858 -0.668335 32.6354 -0.668335C32.085 -0.668335 31.557 -0.45054 31.1667 -0.0625169L27.3542 3.74998L35.1667 11.5625L38.9792 7.74998Z" fill="#FBFDFF"/>
+                            </svg>
+                        </div>
+                    </li>
+                </ul>
+            </section>
+            <section class="salle_sec">
+                <ul class="menu_ul">
+                    <li data-name="amphi1">
+                        <div class="nom_element">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M20.5613 10.7815C20.8422 11.0628 21 11.444 21 11.8415C21 12.239 20.8422 12.6203 20.5613 12.9015L14.9053 18.5605C14.6239 18.8419 14.2423 19 13.8443 19C13.4464 19 13.0647 18.8419 12.7833 18.5605C12.5019 18.2791 12.3438 17.8975 12.3438 17.4995C12.3438 17.1016 12.5019 16.7199 12.7833 16.4385L15.8793 13.3415H4.34432C3.9465 13.3415 3.56497 13.1835 3.28366 12.9022C3.00236 12.6209 2.84432 12.2393 2.84432 11.8415C2.84432 11.4437 3.00236 11.0622 3.28366 10.7809C3.56497 10.4996 3.9465 10.3415 4.34432 10.3415H15.8793L12.7833 7.24552C12.644 7.10619 12.5335 6.94078 12.4581 6.75873C12.3827 6.57668 12.3438 6.38157 12.3438 6.18452C12.3438 5.98747 12.3827 5.79236 12.4581 5.61031C12.5335 5.42826 12.644 5.26285 12.7833 5.12352C12.9227 4.98419 13.0881 4.87366 13.2701 4.79826C13.4522 4.72285 13.6473 4.68404 13.8443 4.68404C14.0414 4.68404 14.2365 4.72285 14.4185 4.79826C14.6006 4.87366 14.766 4.98419 14.9053 5.12352L20.5613 10.7815Z" fill="#FBFDFF"/>
+                            </svg>
+                            <span>amphi1</span></div>
+                        <div class="ul_icons">
+                            <svg class="trash_element" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M5.33333 9.33333H26.6667M13.3333 14.6667V22.6667M18.6667 14.6667V22.6667M6.66666 9.33333L7.99999 25.3333C7.99999 26.0406 8.28095 26.7189 8.78104 27.219C9.28114 27.719 9.95942 28 10.6667 28H21.3333C22.0406 28 22.7188 27.719 23.2189 27.219C23.719 26.7189 24 26.0406 24 25.3333L25.3333 9.33333M12 9.33333V5.33333C12 4.97971 12.1405 4.64057 12.3905 4.39052C12.6406 4.14048 12.9797 4 13.3333 4H18.6667C19.0203 4 19.3594 4.14048 19.6095 4.39052C19.8595 4.64057 20 4.97971 20 5.33333V9.33333" stroke="#FBFDFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <svg class="rename_element" width="40" height="40" viewBox="0 0 50 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M31.25 24.3333L22.9167 32.6667H43.75V24.3333H31.25ZM25.125 5.97915L6.25 24.8541V32.6667H14.0625L32.9375 13.7916L25.125 5.97915ZM38.9792 7.74998C39.7917 6.93748 39.7917 5.58332 38.9792 4.81248L34.1042 -0.0625169C33.7138 -0.45054 33.1858 -0.668335 32.6354 -0.668335C32.085 -0.668335 31.557 -0.45054 31.1667 -0.0625169L27.3542 3.74998L35.1667 11.5625L38.9792 7.74998Z" fill="#FBFDFF"/>
+                            </svg>
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!------------ Sections secondaires ---------->
+
+            <section class="sous_sec">
+                <div class="first_sec">
+                    <div class="return_sec">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3.43862 13.2185C3.15772 12.9372 2.99994 12.556 2.99994 12.1585C2.99994 11.761 3.15772 11.3797 3.43862 11.0985L9.09462 5.43948C9.37601 5.15809 9.75767 5 10.1556 5C10.5536 5 10.9352 5.15809 11.2166 5.43948C11.498 5.72088 11.6561 6.10253 11.6561 6.50048C11.6561 6.89843 11.498 7.28009 11.2166 7.56148L8.12062 10.6585H19.6556C20.0534 10.6585 20.435 10.8165 20.7163 11.0978C20.9976 11.3791 21.1556 11.7607 21.1556 12.1585C21.1556 12.5563 20.9976 12.9378 20.7163 13.2191C20.435 13.5004 20.0534 13.6585 19.6556 13.6585H8.12062L11.2166 16.7545C11.356 16.8938 11.4665 17.0592 11.5419 17.2413C11.6173 17.4233 11.6561 17.6184 11.6561 17.8155C11.6561 18.0125 11.6173 18.2076 11.5419 18.3897C11.4665 18.5717 11.356 18.7371 11.2166 18.8765C11.0773 19.0158 10.9119 19.1263 10.7298 19.2017C10.5478 19.2771 10.3527 19.316 10.1556 19.316C9.95857 19.316 9.76346 19.2771 9.58141 19.2017C9.39936 19.1263 9.23395 19.0158 9.09462 18.8765L3.43862 13.2185Z" fill="#FBFDFF"/>
+                        </svg>
+                        <span>Retour</span>
+                    </div>
+                    <div class="nom_liste">amphi1</div>
+                </div>
+                <div class="search_bar">
+                    <input type="search" id="search_etu" placeholder="Rechercher un(e) étudiant(e)...">
+                    
+                    <label for="search_etu">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19.6 21L13.3 14.7C12.8 15.1 12.225 15.4167 11.575 15.65C10.925 15.8833 10.2333 16 9.5 16C7.68333 16 6.146 15.3707 4.888 14.112C3.63 12.8533 3.00067 11.316 3 9.5C2.99933 7.684 3.62867 6.14667 4.888 4.888C6.14733 3.62933 7.68467 3 9.5 3C11.3153 3 12.853 3.62933 14.113 4.888C15.373 6.14667 16.002 7.684 16 9.5C16 10.2333 15.8833 10.925 15.65 11.575C15.4167 12.225 15.1 12.8 14.7 13.3L21 19.6L19.6 21ZM9.5 14C10.75 14 11.8127 13.5627 12.688 12.688C13.5633 11.8133 14.0007 10.7507 14 9.5C13.9993 8.24933 13.562 7.187 12.688 6.313C11.814 5.439 10.7513 5.00133 9.5 5C8.24867 4.99867 7.18633 5.43633 6.313 6.313C5.43967 7.18967 5.002 8.252 5 9.5C4.998 10.748 5.43567 11.8107 6.313 12.688C7.19033 13.5653 8.25267 14.0027 9.5 14Z" fill="var(--black)"/>
+                        </svg>
+                    </label>
+                </div>
+                <div class="liste_elements">
+                    <!-- Liste étudiant -->
+                    <ul class="bloc_element" data-etu_nom="Lehman">
+                        <li>Lehman</li>
+                        <li>Sébastien</li>
+                        <li>Option: Parcours1</li>
+                        <li>Tier temps</li>
+                    </ul>
+
+                    <!-- Liste des salles -->
+                    <ul class="bloc_element" data-etu_nom="Lehman">
+                        <li>Lehman</li>
+                        <li>Sébastien</li>
+                        <li>Option: Parcours1</li>
+                        <li>Tier temps</li>
+                    </ul>
+                </div>
+                <div class="btn_ajouter">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M23.3333 13.3333H13.3333V23.3333H10V13.3333H0V10H10V0H13.3333V10H23.3333V13.3333Z" fill="#FBFDFF"/>
+                    </svg>
+                    <span>Ajouter</span>
+                </div>
+            </section>
+        </div>
+
+        <!-- Bouton pour ouvrir/fermer le menu -->
+        <div class="button_menu_gauche">
+            Mes listes
+        </div>
+    </div>
+    <!----- Main ----->
+    <main>
+        <!------------------------------------------------------------- Accueil ------------------------------------------------------------->
+        <div class="accueil">
+            <h1>Bienvenue sur Placexam</h1>
+            <h2>L'outil de placement aléatoire des étudiants dans les salles d'examen</h2>
+
+            <!---------------- Inporter fichiers -------------------->
+            <form class="form_import">
+                <div class="import-wrapper">
+                    <div class="import-field">
+                        <label for="import_etudiants" class="custom-loader">
+                            <svg width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M31.7071 21.3762C31.42 21.0895 31.0308 20.9284 30.625 20.9284C30.2192 20.9284 29.83 21.0895 29.5429 21.3762L26.0313 24.8879V8.16666C26.0313 7.76054 25.8699 7.37106 25.5828 7.0839C25.2956 6.79673 24.9061 6.63541 24.5 6.63541C24.0939 6.63541 23.7044 6.79673 23.4173 7.0839C23.1301 7.37106 22.9688 7.76054 22.9688 8.16666V24.8879L19.4571 21.3762C19.1668 21.1058 18.7829 20.9585 18.3862 20.9655C17.9895 20.9725 17.611 21.1332 17.3305 21.4138C17.0499 21.6943 16.8892 22.0728 16.8822 22.4695C16.8752 22.8662 17.0225 23.2501 17.2929 23.5404L23.4179 29.6654C23.705 29.9522 24.0942 30.1132 24.5 30.1132C24.9058 30.1132 25.295 29.9522 25.5821 29.6654L31.7071 23.5404C31.9938 23.2533 32.1549 22.8641 32.1549 22.4583C32.1549 22.0525 31.9938 21.6634 31.7071 21.3762Z" fill="#1A365D"/>
+                            <path d="M36.2355 24.5C35.3209 24.5 34.5205 25.0594 33.8733 25.7066L27.7483 31.8316C27.3217 32.2582 26.8153 32.5966 26.258 32.8274C25.7006 33.0583 25.1033 33.1771 24.5 33.1771C23.8968 33.1771 23.2994 33.0583 22.7421 32.8274C22.1847 32.5966 21.6783 32.2582 21.2517 31.8316L15.1267 25.7066C14.4795 25.0594 13.6792 24.5 12.7645 24.5H8.16669C8.16669 28.8319 9.88752 32.9863 12.9506 36.0494C16.0137 39.1125 20.1682 40.8333 24.5 40.8333C28.8319 40.8333 32.9863 39.1125 36.0494 36.0494C39.1125 32.9863 40.8334 28.8319 40.8334 24.5H36.2355Z" fill="#1A365D"/>
+                            </svg>
+                            <input type="file" id="import_etudiants" hidden accept=".xlsx, .xls, .csv">
+                            <span class="file-name">Importer une liste d'étudiantes</span>
+                        </label>
+                        
+                        <div class="actions">
+                            <button type="button" class="btn-reset" id="reset-btn" title="Supprimer">
+                                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13.5 1.5L1.5 13.5M1.5 1.5L13.5 13.5" stroke="#F12C2C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="btn-submit" id="submit-btn">OK</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="verif_import" id="verif_etu"></div>
+
+    <!--------------------------- Menu mapping ------------------------->
+
+    <div class="fond_sombre menu_import_close"></div>
+    <div class="menu_import_etu menu_import_close">
+        <div class="choix_colonnes">
+            <span>Quels colonne correspond au NOM ?</span>
+            <select name="" id="select_nom"></select>
+        </div>
+        <div class="choix_colonnes">
+            <span>Quels colonne correspond au PRENOM ?</span>
+            <select id="select_prenom"></select>
+        </div>
+        <div class="choix_colonnes">
+            <span>Quels colonne correspond au PARCOURS ?</span>
+            <select id="select_parcours"></select>
+        </div>
+        <div class="menu_erreur"></div>
+        <div class="boutons_menu_import_etu">
+            <div id="menu_import_annul">Annuler</div>
+            <div id="menu_import_valid">Valider</div>
+        </div>
+    </div>
+
+    <hr>
+    <!--------------------------------------------------------------- Section Salles d'exam --------------------------------------------------------------------------->
+
+    <div class="section_salles_exam">
+        <h3>Importez une salle d'examen</h3>
+
+        <div class="section_import">
+            <form class="form_import">
+                <div class="import-wrapper">
+                    <div class="import-field">
+                        <label for="import_salles" class="custom-loader">
+                            <svg width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M31.7071 21.3762C31.42 21.0895 31.0308 20.9284 30.625 20.9284C30.2192 20.9284 29.83 21.0895 29.5429 21.3762L26.0313 24.8879V8.16666C26.0313 7.76054 25.8699 7.37106 25.5828 7.0839C25.2956 6.79673 24.9061 6.63541 24.5 6.63541C24.0939 6.63541 23.7044 6.79673 23.4173 7.0839C23.1301 7.37106 22.9688 7.76054 22.9688 8.16666V24.8879L19.4571 21.3762C19.1668 21.1058 18.7829 20.9585 18.3862 20.9655C17.9895 20.9725 17.611 21.1332 17.3305 21.4138C17.0499 21.6943 16.8892 22.0728 16.8822 22.4695C16.8752 22.8662 17.0225 23.2501 17.2929 23.5404L23.4179 29.6654C23.705 29.9522 24.0942 30.1132 24.5 30.1132C24.9058 30.1132 25.295 29.9522 25.5821 29.6654L31.7071 23.5404C31.9938 23.2533 32.1549 22.8641 32.1549 22.4583C32.1549 22.0525 31.9938 21.6634 31.7071 21.3762Z" fill="#1A365D"/>
+                            <path d="M36.2355 24.5C35.3209 24.5 34.5205 25.0594 33.8733 25.7066L27.7483 31.8316C27.3217 32.2582 26.8153 32.5966 26.258 32.8274C25.7006 33.0583 25.1033 33.1771 24.5 33.1771C23.8968 33.1771 23.2994 33.0583 22.7421 32.8274C22.1847 32.5966 21.6783 32.2582 21.2517 31.8316L15.1267 25.7066C14.4795 25.0594 13.6792 24.5 12.7645 24.5H8.16669C8.16669 28.8319 9.88752 32.9863 12.9506 36.0494C16.0137 39.1125 20.1682 40.8333 24.5 40.8333C28.8319 40.8333 32.9863 39.1125 36.0494 36.0494C39.1125 32.9863 40.8334 28.8319 40.8334 24.5H36.2355Z" fill="#1A365D"/>
+                            </svg>
+                            <input input type="file" id="import_salles" hidden accept=".xlsx, .xls, .csv">
+                            <span class="file-name">Importer une liste de places d'une salle d'examen</span>
+                        </label>
+                        
+                        <div class="actions">
+                            <button type="button" class="btn-reset" id="reset-btn" title="Supprimer">
+                                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13.5 1.5L1.5 13.5M1.5 1.5L13.5 13.5" stroke="var(--rouge)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="btn-submit">OK</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <div class="verif_import" id="verif_salle"></div>
+        </div>
+    </div>
+
+
+    <hr>
+    <!----------------------------------------------------------- Section du tableau ------------------------------------------------------------------->
+
+    <h3>Placement des étudiants</h3>
+    <!-------------- boutons du tableau ------------------->
+    <div class="section_options_table">
+        <div class="options_table">
+            <div class="selects_table">
+                <select name="" id="liste_etus"></select>
+                <select name="" id="liste_salles" ></select>
+                <select name="" id="liste_matiere">
+                    <option value="Matiere" selected>Matière</option>
+                    <option value="Chimie">Chimie</option>
+                </select>
+            </div>
+            <div class="inputs-container">
+                <div class="input_txt">
+                    <label for="heure_debut">Début:</label>
+                    <input type="time" id="heure_debut" value="10:00"> 
+                </div>
+
+                <div class="input_txt">
+                    <label for="duree_exam">Durée :</label>
+                    <input type="time" id="duree_exam" value="00:00">
+                </div>
+            </div>
+        </div>
+        <div class="tiers_temps_filtre">
+            <label class="badge-checkbox" style="--checkcolor: var(--black)">
+                <input type="checkbox" id="tri_tiers_temps" class="tri_tiers_temps" checked>
+                <span class="badge-text">Tiers temps en premier</span>
+                <span class="custom-checkbox"></span>
+            </label>
+        </div>
+        <div class="options_table">
+            <div class="filtres_table">
+                <!-- <div class="filtre_table">
+                    <label class="badge-checkbox" style="--checkcolor: blue">
+                        <input type="checkbox" id="parcours1" checked>
+                        <span class="badge-text">Parcours 1</span>
+                        <span class="custom-checkbox"></span>
+                    </label>
+                </div> -->
+            </div>
+            <div class="btn-placement">
+                <span>Placement aléatoire</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20.5613 10.7815C20.8422 11.0628 21 11.444 21 11.8415C21 12.239 20.8422 12.6203 20.5613 12.9015L14.9053 18.5605C14.6239 18.8419 14.2423 19 13.8443 19C13.4464 19 13.0647 18.8419 12.7833 18.5605C12.5019 18.2791 12.3438 17.8975 12.3438 17.4995C12.3438 17.1016 12.5019 16.7199 12.7833 16.4385L15.8793 13.3415H4.34432C3.9465 13.3415 3.56497 13.1835 3.28366 12.9022C3.00236 12.6209 2.84432 12.2393 2.84432 11.8415C2.84432 11.4437 3.00236 11.0622 3.28366 10.7809C3.56497 10.4996 3.9465 10.3415 4.34432 10.3415H15.8793L12.7833 7.24552C12.644 7.10619 12.5335 6.94078 12.4581 6.75873C12.3827 6.57668 12.3438 6.38157 12.3438 6.18452C12.3438 5.98747 12.3827 5.79236 12.4581 5.61031C12.5335 5.42826 12.644 5.26285 12.7833 5.12352C12.9227 4.98419 13.0881 4.87366 13.2701 4.79826C13.4522 4.72285 13.6473 4.68404 13.8443 4.68404C14.0414 4.68404 14.2365 4.72285 14.4185 4.79826C14.6006 4.87366 14.766 4.98419 14.9053 5.12352L20.5613 10.7815Z" fill="#FBFDFF"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    <!--------------------------- Tableau ------------------------------->
+    <div class="section_tableau">
+        <table class="exam-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Parcours</th>
+                    <th>Place</th>
+                    <th>Absence</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+</div>
+    <div class="zero_etu">Aucun étudiants dans la liste</div>
+    <div class="capacite_max">
+        <div>Capacités insuffisantes</div>
+        <svg width="30" height="26" viewBox="0 0 30 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16.2341 0.702642L29.8091 23.8919C29.9342 24.1055 30 24.3479 30 24.5946C30 24.8413 29.9342 25.0836 29.8091 25.2973C29.684 25.5109 29.5041 25.6883 29.2875 25.8117C29.0709 25.9351 28.8251 26 28.575 26H1.42501C1.17487 26 0.929129 25.9351 0.7125 25.8117C0.49587 25.6883 0.315981 25.5109 0.190911 25.2973C0.0658413 25.0836 -1.58869e-06 24.8413 0 24.5946C1.58874e-06 24.3479 0.0658477 24.1055 0.19092 23.8919L13.7659 0.702642C13.891 0.48901 14.0709 0.31161 14.2875 0.188271C14.5041 0.064932 14.7499 0 15 0C15.2501 0 15.4959 0.064932 15.7125 0.188271C15.9291 0.31161 16.109 0.48901 16.2341 0.702642ZM3.89319 23.1892H26.1068L15 4.21616L3.89319 23.1892ZM13.575 18.973H16.425V21.7838H13.575V18.973ZM13.575 9.1351H16.425V16.1621H13.575V9.1351Z" fill="var(--rouge)"/>
+        </svg>
+    </div>
+
+    <div class="btn-exporter">
+        <span>Exporter: </span>
+        <svg width="40" height="30" viewBox="0 0 40 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M40 15L32.7273 7.5V13.125H16.3636V16.875H32.7273V22.5M0 26.25V3.75C0 2.75544 0.383116 1.80161 1.06507 1.09835C1.74702 0.395088 2.67194 0 3.63636 0H25.4545C26.419 0 27.3439 0.395088 28.0258 1.09835C28.7078 1.80161 29.0909 2.75544 29.0909 3.75V9.375H25.4545V3.75H3.63636V26.25H25.4545V20.625H29.0909V26.25C29.0909 27.2446 28.7078 28.1984 28.0258 28.9016C27.3439 29.6049 26.419 30 25.4545 30H3.63636C2.67194 30 1.74702 29.6049 1.06507 28.9016C0.383116 28.1984 0 27.2446 0 26.25Z" fill="#FBFDFF"/>
+        </svg>
+    </div>
+
+    </main>
+
+    <!-- Pied de page -->
+    <footer></footer>
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="js/variables.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/gestion_listes.js"></script>
+    <script src="js/importation.js"></script>
+    <script src="js/placement.js"></script>
+    <script src="js/exportation.js"></script>
+</body>
+</html>
