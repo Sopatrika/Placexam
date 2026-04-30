@@ -14,6 +14,7 @@ Le tableau dans le fichier doit être dans cette configuration :
 | Lutin |  Marc  |  PARCOUR1 |
 | Lutin |  Marc  |  PARCOUR1 |
 
+
 Si le fichier exporté contient une liste des places d'une salle, il faut être composé que d'une seule colonne :
 - PLACE (nom des places des salles d'examen (1, 2, 3...))
 

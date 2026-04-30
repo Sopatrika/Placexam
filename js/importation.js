@@ -1,6 +1,13 @@
+
+// =================================================================================================================================================================
+// GESTION DE L'IMPORTATION DE FICHIERS 
+//=================================================================================================================================================================
+
+
 //FONCTION POUR IMPORTER UN FICHIER EXCEL ------------------------------------------------------------------------------------------------------------------
 
 const importFields = document.querySelectorAll(".import-field");
+const allowedExtensions = /(\.xlsx|\.xls|\.csv|\.json)$/i;
 
 importFields.forEach(field => {
     const fileInput = field.querySelector("input[type='file']");
@@ -35,10 +42,16 @@ importFields.forEach(field => {
             return; 
         }
 
-        conversionExcel(file, fileInput.id); // On lance la fonction spécifique pour Sheet.js
+        if (!allowedExtensions.exec(file.name)) {
+            fileNameDisplay.textContent = "Format invalide (.xlsx, .xls, .csv, .json uniquement)";
+            fileInput.value = '';
+            return;
+        } 
 
-        fileInput.value = ""; // vide l'input
-        fileNameDisplay.textContent = text_defaut; // met le texte par défaut
+        conversionExcel(file, fileInput.id); 
+
+        fileInput.value = ""; 
+        fileNameDisplay.textContent = text_defaut; 
     });
 });
 
@@ -144,16 +157,13 @@ function selection_colonnes(headers, rawData, fileName) {
         });
 
         // On sauvegarde dans le localStorage
-        localStorage.setItem('tab_etu', JSON.stringify(tab_etu));
+        sauvegarder('tab_etu', tab_etu);
 
         verif_etu.textContent = cleanEtudiants.length + " étudiants importés";
 
         afficher_listes();
         fermerMenuMapping();
-
-        // Met à jour la liste déroulante "Sélecteur de liste" de l'interface principale
-        const select_etu = document.querySelector("#liste_etus");
-        if(select_etu) remplir_select(fileName, select_etu);
+        remplir_select(); // Met à jour le sélecteur des listes étudiantes
     };
 
     remplir_select();
@@ -177,12 +187,10 @@ function sauvegarderSalles(rawData, fileName) {
         places: rawData 
     });
 
-    localStorage.setItem('tab_salles', JSON.stringify(tab_salles));
+    sauvegarder('tab_salles', tab_salles);
     verif_salle.textContent = rawData.length + " places importées";
 
-    // met à jour le sélecteur de salles
-    const select_salle = document.querySelector("#liste_salles");
-    if(select_salle) remplir_select(nom_salle, select_salle);
+    remplir_select(); // met à jour le sélecteur de salles
 
     afficher_listes();
 }

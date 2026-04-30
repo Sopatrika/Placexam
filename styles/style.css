@@ -671,9 +671,10 @@ select {
 /* Filtres de la tables pour les parcours ou étudiants en tier temps */
 
 .filtres_table {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    justify-content: space-around;
+    width: 90%;
+    display: flex;      
+    flex-wrap: wrap;   
+    justify-content: flex-start;
 }
 
 .filtre_table {
@@ -760,6 +761,11 @@ select {
     transform: translateX(5px);
 }
 
+.btn-placement.placement_disable {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
 
 
 /* --------------------- Tableau -------------------*/
@@ -767,7 +773,7 @@ select {
 .section_tableau {
     margin-top: 15px;
     width: 100%;
-    max-height: 400px;
+    max-height: 350px;
     overflow-y: auto;
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -796,9 +802,7 @@ select {
 }
 
 .exam-table td {
-    padding: 12px 15px;
-    border-bottom: 1px solid #edf2f7;
-    font-size: 0.95rem;
+    padding: 5px;
 }
 
 .exam-table td, .exam-table th {
@@ -813,20 +817,66 @@ select {
     background-color: var(--light-grey);
 }
 
-.place-number {
-    font-weight: bold;
-    color: var(--darkblue);
+/* Section après le tableau */
+.after_table {
+    display: flex;
+    justify-content: space-between;
 }
 
 .capacite_max {
     display: flex;
-    color: red;
     gap: 10px;
     align-items: center;
+    height: 10px;
 }
 
-.zero_etu, .capacite_max {
+.zero_etu, .capacite_max, .ajout_salle, #liste_salles_cumulees, .ajout_salle_sup {
     margin-top: 20px;
+    display: none;
+}
+
+.message_visible {
+    display: flex !important;
+}
+
+.texte_vert {
+    color: #10B981;
+}
+
+.texte_rouge {
+    color: var(--rouge);
+}
+
+.liste_salles_cumulees {
+    margin: 10px 0;
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 5px;
+}
+
+.badge_salle_sup {
+    background:var(--hover); 
+    color:var(--white); 
+    padding: 10px 15px; 
+    border-radius:15px; 
+    font-size:0.85rem; 
+    display:flex; 
+    align-items:center; 
+    gap:8px;
+}
+
+.btn_retirer_salle {
+    cursor:pointer; 
+    display:flex; 
+    align-items:center;
+    transition: 0.2s;
+}
+
+.btn_retirer_salle:hover {
+    transform: scale(1.2);
+}
+
+.svg_attention.svg_attention_invisible {
     display: none;
 }
 
