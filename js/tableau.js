@@ -104,7 +104,7 @@ function afficher_tableau() {
 
     const parcours_actifs = Array.from(document.querySelectorAll(".check-parcours:checked")).map(cb => cb.value); 
     const donnees_filtrees = liste_select.donnees.filter(etu => parcours_actifs.includes(etu.parcours)); 
-    const btn_tri_tiers = document.querySelector(".tri_tiers_temps"); 
+    const btn_tri_tiers = check_tiers_temps; 
     
     if (btn_tri_tiers && btn_tri_tiers.checked) {
         donnees_filtrees.sort((a, b) => {
@@ -149,10 +149,10 @@ function afficher_tableau() {
 }
 
 // Écouteur pour le bouton Tiers Temps
-const btn_tri_tiers = document.querySelector(".tri_tiers_temps");
+const btn_tri_tiers = check_tiers_temps;
 if(btn_tri_tiers) btn_tri_tiers.addEventListener("change", afficher_tableau);
 
-// --- 5. INITIALISATION ---
-remplir_select(); 
-// EnregChoix(); // Dé-commente cette ligne si tu as toujours la fonction dans script.js
+// INITIALISATION ---
+remplir_select();
+EnregChoix();
 generer_filtres();

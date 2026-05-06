@@ -69,7 +69,7 @@ function conversionExcel(file, inputId) {
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
 
-        const rawData = XLSX.utils.sheet_to_json(worksheet);
+        const rawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
         
         const headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0];// On extrait la première ligne pour avoir le nom des colonne
 
@@ -112,7 +112,7 @@ function selection_colonnes(headers, rawData, fileName) {
     menuImport.classList.remove('menu_import_close');
 
     document.getElementById('menu_import_annul').onclick = () => {
-        fermerMenuMapping();
+        fermer_mapping();
     };
 
     // gère la validation
@@ -162,7 +162,7 @@ function selection_colonnes(headers, rawData, fileName) {
         verif_etu.textContent = cleanEtudiants.length + " étudiants importés";
 
         afficher_listes();
-        fermerMenuMapping();
+        fermer_mapping();
         remplir_select(); // Met à jour le sélecteur des listes étudiantes
     };
 
@@ -197,7 +197,7 @@ function sauvegarderSalles(rawData, fileName) {
 
 
 // --- FONCTION POUR FERMER LE MENU ---
-function fermerMenuMapping() {
+function fermer_mapping() {
     document.querySelector('.fond_sombre').classList.add('menu_import_close');
     document.querySelector('.menu_import_etu').classList.add('menu_import_close');
     menu_erreur.textContent = "";

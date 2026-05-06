@@ -13,18 +13,16 @@ function getListeSalle(nom_cherche) {
 }
 
 
-//FONCTION POUR GARDER LES INPUT COCHES ----------------------------------------------------------------------------------------------------------------------------------------
-
+//FONCTION POUR GARDER LES INPUT COCHES ----------------------------------------------------------------------------------
 function EnregChoix() {
-    const formElements = document.querySelectorAll('input:not([type="file"]), select');
-
+    const formElements = document.querySelectorAll('input[type="checkbox"], input[type="time"], .selects_table select');
+    
     formElements.forEach(element => {
         if (!element.id) return;
-
+        
         const storageKey = 'form_sauvegarde_' + element.id;
-        const savedValue = recuperer(storageKey, null);
-
-        // Restaurer
+        const savedValue = localStorage.getItem(storageKey); 
+        
         if (savedValue !== null) {
             if (element.type === 'checkbox') {
                 element.checked = (savedValue === 'true');
@@ -33,16 +31,10 @@ function EnregChoix() {
             }
         }
 
-        // Sauvegarde
-        element.onchange = () => { //Si il y'a un changement dans les input
+        element.addEventListener('change', () => {
             const val = (element.type === 'checkbox') ? element.checked : element.value;
-            sauvegarder(storageKey, val);
-
-            // Si on change de liste, on doit rafraîchir les filtres et le tableau
-            if (element.id === "select_etu") {
-                generer_filtres();
-            }
-        };
+            localStorage.setItem(storageKey, val); 
+        });
     });
 }
 

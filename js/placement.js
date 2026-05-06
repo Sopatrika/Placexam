@@ -201,8 +201,6 @@ function placement_aleatoire() {
             places_dispos = places_dispos.concat(places);
         }
     });
-
-    const check_tiers_temps = document.querySelector(".tri_tiers_temps");
     let etudiants_tiers = [];
     let etudiants_standard = [];
 

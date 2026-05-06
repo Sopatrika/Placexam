@@ -102,23 +102,7 @@
                         </svg>
                     </label>
                 </div>
-                <div class="liste_elements">
-                    <!-- Liste étudiant -->
-                    <ul class="bloc_element" data-etu_nom="Lehman">
-                        <li>Lehman</li>
-                        <li>Sébastien</li>
-                        <li>Option: Parcours1</li>
-                        <li>Tier temps</li>
-                    </ul>
-
-                    <!-- Liste des salles -->
-                    <ul class="bloc_element" data-etu_nom="Lehman">
-                        <li>Lehman</li>
-                        <li>Sébastien</li>
-                        <li>Option: Parcours1</li>
-                        <li>Tier temps</li>
-                    </ul>
-                </div>
+                <div class="liste_elements"></div>
                 <div class="btn_ajouter">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M23.3333 13.3333H13.3333V23.3333H10V13.3333H0V10H10V0H13.3333V10H23.3333V13.3333Z" fill="#FBFDFF"/>
@@ -126,12 +110,30 @@
                     <span>Ajouter</span>
                 </div>
             </section>
+
+            <!-------------- Section pour ajouter ou modifier un élément -------------->
+            <section class="edition_sec">
+                <div class="titre_edition_sec">Ajouter un étudiant</div>
+                
+                <div class="form_edition">
+                    <!-- <label class="champ_edition">
+                        <span class="label_texte">Nom</span>
+                        <input type="text" class="input_ligne" placeholder="">
+                    </label> -->
+                </div>
+                
+                <div class="edition_erreur"></div>
+                
+                <div class="groupe_btn">
+                    <div class="btn_annuler" id="edition_annul">Annuler</div>
+                    <div class="btn_valider" id="edition_valid">Valider</div>
+                </div>
+            </section>
+
         </div>
 
         <!-- Bouton pour ouvrir/fermer le menu -->
-        <div class="button_menu_gauche">
-            Mes listes
-        </div>
+        <div class="button_menu_gauche">Mes listes</div>
     </div>
     <!----- Main ----->
     <main>
@@ -187,9 +189,9 @@
             <select id="select_parcours"></select>
         </div>
         <div class="menu_erreur"></div>
-        <div class="boutons_menu_import_etu">
-            <div id="menu_import_annul">Annuler</div>
-            <div id="menu_import_valid">Valider</div>
+        <div class="groupe_btn">
+            <div class="btn_annuler" id="menu_import_annul">Annuler</div>
+            <div class="btn_valider" id="menu_import_valid">Valider</div>
         </div>
     </div>
 
@@ -336,7 +338,7 @@
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="js/variables.js"></script>
-    <script src="js/script.js"></script>
+    <script src="js/script.js"></script> 
     <script src="js/menu_gauche.js"></script>
     <script src="js/tableau.js"></script>
     <script src="js/importation.js"></script>

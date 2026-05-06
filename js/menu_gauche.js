@@ -76,26 +76,22 @@ function bloc_listes(liste) {
 
 // FONCTION POUR AFFICHER LES LISTES DANS LE MENUS ----------------------------------------------------------------------------------------------------------------------
 function afficher_listes() {
-    // 1. On cible les deux conteneurs UL spécifiques
-    const liste_etu = document.querySelector(".etu_sec .menu_ul");
-    const liste_salles = document.querySelector(".salle_sec .menu_ul");
+    // 1. On vide l'affichage actuel via les variables globales
+    if (conteneur_etu_ul) conteneur_etu_ul.innerHTML = "";
+    if (conteneur_salle_ul) conteneur_salle_ul.innerHTML = "";
 
-    // 2. On vide complètement l'affichage actuel (très important pour ne pas dupliquer)
-    if (liste_etu) liste_etu.innerHTML = "";
-    if (liste_salles) liste_salles.innerHTML = "";
-
-    // 3. On injecte les étudiants
+    // 2. On injecte les étudiants
     tab_etu.forEach(liste => {
         const nom = liste.nom_fichier || "Liste sans nom";
         const li = bloc_listes(nom);
-        if (liste_etu) liste_etu.appendChild(li);
+        if (conteneur_etu_ul) conteneur_etu_ul.appendChild(li);
     });
 
-    // 4. On injecte les salles
+    // 3. On injecte les salles
     tab_salles.forEach(liste => {
         const nom = liste.nom_salle || "Salle sans nom";
         const li = bloc_listes(nom);
-        if (liste_salles) liste_salles.appendChild(li);
+        if (conteneur_salle_ul) conteneur_salle_ul.appendChild(li);
     });
 }
 
@@ -107,28 +103,68 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+// Variables global pour l'édition
 let section_precedente; 
+let mode_edition = ""; 
+let type_edition = ""; 
+let index_edition = -1; 
+let ancien_nom_liste = ""; 
 
-// ECOUTEUR GLOBAL DES CLICS DU MENU -----------------------------------------------------------------------------------------------------------------------------------------
+// ECOUTEUR GLOBAL DES CLICS DU MENU -----------------------------------------------------------
 document.addEventListener("click", (e) => {
-    // CLIC SUR LE NOM D'UNE SOUS LISTE
+    
+    // OUVRIR UNE SOUS-LISTE
     if (e.target.classList.contains("nom_texte")) {
         const li = e.target.closest("li");
         section_precedente = e.target.closest("section"); 
         ouvrir_details_liste(li.dataset.name);
     }
-    // CLIC SUR LE BOUTON RETOUR
-    if (e.target.closest(".return_sec")) {
-        document.querySelector(".sous_sec").classList.remove("sec_open");
-        if (section_precedente) {
-            section_precedente.classList.add("sec_open");
-        }
+    
+    // CLIC SUR BOUTON RETOUR
+    else if (e.target.closest(".return_sec")) {
+        fermer_formulaire(section_precedente);
     }
-    // CLIC SUR UNE CORBEILLE
-    if (e.target.closest(".trash_element")) {
+
+    // CLIC SUR SUPPRIMER
+    else if (e.target.closest(".trash_element")) {
         supprimer(e.target.closest(".trash_element")); 
     }
+
+    // CLIC SUR MODIFIER
+    else if (e.target.closest(".rename_element")) {
+        const bloc = e.target.closest(".bloc_element"); 
+        const liListe = e.target.closest(".menu_ul > li"); 
+        
+        if (bloc) {
+            index_edition = parseInt(bloc.dataset.index, 10);
+            mode_edition = "modifier";
+            edition_formulaire();
+        } else if (liListe) {
+            const isEtu = e.target.closest(".etu_sec") !== null;
+            type_edition = isEtu ? "nom_liste_etu" : "nom_liste_salle";
+            index_edition = Array.from(liListe.parentNode.children).indexOf(liListe);
+            ancien_nom_liste = liListe.dataset.name;
+            mode_edition = "modifier_liste";
+            edition_formulaire();
+        }
+    }
+
+    // CLIC POUR AJOUTER
+    else if (e.target.closest(".btn_ajouter")) {
+        mode_edition = "ajouter";
+        index_edition = -1;
+        edition_formulaire();
+    }
+    
+    // CLIC POUR ANNULER l'EDITION
+    else if (e.target.id === "edition_annul") {
+        edition_erreur.textContent = "";
+        const selecteur_retour = CONFIG_SECTION[type_edition].section_retour;
+        fermer_formulaire(document.querySelector(selecteur_retour));
+    }
 });
+
+
 
 // AFFICHER LES DÉTAILS D'UNE LISTE DANS LE MENU -------------------------------------------------------------------------------------------------------------------------------
 function ouvrir_details_liste(nom_cible) {
@@ -157,29 +193,22 @@ function ouvrir_details_liste(nom_cible) {
 
     if (!elementsArray) return;
 
-    const firstSec = document.querySelector(".first_sec");
-    const searchBar = document.querySelector(".search_bar");
-    const searchInput = searchBar.querySelector("input");
-    const btnAjouter = document.querySelector(".btn_ajouter");
+    const regles = CONFIG_SECTION[typeListe]; // Récupère les règles
 
-    firstSec.style.display = (typeListe === "etu" || typeListe === "salle") ? "flex" : "none";
-
-    if (typeListe === "etu") {
-        searchBar.style.display = "flex";
-        if(searchInput) searchInput.value = "";
-    } else {
-        searchBar.style.display = "none";
-    }
+    sec_first.style.display = (typeListe === "etu" || typeListe === "salle") ? "flex" : "none";
     
-    btnAjouter.dataset.source = nom_cible;
-    btnAjouter.style.display = (typeListe === "historique") ? "none" : "flex";
-    document.querySelector(".nom_liste").textContent = nom_cible;
-
-    const liste_conteneur = document.querySelector(".liste_elements");
-    liste_conteneur.innerHTML = ""; 
+    conteneur_search_bar.style.display = regles.affichage.recherche ? "flex" : "none";
+    if (regles.affichage.recherche && search_input_etu) search_input_etu.value = "";
+         
+    btn_ajouter.dataset.source = nom_cible;
+    btn_ajouter.style.display = regles.affichage.bouton_ajout ? "flex" : "none";
+    
+    label_nom_liste.textContent = nom_cible;
+         
+    conteneur_liste_elements.innerHTML = "";
 
     elementsArray.forEach((item, index) => {
-        let classes = (typeListe === "matiere" || typeListe === "historique") ? "bloc_element ligne_simple" : "bloc_element";
+        let classes = regles.affichage.ligne_simple ? "bloc_element ligne_simple" : "bloc_element";
         let li_val = `<ul class="${classes}" data-index="${index}">`;
         
         if (typeListe === "matiere") {
@@ -221,11 +250,11 @@ function ouvrir_details_liste(nom_cible) {
                 </div>
             </li>
         </ul>`;
-        liste_conteneur.insertAdjacentHTML("beforeend", li_val);
+        conteneur_liste_elements.insertAdjacentHTML("beforeend", li_val);
     });
 
     document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => s.classList.remove("sec_open"));
-    document.querySelector(".sous_sec").classList.add("sec_open");
+    sous_sec.classList.add("sec_open");
 }
 
 
@@ -237,7 +266,7 @@ function ouvrir_details_liste(nom_cible) {
 function supprimer(poubelle) {
     if (!confirm("Voulez-vous vraiment supprimer cet élément ?")) return;
 
-    // A. Suppression d'une liste entière
+    // Suppression d'une liste entière
     const liListe = poubelle.closest(".menu_ul > li");
     if (liListe) {
         const element = poubelle.closest(".etu_sec") !== null;
@@ -259,7 +288,7 @@ function supprimer(poubelle) {
         return;
     }
 
-    // B. Suppression d'un élément spécifique (étudiant/place)
+    // Suppression d'un élément spécifique (étudiant/place)
     const bloc_element = poubelle.closest(".bloc_element");
     if (bloc_element) {
         const element_supp = parseInt(bloc_element.dataset.index, 10);
@@ -293,6 +322,173 @@ function supprimer(poubelle) {
 
 
 
+// FONCTION POUR AJOUTER/MODIFIER UNE LISTE/ELEMENT --------------------------------------------------------------------------------------------------------------------------
+function edition_formulaire() {
+    let val_nom = "", val_prenom = "", val_parcours = "";
+    const nom_liste = label_nom_liste.textContent; // Utilise la variable globale
+    
+    // A. Identifier le type exact qu'on édite
+    if (mode_edition !== "modifier_liste") {
+        if (nom_liste === "Matières") type_edition = "matiere";
+        else if (nom_liste === "Historique des placements") type_edition = "historique";
+        else if (getListeEtu(nom_liste)) type_edition = "etu";
+        else if (getListeSalle(nom_liste)) type_edition = "salle";
+    }
+
+    const mode_titre = (mode_edition === "modifier_liste") ? "modifier" : mode_edition;
+    titre_edition_sec.textContent = CONFIG_SECTION[type_edition].titres[mode_titre];
+
+    // B. Récupération des valeurs existantes si on modifie
+    if (mode_edition === "modifier" || mode_edition === "modifier_liste") {
+        switch (type_edition) {
+            case "nom_liste_etu":
+            case "nom_liste_salle":
+                val_nom = ancien_nom_liste;
+                break;
+            case "matiere":
+                val_nom = tab_matiere[index_edition];
+                break;
+            case "historique":
+                val_nom = tab_placer[index_edition].titre;
+                break;
+            case "etu":
+                const etu = getListeEtu(nom_liste).donnees[index_edition];
+                val_nom = etu.nom; val_prenom = etu.prenom; val_parcours = etu.parcours;
+                break;
+            case "salle":
+                const places = getListeSalle(nom_liste).places;
+                const cle = Object.keys(places[index_edition]).find(k => k !== "indisponible");
+                val_nom = places[index_edition][cle];
+                break;
+        }
+    }
+
+    // C. Injection du HTML
+    let html_formulaire = "";
+    const texte_label_nom = (mode_edition === "modifier_liste") ? "Nouveau nom" : "Nom";
+    html_formulaire += generer_champ_input(texte_label_nom, "input_nom", val_nom);
+
+    if (type_edition === "etu") {
+        html_formulaire += generer_champ_input("Prénom", "input_prenom", val_prenom);
+        html_formulaire += generer_champ_input("Parcours", "input_parcours", val_parcours);
+    }
+    
+    form_edition.innerHTML = html_formulaire;
+
+    // D. Affichage propre
+    document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => s.classList.remove("sec_open"));
+    edition_sec.classList.add("sec_open");
+}
+
+
+//FONCTION POUR VALIDER UN AJOUT/MODIFICATION D'UNE LISTE/ELEMENT --------------------------------------------------------------------------------------------------------
+
+edition_valid.addEventListener("click", () => {
+    const input_nom = document.getElementById("input_nom")?.value.trim();
+    const input_prenom = document.getElementById("input_prenom")?.value.trim();
+    const input_parcours = document.getElementById("input_parcours")?.value.trim();
+
+    edition_erreur.textContent = ""; // On nettoie les anciennes erreurs
+    // Validation spécifique pour les étudiants (3 champs)
+    if (type_edition === "etu") {
+        if (!input_nom || !input_prenom || !input_parcours) {
+            edition_erreur.textContent = "Veuillez remplir tous les champs.";
+            return;
+        }
+    } 
+    // Validation pour tout le reste (Listes, Salles, Matières, Historique : 1 seul champ)
+    else {
+        if (!input_nom) {
+            edition_erreur.textContent = "Veuillez remplir tous les champs.";
+            return;
+        }
+    }
+
+    const nom_liste = document.querySelector(".nom_liste").textContent;
+
+    switch (type_edition) {
+        case "nom_liste_etu":
+            tab_etu[index_edition].nom_fichier = input_nom;
+            sauvegarder("tab_etu", tab_etu);
+            rafraichir_menu_principal(".etu_sec");
+            break;
+
+        case "nom_liste_salle":
+            tab_salles[index_edition].nom_salle = input_nom;
+            sauvegarder("tab_salles", tab_salles);
+            rafraichir_menu_principal(".salle_sec");
+            break;
+
+        case "matiere":
+            if (mode_edition === "ajouter") tab_matiere.push(input_nom);
+            else tab_matiere[index_edition] = input_nom;
+            sauvegarder("tab_matiere", tab_matiere);
+            fermer_et_recharger(nom_liste);
+            break;
+
+        case "historique":
+            tab_placer[index_edition].titre = input_nom;
+            sauvegarder("tab_placement", tab_placer);
+            fermer_et_recharger(nom_liste);
+            break;
+
+        case "etu":
+            let listeEtu = getListeEtu(nom_liste);
+            let etu_data = { nom: input_nom, prenom: input_prenom, parcours: input_parcours, tiers_temps: false };
+            
+            if (mode_edition === "ajouter") listeEtu.donnees.push(etu_data);
+            else {
+                etu_data.tiers_temps = listeEtu.donnees[index_edition].tiers_temps;
+                listeEtu.donnees[index_edition] = etu_data;
+            }
+            sauvegarder("tab_etu", tab_etu);
+            if (select_etu.value === nom_liste) generer_filtres(); 
+            fermer_et_recharger(nom_liste);
+            break;
+
+        case "salle":
+            let listeSalle = getListeSalle(nom_liste);
+            let cle = (listeSalle.places.length > 0) ? Object.keys(listeSalle.places[0]).find(k => k !== "indisponible") : "Place";
+            let place_data = { [cle]: input_nom, indisponible: false };
+
+            if (mode_edition === "ajouter") listeSalle.places.push(place_data);
+            else {
+                place_data.indisponible = listeSalle.places[index_edition].indisponible;
+                listeSalle.places[index_edition] = place_data;
+            }
+            sauvegarder("tab_salles", tab_salles);
+            if (typeof verifier_capacite === "function") verifier_capacite();
+            fermer_et_recharger(nom_liste);
+            break;
+    }
+});
+
+//Fonction pour générer un champ texte de formulaire
+function generer_champ_input(label, id, valeur) {
+    return `<label class="champ_edition"><span class="label_texte">${label}</span><input type="text" id="${id}" class="input_ligne" value="${valeur}"></label>`;
+}
+
+
+function fermer_formulaire(section_a_rouvrir) {
+    edition_sec.classList.remove("sec_open");
+    sous_sec.classList.remove("sec_open"); // S'assure que sous_sec est caché si on retourne à la racine
+    if (section_a_rouvrir) section_a_rouvrir.classList.add("sec_open");
+}
+
+function fermer_et_recharger(nom_liste) {
+    fermer_formulaire(sous_sec);
+    ouvrir_details_liste(nom_liste); // Rafraîchit les données visuelles
+}
+
+function rafraichir_menu_principal(selecteur_section) {
+    afficher_listes();
+    remplir_select();
+    generer_filtres();
+    fermer_formulaire(document.querySelector(selecteur_section));
+}
+
+
+
 
 // FONCTION POUR RECHERCHER UN ETUDIANT A PARTIR DE LA BARRE DE RECHERCHE -----------------------------------------------------------------------------------
 const searchInput = document.querySelector(".search_bar input");
@@ -304,9 +500,9 @@ if (searchInput) {
         bloc_etu.forEach(bloc => {
             const texteBloc = bloc.textContent.toLowerCase();
             if (texteBloc.includes(recherche)) {
-                bloc.style.display = "flex";
+                bloc.classList.remove("bloc_invisible");
             } else {
-                bloc.style.display = "none";
+                bloc.classList.add("bloc_invisible");
             }
         });
     });
