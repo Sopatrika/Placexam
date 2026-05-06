@@ -59,9 +59,10 @@ importFields.forEach(field => {
 
 
 //FONCTION POUR CONVERTIR LE FICHIER EXCEL EN JSON
+//la fonction utilise la librairie Sheet.js (xlsx js) pour convertir un fichier Excel en format json
 function conversionExcel(file, inputId) {
     
-    const reader = new FileReader();// FileReader est un outil natif du navigateur pour lire les fichiers locaux
+    const reader = new FileReader();// FileReader est un outil du navigateur pour lire les fichiers locaux
 
     reader.onload = (e) => { //Lorsqu'un fichier arrive
         const data = new Uint8Array(e.target.result);

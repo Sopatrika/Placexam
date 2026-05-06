@@ -3,7 +3,7 @@
 // GESTION DE L'AFFICHAGE DE TABLEAU ET DES FILTRES DYNAMIQUES
 //=================================================================================================================================================================
 
-// --- 1. ECOUTEUR GLOBAL DES FILTRES DE PARCOURS ---
+// ECOUTEUR GLOBAL DES FILTRES DE PARCOURS -------------------------------------------------------------------------------------------------------------------------------------
 if (conteneur_filtres) {
     conteneur_filtres.addEventListener("change", (e) => {
         if (e.target.classList.contains("check-parcours")) {
@@ -20,7 +20,7 @@ if (conteneur_filtres) {
     });
 }
 
-// --- 2. GESTION DES SELECTS (Menus déroulants) ---
+// FONCTION POUR REMPLIR LES SELECTIONS -------------------------------------------------------------------------------------------------------------------------------------
 function creer_option(element, liste) {
     const option = document.createElement("option");
     option.value = element;
@@ -28,6 +28,7 @@ function creer_option(element, liste) {
     liste.appendChild(option);
 }
 
+//On rempli les selects
 function remplir_select() {
     select_etu.innerHTML = "";
     select_salle.innerHTML = "";
@@ -46,8 +47,9 @@ function remplir_select() {
     }
 }
 
-// --- 3. GENERATION DES FILTRES DE PARCOURS ---
-const filtres_color = ['#3B82F6', '#EF4444', '#1ac58c', '#F59E0B', '#8B5CF6', '#06B6D4']; 
+// FONCTION POUR GERER LES FILTRES DE PARCOURS DYNAMIQUE --------------------------------------------------------------------------------------------------------
+// Les filtres parcours sont générés dynamiquement par rapport 
+const filtres_color = ['#3B82F6', '#EF4444', '#1ac58c', '#F59E0B', '#8B5CF6', '#06B6D4']; //Couleurs des filtres
 select_etu.addEventListener("change", generer_filtres);
 
 function generer_filtres() {
@@ -131,7 +133,7 @@ function afficher_tableau() {
                 <td>${etu.prenom}</td>
                 <td>${etu.parcours}</td>
                 <td></td>
-                <td>${tiers_temps}</td>
+                <td class="icon_tiers_temps">${tiers_temps}</td>
                 <td>
                     <label class="badge-checkbox" style="--checkcolor: var(--black);">
                         <input type="checkbox" class="check-absence" data-nom="${etu.nom}" data-prenom="${etu.prenom}">

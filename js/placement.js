@@ -16,20 +16,17 @@ const select_salle_sup = document.querySelector("#select_salle_sup");
 let salles_choisies = []; // Variable pour stocker les salles choisies
 
 // Par défaut, au chargement de la page, le bouton est bloqué
-if (btn_placement) {
-    btn_placement.classList.add("placement_disable");
-    btn_placement.addEventListener("click", placement_aleatoire);
-}
+btn_placement.classList.add("placement_disable");
+btn_placement.addEventListener("click", placement_aleatoire);
 
 // FONCTION POUR VERIFIER LA CAPACITE D'UNE SALLE A CONTENIR TOUT LES ETUDIANTS ------------------------------------------------------------------------
 
 function verifier_capacite() {
-    if (!select_etu || !select_salle) return;
-
+    // Récupère les valeurs dans les deux selections liste étudiants et salles
     const nom_etu = select_etu.value;
     const salle_principale = select_salle.value;
 
-    // Si rien n'est sélectionné
+    // Si rien n'est sélectionné dans les selections
     if (!nom_etu || !salle_principale || !nom_etu) {
         btn_placement.classList.add("placement_disable");
         boite_capacite.classList.remove("message_visible");
@@ -43,10 +40,10 @@ function verifier_capacite() {
     }
 
     let listeEtuObj = getListeEtu(nom_etu); //On recherche la liste étudiante séléctionné
-    if (!listeEtuObj) return;
+    // if (!listeEtuObj) return;
     const parcours_actifs = Array.from(document.querySelectorAll(".check-parcours:checked")).map(cb => cb.value); //Liste des parcours séléctionnés
-    let etudiants_a_placer = listeEtuObj.donnees.filter(etu => parcours_actifs.includes(etu.parcours));
-    let nb_etu = etudiants_a_placer.length;
+    let etudiants_a_placer = listeEtuObj.donnees.filter(etu => parcours_actifs.includes(etu.parcours)); //On place les étudiants dont leurs parcours a été coché
+    let nb_etu = etudiants_a_placer.length; //Nombre d'étudiant
 
     let capa_totale = 0;
     //On cherche la salle séléctionné et en stocke uniquement les places disponibles
@@ -65,7 +62,7 @@ function verifier_capacite() {
         boite_capacite.classList.add("message_visible");
         zone_ajout_salle.classList.add("message_visible"); 
         btn_placement.classList.add("placement_disable"); 
-        maj_select_salles_sup(); 
+        maj_select_salles_sup(); //On ajoute un select qui permet d'ajouter des salles
 
     } else { //Il y'a assez de place
         msg_capacite.classList.remove("texte_rouge");
@@ -95,6 +92,7 @@ function maj_select_salles_sup() {
     });
 }
 
+//Fonction qui permet d'afficher les salles supp séléctionné
 function dessiner_badges_salles() {
     conteneur_badges.innerHTML = "";
 
@@ -105,14 +103,12 @@ function dessiner_badges_salles() {
     
     conteneur_badges.classList.add("message_visible", "liste_salles_cumulees");
     
-    for (let i = 1; i < salles_choisies.length; i++) {
-        const nom_de_la_salle = salles_choisies[i]; 
-        
+    for (let i = 1; i < salles_choisies.length; i++) { //Pour chaque salle supp, on leur créer un badge
+        const salle_actuel = salles_choisies[i]; 
         let badge = document.createElement("div");
         badge.classList.add("badge_salle_sup");
-        
         badge.innerHTML = `
-            <span>${nom_de_la_salle}</span> 
+            <span>${salle_actuel}</span> 
             <span class="btn_retirer_salle" title="Retirer cette salle">
                 <svg width="16" height="16" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g id="Croix" clip-path="url(#clip0_279_24)">
@@ -134,8 +130,8 @@ function dessiner_badges_salles() {
             </span>
         `;
         
-        badge.querySelector(".btn_retirer_salle").addEventListener("click", () => {
-            salles_choisies = salles_choisies.filter(salle => salle !== nom_de_la_salle);
+        badge.querySelector(".btn_retirer_salle").addEventListener("click", () => { //On ajoute une croix qui permet de retirer une salle supp
+            salles_choisies = salles_choisies.filter(salle => salle !== salle_actuel);
             verifier_capacite();
         });
         conteneur_badges.appendChild(badge);
@@ -158,8 +154,8 @@ select_salle_sup.addEventListener("change", (e) => {
     }
 });
 
-window.addEventListener("DOMContentLoaded", () => {
-    setTimeout(verifier_capacite, 200); 
+window.addEventListener("DOMContentLoaded", () => { 
+    setTimeout(verifier_capacite, 200); //On laisse un peu de temps au message pour s'afficher
 });
 
 
@@ -177,10 +173,12 @@ function placement_aleatoire() {
 
     //On cherche la liste étudiante
     let listeEtuObj = getListeEtu(nom_liste_etu);
-    if (!listeEtuObj) return;
+    // if (!listeEtuObj) return;
 
-    const parcours_actifs = Array.from(document.querySelectorAll(".check-parcours:checked")).map(cb => cb.value);
-    let etudiants_a_placer = listeEtuObj.donnees.filter(etu => parcours_actifs.includes(etu.parcours));
+    const parcours_actifs = Array.from(document.querySelectorAll(".check-parcours:checked")).map(cb => cb.value); //Les parcours qui ont été séléctonné
+    let etudiants_a_placer = listeEtuObj.donnees
+    .filter(etu => parcours_actifs.includes(etu.parcours))
+    .map(etu => ({ ...etu }));
 
     let places_dispos = [];
     if(salles_choisies.length === 0) salles_choisies = [nom_liste_salle];
@@ -233,41 +231,91 @@ function placement_aleatoire() {
     });
 
     const lignes_tableau = document.querySelectorAll(".exam-table tbody tr");
-
+    
+    // On attribue les places
     Array.from(lignes_tableau).forEach(ligne => {
-        const tdNom = ligne.cells[0].textContent.trim().toLowerCase();
-        const tdPrenom = ligne.cells[1].textContent.trim().toLowerCase();
-
+        //trim() retire les espaces et toLowerCase() met en minuscule
+        const tdNom = ligne.cells[0].textContent.trim().toLowerCase(); //Le nom de l'étudiant
+        const tdPrenom = ligne.cells[1].textContent.trim().toLowerCase(); //Le prenom de l'étudiant
         const etu = etudiants_finaux.find(e => 
-            String(e.nom).trim().toLowerCase() === tdNom && 
-            String(e.prenom).trim().toLowerCase() === tdPrenom
+             String(e.nom).trim().toLowerCase() === tdNom && 
+             String(e.prenom).trim().toLowerCase() === tdPrenom
         );
 
         if (etu && etu.place_attribuee) {
-            if (salles_choisies.length > 1) {
+            // On sauvegarde les infos de tri
+            ligne.dataset.indexSalle = salles_choisies.indexOf(etu.salle_attribuee);
+            ligne.dataset.nom = tdNom;
+            ligne.dataset.prenom = tdPrenom;
+            ligne.dataset.isTiers = etu.tiers_temps ? 1 : 0;
+
+            if (salles_choisies.length > 1) { //Si il y'a plusieurs salles, on affiche en plus le nom de la salle dans lequel la place appartient
                 ligne.cells[3].innerHTML = `
-                    <div style="font-size:0.75rem; color:var(--darkblue); opacity:0.7;">${etu.salle_attribuee}</div>
+                    <div class="place_attribue">${etu.salle_attribuee}</div>
                     <div class="place-number">${etu.place_attribuee}</div>`;
-            } else {
-                ligne.cells[3].innerHTML = `<span class="place-number">${etu.place_attribuee}</span>`;
+            } else { 
+                ligne.cells[3].innerHTML = `<span>${etu.place_attribuee}</span>`; //Sinon on affiche que la place
             }
+        } else {
+            // Étudiants non placés (sécurité)
+            ligne.dataset.indexSalle = 999; 
+            ligne.dataset.nom = tdNom;
+            ligne.dataset.prenom = tdPrenom;
+            ligne.dataset.isTiers = 0;
         }
     });
-    
+
+    const tbody = document.querySelector(".exam-table tbody");
+    const lignes_array = Array.from(tbody.querySelectorAll("tr"));
+
+    //le script va classer les places en fonction de l'ordre des salles séléctionné (d'abord la 1ère salle, puis la 2ème, la 3ème...)
+    lignes_array.sort((a, b) => {
+        let salleA = parseInt(a.dataset.indexSalle);
+        let salleB = parseInt(b.dataset.indexSalle);
+
+        if (salleA !== salleB) return salleA - salleB; // Grouper par salle (Amphi 1 avant Amphi 2, etc.)
+
+        // Si les tiers temps doivent être en premier
+        if (check_tiers_temps && check_tiers_temps.checked) {
+            let tiersA = parseInt(a.dataset.isTiers);
+            let tiersB = parseInt(b.dataset.isTiers);
+            if (tiersA !== tiersB) return tiersB - tiersA; // Le 1 passe avant le 0
+        }
+
+        // Tri Alphabétique par Nom
+        if (a.dataset.nom !== b.dataset.nom) {
+            return a.dataset.nom.localeCompare(b.dataset.nom);
+        }
+        return a.dataset.prenom.localeCompare(b.dataset.prenom); // En cas d'homonyme, le tri sera par Prénom
+    });
+    //réinjecte les lignes dans le tableau
+    lignes_array.forEach(ligne => tbody.appendChild(ligne));
+
     const val_matiere = select_matiere.value; 
     const nom_matiere = val_matiere ? val_matiere : nom_liste_etu;
-    const date_jour = new Date().toLocaleDateString();
-    
+    const date_jour = new Date().toLocaleDateString(); //met la date et la convertie en chaine de caractère
+         
     const titre_salles = salles_choisies.join(' + ');
     const titre_placement = `${nom_matiere} - ${titre_salles} (${date_jour})`;
+    
+    // On prépare les données
+    const donnees_sauvegarde = etudiants_finaux.map(etu => ({
+        nom: etu.nom,
+        prenom: etu.prenom,
+        parcours: etu.parcours,
+        tiers_temps: etu.tiers_temps,
+        salle_attribuee: etu.salle_attribuee || "Non placé",
+        place_attribuee: etu.place_attribuee || "-",
+        absent: false // Par défaut, personne n'est absent au moment du placement
+    }));
 
-    const tableau_fini = document.querySelector(".exam-table tbody").innerHTML;
-
-    //On ajoute le placement dans tab_placer
+    // ajoute le placement dans tab_placer
     tab_placer.push({
         titre: titre_placement,
-        tableau: tableau_fini
+        date: date_jour,
+        donnees_placement: donnees_sauvegarde
     });
+    
     sauvegarder('tab_placement', tab_placer);
 
     msg_capacite.textContent = "Placement effectué avec succès !";

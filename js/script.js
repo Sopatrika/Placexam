@@ -13,14 +13,14 @@ function getListeSalle(nom_cherche) {
 }
 
 
-//FONCTION POUR GARDER LES INPUT COCHES ----------------------------------------------------------------------------------
+//FONCTION POUR SAUVEGARDER LES INPUT COCHER ET LES SELECTIONS ----------------------------------------------------------------------------------
 function EnregChoix() {
     const formElements = document.querySelectorAll('input[type="checkbox"], input[type="time"], .selects_table select');
     
     formElements.forEach(element => {
         if (!element.id) return;
         
-        const storageKey = 'form_sauvegarde_' + element.id;
+        const storageKey = "form: "+ element.id;
         const savedValue = localStorage.getItem(storageKey); 
         
         if (savedValue !== null) {
