@@ -6,14 +6,14 @@
 // ECOUTEUR GLOBAL DES FILTRES DE PARCOURS -------------------------------------------------------------------------------------------------------------------------------------
 if (conteneur_filtres) {
     conteneur_filtres.addEventListener("change", (e) => {
-        if (e.target.classList.contains("check-parcours")) {
-            const nomParcours = e.target.value; 
+        if (e.target.classList.contains("check-specialite")) {
+            const nomSpecialite = e.target.value; 
             const nom_liste_actuelle = select_etu.value;
             
-            if (!tab_filtres_prc[nom_liste_actuelle]) tab_filtres_prc[nom_liste_actuelle] = {};
+            if (!tab_filtres_spe[nom_liste_actuelle]) tab_filtres_spe[nom_liste_actuelle] = {};
 
-            tab_filtres_prc[nom_liste_actuelle][nomParcours] = e.target.checked;
-            sauvegarder('tab_filtres_prc', tab_filtres_prc);
+            tab_filtres_spe[nom_liste_actuelle][nomSpecialite] = e.target.checked;
+            sauvegarder('tab_filtres_spe', tab_filtres_spe);
             
             afficher_tableau();
         }
@@ -47,7 +47,7 @@ function remplir_select() {
     }
 }
 
-// FONCTION POUR GERER LES FILTRES DE PARCOURS DYNAMIQUE --------------------------------------------------------------------------------------------------------
+// FONCTION POUR GERER LES FILTRES DE PARCOURS DYNAMIQUE ------------------------------------------------------------------------------------------------------------------
 // Les filtres parcours sont générés dynamiquement par rapport 
 const filtres_color = ['#3B82F6', '#EF4444', '#1ac58c', '#F59E0B', '#8B5CF6', '#06B6D4']; //Couleurs des filtres
 select_etu.addEventListener("change", generer_filtres);
@@ -61,22 +61,22 @@ function generer_filtres() {
         return;
     }
 
-    const list_parcours = [...new Set(liste_select.donnees.map(etu => etu.parcours))];
+    const list_specialite = [...new Set(liste_select.donnees.map(etu => etu.specialite))];
     const nom_liste_actuelle = select_etu.value; 
 
-    if (!tab_filtres_prc[nom_liste_actuelle]) {
-        tab_filtres_prc[nom_liste_actuelle] = {};
+    if (!tab_filtres_spe[nom_liste_actuelle]) {
+        tab_filtres_spe[nom_liste_actuelle] = {};
     }
 
-    list_parcours.forEach((parcours, index) => {
+    list_specialite.forEach((parcours, index) => {
         const couleur = filtres_color[index % filtres_color.length];
-        const etatSpecifique = tab_filtres_prc[nom_liste_actuelle][parcours];
+        const etatSpecifique = tab_filtres_spe[nom_liste_actuelle][parcours];
         const estCoche = (etatSpecifique === false) ? '' : 'checked';
 
         const htmlFiltre = `
             <div class="filtre_table">
                 <label class="badge-checkbox" style="--checkcolor: ${couleur}">
-                    <input type="checkbox" value="${parcours}" class="check-parcours" ${estCoche}>
+                    <input type="checkbox" value="${parcours}" class="check-specialite" ${estCoche}>
                     <span class="badge-text">${parcours}</span>
                     <span class="custom-checkbox"></span>
                 </label>
@@ -90,22 +90,22 @@ function generer_filtres() {
 
 function nettoyer_filtres() {
     const noms_listes_existantes = tab_etu.map(liste => liste.nom_fichier);
-    for (let nom_liste_sauvegardee in tab_filtres_prc) {
+    for (let nom_liste_sauvegardee in tab_filtres_spe) {
         if (!noms_listes_existantes.includes(nom_liste_sauvegardee)) {
-            delete tab_filtres_prc[nom_liste_sauvegardee]; 
+            delete tab_filtres_spe[nom_liste_sauvegardee]; 
         }
     }
-    sauvegarder('tab_filtres_prc', tab_filtres_prc);
+    sauvegarder('tab_filtres_spe', tab_filtres_spe);
 }
 
-// --- 4. AFFICHAGE DU TABLEAU ---
+// FONCTON POUR l'AFFICHAGE DU TABLEAU ----------------------------------------------------------------------------------------------------------------------------------
 function afficher_tableau() {
     tableau_etu.innerHTML = "";
     let liste_select = getListeEtu(select_etu.value);
     if (!liste_select) return;
 
-    const parcours_actifs = Array.from(document.querySelectorAll(".check-parcours:checked")).map(cb => cb.value); 
-    const donnees_filtrees = liste_select.donnees.filter(etu => parcours_actifs.includes(etu.parcours)); 
+    const specialites_actives = Array.from(document.querySelectorAll(".check-specialite:checked")).map(cb => cb.value); 
+    const donnees_filtrees = liste_select.donnees.filter(etu => specialites_actives.includes(etu.specialite)); 
     const btn_tri_tiers = check_tiers_temps; 
     
     if (btn_tri_tiers && btn_tri_tiers.checked) {
@@ -131,7 +131,7 @@ function afficher_tableau() {
             <tr>
                 <td>${etu.nom}</td>
                 <td>${etu.prenom}</td>
-                <td>${etu.parcours}</td>
+                <td>${etu.specialite}</td>
                 <td></td>
                 <td class="icon_tiers_temps">${tiers_temps}</td>
                 <td>

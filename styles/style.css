@@ -23,6 +23,11 @@
     --font-family: "Mono";
     /* effet d'ombre extérieur sur certains éléments */
     --shadow: 2px 2px 10px #1e1e1e50;
+    --succes: #10B981;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
@@ -38,7 +43,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--white);
   border-radius: 16px;
 
 }
@@ -56,6 +61,32 @@ body {
 header {
     background: var(--darkblue);
     padding: 50px;
+}
+
+.header_navs {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.header_lien {
+    text-decoration: none;
+    color: var(--white);
+    position: relative;
+}
+
+.header_lien::after {
+    content: "";
+    position: absolute;
+    background: var(--white);
+    height: 2px;
+    left: 0;
+    bottom: -5px;
+    width: 0%;
+    transition: 0.2s ease;
+}
+
+.header_lien:hover::after {
+    width: 100%;
 }
 
 /* Main */
@@ -145,10 +176,16 @@ main {
     justify-content: center;
     background: transparent;
     z-index: 1;
+    opacity: 0.7;
+}
+
+.btn-section-menu:nth-child(:not(.btn_open)) {
+    opacity: 0.7;
 }
 
 .btn-section-menu:hover {
     background: var(--hover);
+    opacity: 1;
 }
 
 .btn_open, .btn-section-menu.btn_open:hover {
@@ -157,6 +194,7 @@ main {
     font-weight: bold;
     box-shadow: var(--shadow);
     padding: 20px 20px;
+    opacity: 1;
 }
 
 .btn_open::before {
@@ -240,6 +278,9 @@ main {
     display: flex;
     align-items: center;
     cursor: pointer;
+    border: solid 1px var(--white);
+    padding: 5px 20px;
+    border-radius: 16px;
 }
 
 .return_sec svg {
@@ -297,27 +338,28 @@ main {
 
 .liste_elements {
     margin-top: 20px;
-    max-height: 300px;
+    max-height: 350px;
     overflow-y: auto;
     padding: 0;
     width: 250px;
     margin-left: auto;
     margin-right: auto;
-    border-bottom: solid 1px var(--white);
+    border: solid 1px var(--white);
+    border-radius: 8px;
 }
 
 .bloc_element {
-    list-style-type: none;
     margin: 0;
     padding: 15px 20px;
     display: flex;
     flex-direction: column;
     gap: 8px;
     border-bottom: 1px solid var(--white);
+    transition: 0.2s ease;
 }
 
 .bloc_element:hover {
-    border-left: 4px solid var(--white);
+    font-weight: bold;
 }
 
 .bloc_element:nth-child(2n of :not(.bloc_invisible)) {
@@ -365,7 +407,8 @@ main {
     margin-top: 0;
 }
 
-.btn_ajouter {
+.btn_ajouter, .btn_supp_historique {
+    margin: 24px 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -374,12 +417,16 @@ main {
     cursor: pointer;
 }
 
-.btn_ajouter svg{
+.btn_ajouter svg, .btn_supp_historique svg{
     transition: 0.2s ease;
 }
 
-.btn_ajouter:hover svg {
+.btn_ajouter:hover svg ,.btn_supp_historique:hover svg{
     transform: scale(1.5);
+}
+
+.supp_histo {
+    display: none;
 }
 
 /* Section edition (ajouter ou modifier un élément) */
@@ -427,8 +474,7 @@ main {
 .input_ligne {
     background: transparent;
     border: none;
-    border-bottom: 1px solid rgba(251, 253, 255, 0.4);
-    color: #FBFDFF;
+    border-bottom: 1px solid var(--light-grey);
     font-size: 1rem;
     padding: 5px 0;
     outline: none;
@@ -436,7 +482,7 @@ main {
 }
 
 .input_ligne:focus {
-    border-bottom: 2px solid #FBFDFF; 
+    border-bottom: 2px solid var(--white); 
 }
 
 .edition_erreur {
@@ -568,6 +614,7 @@ h2 {
 /* ---- Menu Import étudiant ---- */
 
 .fond_sombre {
+    transition: 0.2s ease;
     position: fixed;
     top: 0;
     left: 0;
@@ -589,6 +636,7 @@ h2 {
     background: var(--darkblue);
     color: var(--white);
     padding: 30px;
+    transition: 0.2s ease;
 }
 
 .choix_colonnes {
@@ -727,7 +775,7 @@ h3 {
     margin: 0; 
 }
 
-/* Filtres de la tables pour les parcours ou étudiants en tier temps */
+/* Filtres de la tables pour les spécialités ou étudiants en tier temps */
 
 .filtres_table {
     width: 90%;
@@ -837,13 +885,13 @@ select {
     outline: none;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow);
 }
 
 /* Effet quand on clique sur le select ou qu'on le survole */
 select:focus, select:hover {
     border-color: var(--darkblue); /* La bordure devient plus foncée */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
 }
 
 /* Effet de survol sympa */
@@ -856,13 +904,13 @@ select:focus, select:hover {
 /* --------------------- Tableau -------------------*/
 
 .section_tableau {
+    background: var(--white);
     margin-top: 15px;
     width: 100%;
     max-height: 350px;
     overflow-y: auto;
     border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    background: var(--white);
+    box-shadow: var(--shadow);
 }
 
 .exam-table {
@@ -924,7 +972,7 @@ select:focus, select:hover {
     display: flex;
     gap: 10px;
     align-items: center;
-    height: 10px;
+    margin: 10px;
 }
 
 .zero_etu, .capacite_max, .ajout_salle, #liste_salles_cumulees, .ajout_salle_sup {
@@ -937,7 +985,7 @@ select:focus, select:hover {
 }
 
 .texte_vert {
-    color: #10B981;
+    color: var(--succes);
 }
 
 .texte_rouge {

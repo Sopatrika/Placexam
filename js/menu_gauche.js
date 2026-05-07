@@ -197,8 +197,12 @@ function ouvrir_details_liste(nom_cible) {
 
     sec_first.style.display = (typeListe === "etu" || typeListe === "salle") ? "flex" : "none";
     
+    //Si c'est une liste d'étudiante, la barre de recherche sera affiché
     conteneur_search_bar.style.display = regles.affichage.recherche ? "flex" : "none";
     if (regles.affichage.recherche && search_input_etu) search_input_etu.value = "";
+
+    btn_supp_histo.style.display = regles.affichage.supp_histo ? "flex" : "none";
+    if (tab_placer.length < 1) btn_supp_histo.style.display = "none";
          
     btn_ajouter.dataset.source = nom_cible;
     btn_ajouter.style.display = regles.affichage.bouton_ajout ? "flex" : "none";
@@ -207,6 +211,7 @@ function ouvrir_details_liste(nom_cible) {
          
     conteneur_liste_elements.innerHTML = "";
 
+    //On affiche les blocs d'éléments
     elementsArray.forEach((item, index) => {
         let classes = regles.affichage.ligne_simple ? "bloc_element ligne_simple" : "bloc_element";
         let li_val = `<ul class="${classes}" data-index="${index}">`;
@@ -242,14 +247,13 @@ function ouvrir_details_liste(nom_cible) {
             }
         }
 
-        li_val += `
-            <li>
-                <div class="ul_icons">
-                    <svg class="trash_element" title="supprimer l'élément" width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33333 9.33333H26.6667M13.3333 14.6667V22.6667M18.6667 14.6667V22.6667M6.66666 9.33333L7.99999 25.3333C7.99999 26.0406 8.28095 26.7189 8.78104 27.219C9.28114 27.719 9.95942 28 10.6667 28H21.3333C22.0406 28 22.7188 27.719 23.2189 27.219C23.719 26.7189 24 26.0406 24 25.3333L25.3333 9.33333M12 9.33333V5.33333C12 4.97971 12.1405 4.64057 12.3905 4.39052C12.6406 4.14048 12.9797 4 13.3333 4H18.6667C19.0203 4 19.3594 4.14048 19.6095 4.39052C19.8595 4.64057 20 4.97971 20 5.33333V9.33333" stroke="#FBFDFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <svg class="rename_element" title="modifier l'élément" width="24" height="24" viewBox="0 0 50 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M31.25 24.3333L22.9167 32.6667H43.75V24.3333H31.25ZM25.125 5.97915L6.25 24.8541V32.6667H14.0625L32.9375 13.7916L25.125 5.97915ZM38.9792 7.74998C39.7917 6.93748 39.7917 5.58332 38.9792 4.81248L34.1042 -0.0625169C33.7138 -0.45054 33.1858 -0.668335 32.6354 -0.668335C32.085 -0.668335 31.557 -0.45054 31.1667 -0.0625169L27.3542 3.74998L35.1667 11.5625L38.9792 7.74998Z" fill="#FBFDFF"/></svg>
-                </div>
-            </li>
-        </ul>`;
+        li_val += `<li>
+                    <div class="ul_icons">
+                        <svg class="trash_element" title="supprimer l'élément" width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33333 9.33333H26.6667M13.3333 14.6667V22.6667M18.6667 14.6667V22.6667M6.66666 9.33333L7.99999 25.3333C7.99999 26.0406 8.28095 26.7189 8.78104 27.219C9.28114 27.719 9.95942 28 10.6667 28H21.3333C22.0406 28 22.7188 27.719 23.2189 27.219C23.719 26.7189 24 26.0406 24 25.3333L25.3333 9.33333M12 9.33333V5.33333C12 4.97971 12.1405 4.64057 12.3905 4.39052C12.6406 4.14048 12.9797 4 13.3333 4H18.6667C19.0203 4 19.3594 4.14048 19.6095 4.39052C19.8595 4.64057 20 4.97971 20 5.33333V9.33333" stroke="#FBFDFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <svg class="rename_element" title="modifier l'élément" width="24" height="24" viewBox="0 0 50 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M31.25 24.3333L22.9167 32.6667H43.75V24.3333H31.25ZM25.125 5.97915L6.25 24.8541V32.6667H14.0625L32.9375 13.7916L25.125 5.97915ZM38.9792 7.74998C39.7917 6.93748 39.7917 5.58332 38.9792 4.81248L34.1042 -0.0625169C33.7138 -0.45054 33.1858 -0.668335 32.6354 -0.668335C32.085 -0.668335 31.557 -0.45054 31.1667 -0.0625169L27.3542 3.74998L35.1667 11.5625L38.9792 7.74998Z" fill="#FBFDFF"/></svg>
+                    </div>
+                    </li>
+            </ul>`;
         conteneur_liste_elements.insertAdjacentHTML("beforeend", li_val);
     });
 
@@ -284,7 +288,7 @@ function supprimer(poubelle) {
         nettoyer_filtres();
         remplir_select();
         generer_filtres();
-        if (typeof verifier_capacite === "function") verifier_capacite();
+        verifier_capacite();
         return;
     }
 
@@ -324,7 +328,7 @@ function supprimer(poubelle) {
 
 // FONCTION POUR AJOUTER/MODIFIER UNE LISTE/ELEMENT --------------------------------------------------------------------------------------------------------------------------
 function edition_formulaire() {
-    let val_nom = "", val_prenom = "", val_parcours = "";
+    let val_nom = "", val_prenom = "", val_specialite = "";
     const nom_liste = label_nom_liste.textContent; // Utilise la variable globale
     
     // A. Identifier le type exact qu'on édite
@@ -353,7 +357,7 @@ function edition_formulaire() {
                 break;
             case "etu":
                 const etu = getListeEtu(nom_liste).donnees[index_edition];
-                val_nom = etu.nom; val_prenom = etu.prenom; val_parcours = etu.parcours;
+                val_nom = etu.nom; val_prenom = etu.prenom; val_specialite = etu.specialite;
                 break;
             case "salle":
                 const places = getListeSalle(nom_liste).places;
@@ -370,7 +374,7 @@ function edition_formulaire() {
 
     if (type_edition === "etu") {
         html_formulaire += generer_champ_input("Prénom", "input_prenom", val_prenom);
-        html_formulaire += generer_champ_input("Parcours", "input_parcours", val_parcours);
+        html_formulaire += generer_champ_input("Spécialité", "input_specialite", val_specialite);
     }
     
     form_edition.innerHTML = html_formulaire;
@@ -386,12 +390,12 @@ function edition_formulaire() {
 edition_valid.addEventListener("click", () => {
     const input_nom = document.getElementById("input_nom")?.value.trim();
     const input_prenom = document.getElementById("input_prenom")?.value.trim();
-    const input_parcours = document.getElementById("input_parcours")?.value.trim();
+    const input_specialite = document.getElementById("input_specialite")?.value.trim();
 
     edition_erreur.textContent = ""; // On nettoie les anciennes erreurs
     // Validation spécifique pour les étudiants (3 champs)
     if (type_edition === "etu") {
-        if (!input_nom || !input_prenom || !input_parcours) {
+        if (!input_nom || !input_prenom || !input_specialite) {
             edition_erreur.textContent = "Veuillez remplir tous les champs.";
             return;
         }
@@ -434,7 +438,7 @@ edition_valid.addEventListener("click", () => {
 
         case "etu":
             let listeEtu = getListeEtu(nom_liste);
-            let etu_data = { nom: input_nom, prenom: input_prenom, parcours: input_parcours, tiers_temps: false };
+            let etu_data = { nom: input_nom, prenom: input_prenom, specialite: input_specialite, tiers_temps: false };
             
             if (mode_edition === "ajouter") listeEtu.donnees.push(etu_data);
             else {
@@ -456,6 +460,7 @@ edition_valid.addEventListener("click", () => {
                 place_data.indisponible = listeSalle.places[index_edition].indisponible;
                 listeSalle.places[index_edition] = place_data;
             }
+            listeSalle.capacite_max = listeSalle.places.filter(place => place.indisponible !== true).length;
             sauvegarder("tab_salles", tab_salles);
             if (typeof verifier_capacite === "function") verifier_capacite();
             fermer_et_recharger(nom_liste);
@@ -476,8 +481,8 @@ function fermer_formulaire(section_a_rouvrir) {
 }
 
 function fermer_et_recharger(nom_liste) {
-    fermer_formulaire(sous_sec);
-    ouvrir_details_liste(nom_liste); // Rafraîchit les données visuelles
+    ouvrir_details_liste(nom_liste);
+    fermer_formulaire(document.querySelector(".sous_sec"));
 }
 
 function rafraichir_menu_principal(selecteur_section) {
@@ -531,6 +536,17 @@ document.addEventListener("change", (e) => {
             listeSalle.places[index].indisponible = e.target.checked;
             sauvegarder('tab_salles', tab_salles);
         }
-        if (typeof verifier_capacite === "function") verifier_capacite();
     }
 });
+
+
+//FONCTION POUR SUPPRIMER TOUTE L'HISTORIQUE DES PLACEMENT ----------------------------------------------------------------------------------------------------------------
+
+btn_supp_histo.addEventListener("click", supp_histo_placement)
+function supp_histo_placement() {
+    if (!confirm("Voulez-vous vraiment supprimer toute l'historique des placement ?")) return;
+
+    tab_placer = [];
+    localStorage.removeItem("tab_placement");
+    ouvrir_details_liste("Historique des placements");
+}

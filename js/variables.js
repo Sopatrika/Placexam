@@ -18,9 +18,9 @@ function recuperer(cle, default_value) { //cle = nom du stockage, default_value 
 // LISTES --------------------------------------------------------------------------------------------------------------------------------------------------------------------
 let tab_etu = recuperer('tab_etu', []); //Contient les liste étudiant(e)s
 let tab_salles = recuperer('tab_salles', []); //Contient les salles et leurs places
-let tab_matiere = recuperer('tab_matiere', ["", "Chimie", "Physique"]); //Contient les matières
+let tab_matiere = recuperer('tab_matiere', []); //Contient les matières
 let tab_placer = recuperer('tab_placement', []); //Contient l'historique des placements
-let tab_filtres_prc = recuperer('tab_filtres_prc', {}); //Contient la liste des filtres des parcours
+let tab_filtres_spe = recuperer('tab_filtres_spe', {}); //Contient la liste des filtres des spécialités
 
 //Variable du menu gauche
 
@@ -44,30 +44,30 @@ const tableau_etu = document.querySelector(".exam-table tbody");
 const CONFIG_SECTION = {
     "etu": { 
         titres: { ajouter: "Ajouter un étudiant", modifier: "Modifier l'étudiant" },
-        affichage: { recherche: true, bouton_ajout: true, ligne_simple: false, supp_total: false },
-        section_retour: ".etu_sec"
+        affichage: { recherche: true, bouton_ajout: true, ligne_simple: false },
+        section_retour: ".sous_sec"
     },
     "salle": { 
         titres: { ajouter: "Ajouter une place", modifier: "Modifier la place" },
-        affichage: { recherche: false, bouton_ajout: true, ligne_simple: false, supp_total: false },
-        section_retour: ".salle_sec"
+        affichage: { recherche: false, bouton_ajout: true, ligne_simple: false },
+        section_retour: ".sous_sec"
     },
     "matiere": { 
         titres: { ajouter: "Ajouter une matière", modifier: "Modifier la matière" },
-        affichage: { recherche: false, bouton_ajout: true, ligne_simple: true, supp_total: false },
+        affichage: { recherche: false, bouton_ajout: true, ligne_simple: true, supp_histo: false },
         section_retour: ".sous_sec"
     },
     "historique": { 
-        titres: { ajouter: "", modifier: "Renommer le placement" },
-        affichage: { recherche: false, bouton_ajout: false, ligne_simple: true, supp_total: true },
+        titres: { ajouter: "", modifier: "Modifier le placement" },
+        affichage: { recherche: false, bouton_ajout: false, ligne_simple: true, supp_histo: true },
         section_retour: ".sous_sec"
     },
     "nom_liste_etu": {
-        titres: { modifier: "Renommer la liste d'étudiants", supp_total: false },
+        titres: { modifier: "Modifier la liste d'étudiants", supp_histo: false },
         section_retour: ".etu_sec"
     },
     "nom_liste_salle": {
-        titres: { modifier: "Renommer la salle", supp_total: false },
+        titres: { modifier: "Modifier la salle", supp_histo: false },
         section_retour: ".salle_sec"
     }
 };
@@ -82,6 +82,7 @@ const sec_first = document.querySelector(".first_sec"); // La barre du haut (ave
 const conteneur_search_bar = document.querySelector(".search_bar"); 
 const search_input_etu = document.querySelector(".search_bar input");
 const btn_ajouter = document.querySelector(".btn_ajouter"); 
+const btn_supp_histo = document.querySelector(".btn_supp_historique");
 
 // --- ELEMENTS DU MENU D'EDITION ---
 const form_edition = document.querySelector(".form_edition");

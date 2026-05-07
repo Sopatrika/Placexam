@@ -41,8 +41,8 @@ function verifier_capacite() {
 
     let listeEtuObj = getListeEtu(nom_etu); //On recherche la liste étudiante séléctionné
     // if (!listeEtuObj) return;
-    const parcours_actifs = Array.from(document.querySelectorAll(".check-parcours:checked")).map(cb => cb.value); //Liste des parcours séléctionnés
-    let etudiants_a_placer = listeEtuObj.donnees.filter(etu => parcours_actifs.includes(etu.parcours)); //On place les étudiants dont leurs parcours a été coché
+    const specialites_actives = Array.from(document.querySelectorAll(".check-specialite:checked")).map(cb => cb.value); //Liste des spécialités séléctionnés
+    let etudiants_a_placer = listeEtuObj.donnees.filter(etu => specialites_actives.includes(etu.specialite)); //On place les étudiants dont leurs parcours a été coché
     let nb_etu = etudiants_a_placer.length; //Nombre d'étudiant
 
     let capa_totale = 0;
@@ -175,9 +175,9 @@ function placement_aleatoire() {
     let listeEtuObj = getListeEtu(nom_liste_etu);
     // if (!listeEtuObj) return;
 
-    const parcours_actifs = Array.from(document.querySelectorAll(".check-parcours:checked")).map(cb => cb.value); //Les parcours qui ont été séléctonné
+    const specialites_actives = Array.from(document.querySelectorAll(".check-specialite:checked")).map(cb => cb.value); //Les parcours qui ont été séléctonné
     let etudiants_a_placer = listeEtuObj.donnees
-    .filter(etu => parcours_actifs.includes(etu.parcours))
+    .filter(etu => specialites_actives.includes(etu.specialite))
     .map(etu => ({ ...etu }));
 
     let places_dispos = [];
@@ -302,7 +302,7 @@ function placement_aleatoire() {
     const donnees_sauvegarde = etudiants_finaux.map(etu => ({
         nom: etu.nom,
         prenom: etu.prenom,
-        parcours: etu.parcours,
+        specialite: etu.specialite,
         tiers_temps: etu.tiers_temps,
         salle_attribuee: etu.salle_attribuee || "Non placé",
         place_attribuee: etu.place_attribuee || "-",
@@ -318,10 +318,23 @@ function placement_aleatoire() {
     
     sauvegarder('tab_placement', tab_placer);
 
-    msg_capacite.textContent = "Placement effectué avec succès !";
+    let detail_placement_array = [];
+    salles_choisies.forEach(nom_salle => {
+        let nb_places_salle = etudiants_finaux.filter(etu => etu.salle_attribuee === nom_salle).length;
+        if (nb_places_salle > 0) {
+            detail_placement_array.push(`&bull; <b>${nom_salle}</b> : ${nb_places_salle} étudiant(s) pla`);
+        }
+    });
+
+    let detail_texte_placement = detail_placement_array.join("<br>");
+
+    // 2. On affiche le message de succès détaillé avec du HTML (innerHTML)
+    msg_capacite.innerHTML = `${detail_texte_placement}`;
+    
     msg_capacite.classList.remove("texte_rouge");
     msg_capacite.classList.add("texte_vert"); 
     icon_attention.classList.add("svg_attention_invisible");
+    boite_capacite.classList.add("message_visible");
     
     boite_capacite.classList.add("message_visible");
 }
