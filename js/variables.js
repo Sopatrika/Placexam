@@ -44,31 +44,40 @@ const tableau_etu = document.querySelector(".exam-table tbody");
 const CONFIG_SECTION = {
     "etu": { 
         titres: { ajouter: "Ajouter un étudiant", modifier: "Modifier l'étudiant" },
-        affichage: { recherche: true, bouton_ajout: true, ligne_simple: false },
-        section_retour: ".sous_sec"
+        affichage: { recherche: true, bouton_ajout: true, ligne_simple: false, supp_histo: false },
+        section_retour: ".sous_sec",
+        get_donnees: (nom) => getListeEtu(nom).donnees,
+        champs: [
+            { id: "nom", label: "Nom", type: "text" },
+            { id: "prenom", label: "Prénom", type: "text" },
+            { id: "specialite", label: "Spécialité", type: "text" }
+        ]
     },
     "salle": { 
-        titres: { ajouter: "Ajouter une place", modifier: "Modifier la place" },
-        affichage: { recherche: false, bouton_ajout: true, ligne_simple: false },
-        section_retour: ".sous_sec"
+        titres: { ajouter: "", modifier: "Modifier la salle" },
+        affichage: { recherche: false, bouton_ajout: false, ligne_simple: false, supp_histo: false },
+        section_retour: ".sous_sec",
+        get_donnees: () => tab_salles,
+        champs: [
+            { id: "nom_salle", label: "Nom Salle", type: "text" },
+            { id: "capacite_max", label: "Capacité max", type: "number" },
+            { id: "nbr_rangees", label: "Nombre de rangées", type: "number" },
+            { id: "sieges_espaces", label: "Sièges espacés", type: "number" }
+        ]
     },
     "matiere": { 
         titres: { ajouter: "Ajouter une matière", modifier: "Modifier la matière" },
         affichage: { recherche: false, bouton_ajout: true, ligne_simple: true, supp_histo: false },
-        section_retour: ".sous_sec"
+        section_retour: ".sous_sec",
+        get_donnees: () => tab_matiere,
+        champs: [ { id: "nom", label: "Nom de la matière", type: "text" } ]
     },
     "historique": { 
-        titres: { ajouter: "", modifier: "Modifier le placement" },
+        titres: { ajouter: "", modifier: "Modifier l'historique" },
         affichage: { recherche: false, bouton_ajout: false, ligne_simple: true, supp_histo: true },
-        section_retour: ".sous_sec"
-    },
-    "nom_liste_etu": {
-        titres: { modifier: "Modifier la liste d'étudiants", supp_histo: false },
-        section_retour: ".etu_sec"
-    },
-    "nom_liste_salle": {
-        titres: { modifier: "Modifier la salle", supp_histo: false },
-        section_retour: ".salle_sec"
+        section_retour: ".sous_sec",
+        get_donnees: () => tab_placer,
+        champs: [ { id: "titre", label: "Titre du placement", type: "text" } ]
     }
 };
 

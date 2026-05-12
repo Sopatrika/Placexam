@@ -37,12 +37,12 @@ importFields.forEach(field => {
     btnSubmit.addEventListener('click', () => {
         const file = fileInput.files[0];
         
-        if (!file) { 
-            fileNameDisplay.textContent = "Veuillez mettre un fichier Excel"; 
+        if (!file) { //Si il n'y a pas de fichier importé
+            fileNameDisplay.textContent = "Veuillez mettre un fichier Excel";
             return; 
         }
 
-        if (!allowedExtensions.exec(file.name)) {
+        if (!allowedExtensions.exec(file.name)) { //Si le format est invalide, on met un message d'erreur
             fileNameDisplay.textContent = "Format invalide (.xlsx, .xls, .csv, .json uniquement)"; //Message pour montrer les formats autorisés
             fileInput.value = '';
             return;
@@ -95,6 +95,7 @@ const menuImport = document.querySelector('.menu_import_etu');
 const menu_erreur = document.querySelector(".menu_erreur");
 const verif_etu = document.querySelector("#verif_etu");
 const verif_salle = document.querySelector("#verif_salle");
+
 
 // FONCTION POUR GERER LE MENU MAPPING ET SAUVEGARDER LES LISTES ETUDIANTS --------------------------------------------------------------------------------------------
 // Cette fonction permet de choisir quel colonnes correspond à quel noms (NOM, PRENOM, SPECIALITE) pour éviter des erreurs

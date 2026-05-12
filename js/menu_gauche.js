@@ -25,11 +25,13 @@ btn_sec_menu.forEach(btn => {
         btn_sec_menu.forEach(e => e.classList.remove("btn_open"));
         btn.classList.add("btn_open");
 
-        const nom_onglet = btn.textContent.trim(); //recupère le nom du menu qu'on a cliqué en supprimant les espaces avec trim();
+        const nom_onglet = btn.textContent.trim(); 
+        const type_onglet = btn.dataset.type;
 
-        if (nom_onglet === "Matières" || nom_onglet === "Historique des placements") {
-            ouvrir_details_liste(nom_onglet); // Appelle la super-fonction
-            return; // On arrête là !
+        // Si on clique sur la liste de étudiants
+        if (type_onglet === "matiere" || type_onglet === "historique" || type_onglet === "salle") {
+            ouvrir_details_liste(nom_onglet, type_onglet);
+            return;
         }
 
         // Comportement classique pour Etudiants et Salles
@@ -45,9 +47,10 @@ btn_sec_menu.forEach(btn => {
 
 //FONCTION POUR CREER LES BLOCS DANS LE MENU --------------------------------------------------------------------------------------------------------------------------------
 
-function bloc_listes(liste) {
+function bloc_listes(liste, type) {
     let bloc_el = document.createElement("li");
     bloc_el.dataset.name = liste;
+    bloc_el.dataset.type = type;
 
     bloc_el.innerHTML = `
         <div class="nom_element">
@@ -76,22 +79,14 @@ function bloc_listes(liste) {
 
 // FONCTION POUR AFFICHER LES LISTES DANS LE MENUS ----------------------------------------------------------------------------------------------------------------------
 function afficher_listes() {
-    // 1. On vide l'affichage actuel via les variables globales
     if (conteneur_etu_ul) conteneur_etu_ul.innerHTML = "";
     if (conteneur_salle_ul) conteneur_salle_ul.innerHTML = "";
 
-    // 2. On injecte les étudiants
+    // Pour les étudiants, on ne change rien
     tab_etu.forEach(liste => {
         const nom = liste.nom_fichier || "Liste sans nom";
-        const li = bloc_listes(nom);
+        const li = bloc_listes(nom, "etu"); 
         if (conteneur_etu_ul) conteneur_etu_ul.appendChild(li);
-    });
-
-    // 3. On injecte les salles
-    tab_salles.forEach(liste => {
-        const nom = liste.nom_salle || "Salle sans nom";
-        const li = bloc_listes(nom);
-        if (conteneur_salle_ul) conteneur_salle_ul.appendChild(li);
     });
 }
 
@@ -116,8 +111,9 @@ document.addEventListener("click", (e) => {
     // OUVRIR UNE SOUS-LISTE
     if (e.target.classList.contains("nom_texte")) {
         const li = e.target.closest("li");
+        const type_liste = li.dataset.type;
         section_precedente = e.target.closest("section"); 
-        ouvrir_details_liste(li.dataset.name);
+        ouvrir_details_liste(li.dataset.name, type_liste);
     }
     
     // CLIC SUR BOUTON RETOUR
@@ -159,7 +155,15 @@ document.addEventListener("click", (e) => {
     // CLIC POUR ANNULER l'EDITION
     else if (e.target.id === "edition_annul") {
         edition_erreur.textContent = "";
-        const selecteur_retour = CONFIG_SECTION[type_edition].section_retour;
+        let selecteur_retour = ".sous_sec";
+        
+        // Sécurité : Si on annulait la modification du nom d'une liste, on retourne au menu général
+        if (mode_edition === "modifier_liste") {
+            selecteur_retour = ".etu_sec";
+        } else if (CONFIG_SECTION[type_edition]) {
+            selecteur_retour = CONFIG_SECTION[type_edition].section_retour;
+        }
+        
         fermer_formulaire(document.querySelector(selecteur_retour));
     }
 });
@@ -167,47 +171,29 @@ document.addEventListener("click", (e) => {
 
 
 // AFFICHER LES DÉTAILS D'UNE LISTE DANS LE MENU -------------------------------------------------------------------------------------------------------------------------------
-function ouvrir_details_liste(nom_cible) {
-    let typeListe = "";
-    let elementsArray = [];
+function ouvrir_details_liste(nom_cible, typeListe) {
 
-    if (nom_cible === "Matières") {
-        typeListe = "matiere";
-        elementsArray = tab_matiere;
-    } else if (nom_cible === "Historique des placements") {
-        typeListe = "historique";
-        elementsArray = tab_placer;
-    } else {
-        let liste_select = getListeEtu(nom_cible);
-        if (liste_select) {
-            typeListe = "etu";
-            elementsArray = liste_select.donnees;
-        } else {
-            liste_select = getListeSalle(nom_cible);
-            if (liste_select) {
-                typeListe = "salle";
-                elementsArray = liste_select.places;
-            }
-        }
-    }
-
+    let elementsArray = CONFIG_SECTION[typeListe].get_donnees(nom_cible); //demande à CONFIG_SECTION de donner le bon tableau
     if (!elementsArray) return;
 
     const regles = CONFIG_SECTION[typeListe]; // Récupère les règles
 
-    sec_first.style.display = (typeListe === "etu" || typeListe === "salle") ? "flex" : "none";
+    sec_first.style.display = (typeListe === "etu") ? "flex" : "none";
     
     //Si c'est une liste d'étudiante, la barre de recherche sera affiché
     conteneur_search_bar.style.display = regles.affichage.recherche ? "flex" : "none";
     if (regles.affichage.recherche && search_input_etu) search_input_etu.value = "";
 
+    //Si c'est l'historique des placements, on ajoute le bouton supprimer l'historique
     btn_supp_histo.style.display = regles.affichage.supp_histo ? "flex" : "none";
     if (tab_placer.length < 1) btn_supp_histo.style.display = "none";
-         
+        
+    //si ce n'est pas l'historique des placements, on ajoute le bouton ajouter
     btn_ajouter.dataset.source = nom_cible;
     btn_ajouter.style.display = regles.affichage.bouton_ajout ? "flex" : "none";
     
     label_nom_liste.textContent = nom_cible;
+    label_nom_liste.dataset.type = typeListe;
          
     conteneur_liste_elements.innerHTML = "";
 
@@ -220,31 +206,27 @@ function ouvrir_details_liste(nom_cible) {
             li_val += `<li>${item}</li>`;
         } else if (typeListe === "historique") {
             li_val += `<li>${item.titre || "Placement n°" + (index+1)}</li>`;
+        } else if (typeListe === "salle") {
+            li_val += `<li><b>${item.nom_salle}</b></li>`;
+            li_val += `<li>Capacité max : <b>${item.capacite_max}</b> places</li>`;
+            li_val += `<li>Nombre de rangées : <b>${item.nbr_rangees}</b></li>`;
+            li_val += `<li>Espaces entre étudiants : <b>${item.sieges_espaces}</b> siège(s)</li>`;
         } else {
+            // Affichage pour les Étudiants
             Object.keys(item).forEach(key => {
-                if (key !== "tiers_temps" && key !== "indisponible") {
+                // 🧹 On a supprimé la mention à "indisponible"
+                if (key !== "tiers_temps") {
                     li_val += `<li>${item[key]}</li>`;
                 }
             });
-            if (typeListe === "etu") {
-                const estCoche = item.tiers_temps ? "checked" : "";
-                li_val += `<li>
-                    <label class="badge-checkbox" style="--checkcolor: none">
-                        <input type="checkbox" class="check_tier" ${estCoche}>
-                        <span class="badge-text">Tiers-temps</span>
-                        <span class="custom-checkbox"></span>
-                    </label>
-                </li>`;
-            } else {
-                const estCoche = item.indisponible ? "checked" : "";
-                li_val += `<li>
-                    <label class="badge-checkbox" style="--checkcolor: none">
-                        <input type="checkbox" class="check_indispo" ${estCoche}>
-                        <span class="badge-text">Indisponibilité</span>
-                        <span class="custom-checkbox"></span>
-                    </label>
-                </li>`;
-            }
+            const estCoche = item.tiers_temps ? "checked" : "";
+            li_val += `<li>
+                <label class="badge-checkbox" style="--checkcolor: none">
+                    <input type="checkbox" class="check_tier" ${estCoche}>
+                    <span class="badge-text">Tiers-temps</span>
+                    <span class="custom-checkbox"></span>
+                </label>
+            </li>`;
         }
 
         li_val += `<li>
@@ -279,9 +261,6 @@ function supprimer(poubelle) {
         if (element) {
             tab_etu.splice(numero_list, 1);
             sauvegarder('tab_etu', tab_etu);
-        } else {
-            tab_salles.splice(numero_list, 1);
-            sauvegarder('tab_salles', tab_salles);
         }
 
         afficher_listes();
@@ -304,20 +283,19 @@ function supprimer(poubelle) {
         } else if (list_el === "Historique des placements") {
             tab_placer.splice(element_supp, 1);
             sauvegarder('tab_placement', tab_placer);
+        } else if (list_el === "Salles") { 
+            tab_salles.splice(element_supp, 1);
+            sauvegarder('tab_salles', tab_salles);
         } else {
             let listeEtu = getListeEtu(list_el);
-            let listeSalle = getListeSalle(list_el);
-
             if (listeEtu) {
                 listeEtu.donnees.splice(element_supp, 1);
                 sauvegarder('tab_etu', tab_etu);
-            } else if (listeSalle) {
-                listeSalle.places.splice(element_supp, 1);
-                sauvegarder('tab_salles', tab_salles);
             }
         }
 
-        ouvrir_details_liste(list_el);
+        const type_el = document.querySelector(".nom_liste").dataset.type; // On récupère le type sauvegardé
+        ouvrir_details_liste(list_el, type_el);
         remplir_select();
         generer_filtres();
         verifier_capacite();
@@ -328,58 +306,51 @@ function supprimer(poubelle) {
 
 // FONCTION POUR AJOUTER/MODIFIER UNE LISTE/ELEMENT --------------------------------------------------------------------------------------------------------------------------
 function edition_formulaire() {
-    let val_nom = "", val_prenom = "", val_specialite = "";
-    const nom_liste = label_nom_liste.textContent; // Utilise la variable globale
+    const nom_liste = label_nom_liste.textContent; 
     
-    // A. Identifier le type exact qu'on édite
-    if (mode_edition !== "modifier_liste") {
-        if (nom_liste === "Matières") type_edition = "matiere";
-        else if (nom_liste === "Historique des placements") type_edition = "historique";
-        else if (getListeEtu(nom_liste)) type_edition = "etu";
-        else if (getListeSalle(nom_liste)) type_edition = "salle";
-    }
+    if (mode_edition !== "modifier_liste") type_edition = label_nom_liste.dataset.type; 
 
-    const mode_titre = (mode_edition === "modifier_liste") ? "modifier" : mode_edition;
-    titre_edition_sec.textContent = CONFIG_SECTION[type_edition].titres[mode_titre];
+    titre_edition_sec.textContent = (mode_edition === "modifier_liste") ? 
+        "Renommer la liste" : CONFIG_SECTION[type_edition].titres[mode_edition];
 
-    // B. Récupération des valeurs existantes si on modifie
-    if (mode_edition === "modifier" || mode_edition === "modifier_liste") {
+    // 1. On récupère l'objet qu'on est en train d'éditer
+    let objet_a_editer = {}; 
+    if (mode_edition === "modifier") {
         switch (type_edition) {
-            case "nom_liste_etu":
-            case "nom_liste_salle":
-                val_nom = ancien_nom_liste;
-                break;
-            case "matiere":
-                val_nom = tab_matiere[index_edition];
-                break;
-            case "historique":
-                val_nom = tab_placer[index_edition].titre;
-                break;
             case "etu":
-                const etu = getListeEtu(nom_liste).donnees[index_edition];
-                val_nom = etu.nom; val_prenom = etu.prenom; val_specialite = etu.specialite;
+                objet_a_editer = getListeEtu(nom_liste).donnees[index_edition];
                 break;
             case "salle":
-                const places = getListeSalle(nom_liste).places;
-                const cle = Object.keys(places[index_edition]).find(k => k !== "indisponible");
-                val_nom = places[index_edition][cle];
+                objet_a_editer = tab_salles[index_edition];
+                break;
+            case "matiere":
+                objet_a_editer = { nom: tab_matiere[index_edition] };
+                break;
+            case "historique":
+                objet_a_editer = { titre: tab_placer[index_edition].titre };
                 break;
         }
     }
 
-    // C. Injection du HTML
+    // Générer la liste des inputs en fonction des valeurs dans CONFIG_SECTION
     let html_formulaire = "";
-    const texte_label_nom = (mode_edition === "modifier_liste") ? "Nouveau nom" : "Nom";
-    html_formulaire += generer_champ_input(texte_label_nom, "input_nom", val_nom);
-
-    if (type_edition === "etu") {
-        html_formulaire += generer_champ_input("Prénom", "input_prenom", val_prenom);
-        html_formulaire += generer_champ_input("Spécialité", "input_specialite", val_specialite);
-    }
     
+    if (mode_edition === "modifier_liste") {
+        html_formulaire += generer_champ_input("Nouveau nom", "input_nom_liste", ancien_nom_liste, "text");
+    } else {
+        const champs_config = CONFIG_SECTION[type_edition].champs;
+        
+        champs_config.forEach(champ => {
+            // On récupère l'ancienne valeur si on modifie, sinon on met vide
+            let valeur = (mode_edition === "modifier" && objet_a_editer[champ.id] !== undefined) 
+                         ? objet_a_editer[champ.id] : "";
+                         
+            html_formulaire += generer_champ_input(champ.label, `input_${champ.id}`, valeur, champ.type);
+        });
+    }
+
     form_edition.innerHTML = html_formulaire;
 
-    // D. Affichage propre
     document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => s.classList.remove("sec_open"));
     edition_sec.classList.add("sec_open");
 }
@@ -388,60 +359,68 @@ function edition_formulaire() {
 //FONCTION POUR VALIDER UN AJOUT/MODIFICATION D'UNE LISTE/ELEMENT --------------------------------------------------------------------------------------------------------
 
 edition_valid.addEventListener("click", () => {
-    const input_nom = document.getElementById("input_nom")?.value.trim();
-    const input_prenom = document.getElementById("input_prenom")?.value.trim();
-    const input_specialite = document.getElementById("input_specialite")?.value.trim();
-
     edition_erreur.textContent = ""; // On nettoie les anciennes erreurs
-    // Validation spécifique pour les étudiants (3 champs)
-    if (type_edition === "etu") {
-        if (!input_nom || !input_prenom || !input_specialite) {
-            edition_erreur.textContent = "Veuillez remplir tous les champs.";
+    
+    let nouvel_objet = {};
+    let nouveau_nom_liste = "";
+
+    // A. Si on modifie une liste entière (le nom du fichier)
+    if (mode_edition === "modifier_liste") {
+        nouveau_nom_liste = document.getElementById("input_nom_liste")?.value.trim();
+        if (!nouveau_nom_liste) {
+            edition_erreur.textContent = "Le nom ne peut pas être vide.";
             return;
         }
     } 
-    // Validation pour tout le reste (Listes, Salles, Matières, Historique : 1 seul champ)
+    // Si on modifie un élément avec le formulaire (salle, étudiant, matière...)
     else {
-        if (!input_nom) {
-            edition_erreur.textContent = "Veuillez remplir tous les champs.";
-            return;
-        }
+        const champs_config = CONFIG_SECTION[type_edition].champs;
+        champs_config.forEach(champ => {
+            let input_element = document.getElementById(`input_${champ.id}`);
+            if (input_element) {
+                let valeur = input_element.value.trim();
+                // Sécurité : on convertit en chiffre si le champ est un 'number'
+                if (champ.type === "number") valeur = parseInt(valeur) || 0; 
+                nouvel_objet[champ.id] = valeur;
+            }
+        });
     }
 
     const nom_liste = document.querySelector(".nom_liste").textContent;
 
+    // Sauvegarde en fonction du type
     switch (type_edition) {
         case "nom_liste_etu":
-            tab_etu[index_edition].nom_fichier = input_nom;
+            tab_etu[index_edition].nom_fichier = nouveau_nom_liste;
             sauvegarder("tab_etu", tab_etu);
             rafraichir_menu_principal(".etu_sec");
             break;
 
-        case "nom_liste_salle":
-            tab_salles[index_edition].nom_salle = input_nom;
-            sauvegarder("tab_salles", tab_salles);
-            rafraichir_menu_principal(".salle_sec");
-            break;
-
         case "matiere":
-            if (mode_edition === "ajouter") tab_matiere.push(input_nom);
-            else tab_matiere[index_edition] = input_nom;
+            if (mode_edition === "ajouter") tab_matiere.push(nouvel_objet.nom);
+            else tab_matiere[index_edition] = nouvel_objet.nom;
             sauvegarder("tab_matiere", tab_matiere);
             fermer_et_recharger(nom_liste);
             break;
 
         case "historique":
-            tab_placer[index_edition].titre = input_nom;
+            tab_placer[index_edition].titre = nouvel_objet.titre;
             sauvegarder("tab_placement", tab_placer);
             fermer_et_recharger(nom_liste);
             break;
 
         case "etu":
             let listeEtu = getListeEtu(nom_liste);
-            let etu_data = { nom: input_nom, prenom: input_prenom, specialite: input_specialite, tiers_temps: false };
+            let etu_data = { 
+                nom: nouvel_objet.nom, 
+                prenom: nouvel_objet.prenom, 
+                specialite: nouvel_objet.specialite, 
+                tiers_temps: false 
+            };
             
-            if (mode_edition === "ajouter") listeEtu.donnees.push(etu_data);
-            else {
+            if (mode_edition === "ajouter") {
+                listeEtu.donnees.push(etu_data);
+            } else {
                 etu_data.tiers_temps = listeEtu.donnees[index_edition].tiers_temps;
                 listeEtu.donnees[index_edition] = etu_data;
             }
@@ -451,26 +430,24 @@ edition_valid.addEventListener("click", () => {
             break;
 
         case "salle":
-            let listeSalle = getListeSalle(nom_liste);
-            let cle = (listeSalle.places.length > 0) ? Object.keys(listeSalle.places[0]).find(k => k !== "indisponible") : "Place";
-            let place_data = { [cle]: input_nom, indisponible: false };
-
-            if (mode_edition === "ajouter") listeSalle.places.push(place_data);
-            else {
-                place_data.indisponible = listeSalle.places[index_edition].indisponible;
-                listeSalle.places[index_edition] = place_data;
+            if (mode_edition === "modifier") {
+                nouvel_objet.places_banni = tab_salles[index_edition].places_banni || null; // récupère les places bloquées
+                tab_salles[index_edition] = nouvel_objet; //On remplace les anciennes données par les nouvelles
+                
+                sauvegarder("tab_salles", tab_salles);
+                if (typeof verifier_capacite === "function") verifier_capacite();
+                fermer_et_recharger("Salles"); // On recharge l'onglet Salles
             }
-            listeSalle.capacite_max = listeSalle.places.filter(place => place.indisponible !== true).length;
-            sauvegarder("tab_salles", tab_salles);
-            if (typeof verifier_capacite === "function") verifier_capacite();
-            fermer_et_recharger(nom_liste);
             break;
     }
 });
 
 //Fonction pour générer un champ texte de formulaire
-function generer_champ_input(label, id, valeur) {
-    return `<label class="champ_edition"><span class="label_texte">${label}</span><input type="text" id="${id}" class="input_ligne" value="${valeur}"></label>`;
+function generer_champ_input(label, id, valeur = "", type = "text") {
+    return `<label class="champ_edition">
+                <span class="label_texte">${label}</span>
+                <input type="${type}" id="${id}" class="input_ligne" value="${valeur}">
+            </label>`;
 }
 
 
@@ -481,7 +458,8 @@ function fermer_formulaire(section_a_rouvrir) {
 }
 
 function fermer_et_recharger(nom_liste) {
-    ouvrir_details_liste(nom_liste);
+    const type_el = document.querySelector(".nom_liste").dataset.type; // On récupère le type
+    ouvrir_details_liste(nom_liste, type_el);
     fermer_formulaire(document.querySelector(".sous_sec"));
 }
 
@@ -532,9 +510,6 @@ document.addEventListener("change", (e) => {
             
             if (select_etu.value === nom_liste) afficher_tableau();
 
-        } else if (listeSalle && e.target.classList.contains("check_indispo")) {
-            listeSalle.places[index].indisponible = e.target.checked;
-            sauvegarder('tab_salles', tab_salles);
         }
     }
 });
@@ -543,10 +518,11 @@ document.addEventListener("change", (e) => {
 //FONCTION POUR SUPPRIMER TOUTE L'HISTORIQUE DES PLACEMENT ----------------------------------------------------------------------------------------------------------------
 
 btn_supp_histo.addEventListener("click", supp_histo_placement)
+
 function supp_histo_placement() {
-    if (!confirm("Voulez-vous vraiment supprimer toute l'historique des placement ?")) return;
+    if (!confirm("Voulez-vous vraiment supprimer tout l'historique des placements ?")) return;
 
     tab_placer = [];
-    localStorage.removeItem("tab_placement");
-    ouvrir_details_liste("Historique des placements");
+    sauvegarder("tab_placement", tab_placer);
+    ouvrir_details_liste("Historique des placements", "historique");
 }

@@ -48,7 +48,7 @@ function remplir_select() {
 }
 
 // FONCTION POUR GERER LES FILTRES DE PARCOURS DYNAMIQUE ------------------------------------------------------------------------------------------------------------------
-// Les filtres parcours sont générés dynamiquement par rapport 
+// Les filtres parcours sont générés dynamiquement par rapport à la liste étudiant choisis
 const filtres_color = ['#3B82F6', '#EF4444', '#1ac58c', '#F59E0B', '#8B5CF6', '#06B6D4']; //Couleurs des filtres
 select_etu.addEventListener("change", generer_filtres);
 
@@ -61,10 +61,10 @@ function generer_filtres() {
         return;
     }
 
-    const list_specialite = [...new Set(liste_select.donnees.map(etu => etu.specialite))];
+    const list_specialite = [...new Set(liste_select.donnees.map(etu => etu.specialite))]; //Tableau qui inclut les parcours en retirant les doublons
     const nom_liste_actuelle = select_etu.value; 
 
-    if (!tab_filtres_spe[nom_liste_actuelle]) {
+    if (!tab_filtres_spe[nom_liste_actuelle]) { //Si les filtres de la liste choisi n'existe pas
         tab_filtres_spe[nom_liste_actuelle] = {};
     }
 
@@ -88,6 +88,7 @@ function generer_filtres() {
     afficher_tableau();
 }
 
+//Fonction pour supprimer les filtres de listes qui n'existent plus
 function nettoyer_filtres() {
     const noms_listes_existantes = tab_etu.map(liste => liste.nom_fichier);
     for (let nom_liste_sauvegardee in tab_filtres_spe) {

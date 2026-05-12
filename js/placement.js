@@ -46,10 +46,20 @@ function verifier_capacite() {
     let nb_etu = etudiants_a_placer.length; //Nombre d'étudiant
 
     let capa_totale = 0;
-    //On cherche la salle séléctionné et en stocke uniquement les places disponibles
+    
     salles_choisies.forEach(nom => {
         let salleObj = getListeSalle(nom);
-        if (salleObj) capa_totale += salleObj.places.filter(p => !p.indisponible).length; 
+        if (salleObj) {
+            // récupère l'espacement (0 par défaut)
+            let espaces = parseInt(salleObj.sieges_espaces) || 0;
+            let pas = espaces + 1; // Si espace = 2, on fait des bonds de 3
+            
+            // On calcule  les places utilisables
+            let places_utilisables = Math.ceil(salleObj.capacite_max / pas); //ceil arrondi vers le haut et retourne le plus petit entier supérieur ou égal à un nombre donné
+            capa_totale += places_utilisables; 
+            
+            // capa_totale += places_utilisables - places_bloquees)
+        }
     });
 
     //Si le nombre d'étudiants est supérieur au nombre de place disponible d'une salle
@@ -138,7 +148,6 @@ function dessiner_badges_salles() {
     }
 }
 
-//lorsqu'on sélectionne une liste étudiante ou des salles, ça appel la fonction verifier_capacite()
 select_etu.addEventListener("change", () => { 
     salles_choisies = []; verifier_capacite(); 
 });
@@ -175,6 +184,7 @@ function placement_aleatoire() {
     let listeEtuObj = getListeEtu(nom_liste_etu);
     // if (!listeEtuObj) return;
 
+    //cherche les specialités qui sont cochés dans les filtres
     const specialites_actives = Array.from(document.querySelectorAll(".check-specialite:checked")).map(cb => cb.value); //Les parcours qui ont été séléctonné
     let etudiants_a_placer = listeEtuObj.donnees
     .filter(etu => specialites_actives.includes(etu.specialite))
@@ -183,20 +193,18 @@ function placement_aleatoire() {
     let places_dispos = [];
     if(salles_choisies.length === 0) salles_choisies = [nom_liste_salle];
 
+    //  génère les numéros de places
     salles_choisies.forEach(nom_salle => {
         let salleObj = getListeSalle(nom_salle);
-        if (salleObj && salleObj.places.length > 0) {
-            
-            let cle_locale = Object.keys(salleObj.places[0]).find(k => k !== "indisponible");
-            
-            let places = salleObj.places
-                .filter(p => !p.indisponible)
-                .map(p => ({ 
+        if (salleObj) {
+            // crée des places de 1 jusqu'à la capacité max
+            for (let i = 1; i <= salleObj.capacite_max; i++) {
+                // (Plus tard : on ajoutera un IF ici pour vérifier que 'i' n'est pas dans salleObj.places_banni)
+                places_dispos.push({
                     nom_salle_origine: nom_salle, 
-                    nom_de_la_place: p[cle_locale] 
-                }));
-            
-            places_dispos = places_dispos.concat(places);
+                    nom_de_la_place: i
+                });
+            }
         }
     });
     let etudiants_tiers = [];
@@ -319,10 +327,10 @@ function placement_aleatoire() {
     sauvegarder('tab_placement', tab_placer);
 
     let detail_placement_array = [];
-    salles_choisies.forEach(nom_salle => {
+    salles_choisies.forEach(nom_salle => { //affiche le nombre d'étudiants par salles.
         let nb_places_salle = etudiants_finaux.filter(etu => etu.salle_attribuee === nom_salle).length;
         if (nb_places_salle > 0) {
-            detail_placement_array.push(`&bull; <b>${nom_salle}</b> : ${nb_places_salle} étudiant(s) pla`);
+            detail_placement_array.push(`&bull; <b>${nom_salle}</b> : ${nb_places_salle} étudiant(s) placés`);
         }
     });
 
