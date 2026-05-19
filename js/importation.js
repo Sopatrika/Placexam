@@ -90,8 +90,8 @@ function conversionExcel(file, inputId) {
 const selectNom = document.getElementById('select_nom');
 const selectPrenom = document.getElementById('select_prenom');
 const selectSpecialite = document.getElementById('select_specialite');
-const fondSombre = document.querySelector('.fond_sombre');
-const menuImport = document.querySelector('.menu_import_etu');
+const fond_sombre = document.querySelector('.fond_sombre');
+const menu_import = document.querySelector('.menu_import_etu');
 const menu_erreur = document.querySelector(".menu_erreur");
 const verif_etu = document.querySelector("#verif_etu");
 const verif_salle = document.querySelector("#verif_salle");
@@ -110,15 +110,11 @@ function selection_colonnes(headers, rawData, fileName) {
     selectSpecialite.innerHTML = options_colonnes;
 
     // Affiche le menu
-    fondSombre.classList.remove('menu_import_close');
-    menuImport.classList.remove('menu_import_close');
-
-    document.getElementById('menu_import_annul').onclick = () => {
-        fermer_mapping();
-    };
+    fond_sombre.classList.remove('menu_close');
+    menu_import.classList.remove('menu_close');
 
     // gère la validation
-    document.getElementById('menu_import_valid').onclick = () => {
+    window.action_valider_import = () => {
         // récupère le choix de l'utilisateur
         const colNom = selectNom.value;
         const colPrenom = selectPrenom.value;
@@ -129,7 +125,6 @@ function selection_colonnes(headers, rawData, fileName) {
             menu_erreur.textContent = "Veuillez attribuer une colonne pour chaque champ.";
             return;
         }
-        //Vérifie si les colonnes ne sont pas les mêmes
         if (colNom === colPrenom || colNom === colSpecialite || colPrenom === colSpecialite) {
             menu_erreur.textContent = "Les choix des colonnes doivent être différents.";
             return;
@@ -138,35 +133,28 @@ function selection_colonnes(headers, rawData, fileName) {
         // crée un nouveau tableau JSON propre avec les clés
         const cleanEtudiants = rawData.map(ligne => {
             return {
-                nom: ligne[colNom],
-                prenom: ligne[colPrenom],
-                specialite: ligne[colSpecialite]
+                nom: ligne[colNom], prenom: ligne[colPrenom], specialite: ligne[colSpecialite]
             };
         });
 
         let nom_final = fileName;
         let compteur = 1;
-        // si une autre liste a le meme nom, on ajoute _1, _2...
         while (tab_etu.some(liste => liste.nom_fichier === nom_final)) {
             nom_final = fileName + "_" + compteur;
             compteur++;
         }
 
-        // On ajoute cette nouvelle liste à tab_etu
         tab_etu.push({
             nom_fichier: nom_final,
             date_import: new Date().toLocaleDateString(),
             donnees: cleanEtudiants
         });
 
-        // On sauvegarde dans le localStorage
         sauvegarder('tab_etu', tab_etu);
-
-        verif_etu.textContent = cleanEtudiants.length + " étudiants importés"; //Message pour indiquer le nombre d'utilisateurs ajoutés
-
+        verif_etu.textContent = cleanEtudiants.length + " étudiants importés"; 
         afficher_listes();
         fermer_mapping();
-        remplir_select(); // Met à jour le sélecteur des listes étudiantes
+        remplir_select(); 
     };
 
     remplir_select();
@@ -201,7 +189,7 @@ function sauvegarderSalles(rawData, fileName) {
 
 // FONCTION POUR FERMER LE MENU MAPPING ---------------------------------------------------------------------------------------------------------------------------------------
 function fermer_mapping() {
-    document.querySelector('.fond_sombre').classList.add('menu_import_close');
-    document.querySelector('.menu_import_etu').classList.add('menu_import_close');
+    fond_sombre.classList.add('menu_close');
+    menu_import.classList.add('menu_close');
     menu_erreur.textContent = "";
 }

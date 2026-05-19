@@ -13,8 +13,6 @@ const conteneur_badges = document.querySelector("#liste_salles_cumulees");
 const zone_ajout_salle = document.querySelector(".ajout_salle_sup");
 const select_salle_sup = document.querySelector("#select_salle_sup");
 
-let salles_choisies = []; // Variable pour stocker les salles choisies
-
 // Par défaut, au chargement de la page, le bouton est bloqué
 btn_placement.classList.add("placement_disable");
 btn_placement.addEventListener("click", placement_aleatoire);
@@ -90,6 +88,7 @@ function verifier_capacite() {
         }
     }
     dessiner_badges_salles();
+    btn_plans(salles_choisies);
 }
 
 //FONCTION POUR CREER LES SELECTIONS DE SALLE SUPPLEMENTAIRE
@@ -142,6 +141,8 @@ function dessiner_badges_salles() {
         
         badge.querySelector(".btn_retirer_salle").addEventListener("click", () => { //On ajoute une croix qui permet de retirer une salle supp
             salles_choisies = salles_choisies.filter(salle => salle !== salle_actuel);
+            placement_actuel_donnees = [];
+            afficher_tableau();
             verifier_capacite();
         });
         conteneur_badges.appendChild(badge);
@@ -149,10 +150,12 @@ function dessiner_badges_salles() {
 }
 
 select_etu.addEventListener("change", () => { 
-    salles_choisies = []; verifier_capacite(); 
+    salles_choisies = []; //Vide le placement chargé
+    verifier_capacite();
 });
 select_salle.addEventListener("change", () => {
-     salles_choisies = []; verifier_capacite(); 
+     salles_choisies = []; //Vide le placement chargé
+     verifier_capacite();
 });
 
 select_salle_sup.addEventListener("change", (e) => {
@@ -197,8 +200,9 @@ function placement_aleatoire() {
     salles_choisies.forEach(nom_salle => {
         let salleObj = getListeSalle(nom_salle);
         if (salleObj) {
-            // crée des places de 1 jusqu'à la capacité max
-            for (let i = 1; i <= salleObj.capacite_max; i++) {
+            let espaces = parseInt(salleObj.sieges_espaces) || 0;
+            let pas = espaces + 1;
+            for (let i = 1; i <= salleObj.capacite_max; i += pas) {
                 // (Plus tard : on ajoutera un IF ici pour vérifier que 'i' n'est pas dans salleObj.places_banni)
                 places_dispos.push({
                     nom_salle_origine: nom_salle, 
@@ -317,11 +321,19 @@ function placement_aleatoire() {
         absent: false // Par défaut, personne n'est absent au moment du placement
     }));
 
+    const spe_actives = Array.from(document.querySelectorAll(".check-specialite:checked")).map(cb => cb.value); //On récupère les filtres cochés
+    const tiers_temps_actif = check_tiers_temps ? check_tiers_temps.checked : false; //Si le tier-temps est actif
+
     // ajoute le placement dans tab_placer
     tab_placer.push({
         titre: titre_placement,
         date: date_jour,
-        donnees_placement: donnees_sauvegarde
+        donnees_placement: donnees_sauvegarde,
+        salles_choisies: [...salles_choisies],
+        filtres: {
+            specialites: spe_actives,
+            tiers_temps: tiers_temps_actif
+        }
     });
     
     sauvegarder('tab_placement', tab_placer);
@@ -343,6 +355,7 @@ function placement_aleatoire() {
     msg_capacite.classList.add("texte_vert"); 
     icon_attention.classList.add("svg_attention_invisible");
     boite_capacite.classList.add("message_visible");
-    
-    boite_capacite.classList.add("message_visible");
+
+    colorier_places(donnees_sauvegarde);
+
 }

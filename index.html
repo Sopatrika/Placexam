@@ -17,6 +17,8 @@
             </g>
         </defs>
     </svg>
+    <!-- Fond sombre -->
+    <div class="fond_sombre menu_close"></div>
     <!---------------------------------------------------------------------------------------------------------------------------------------->
     <!-----------------------------------------------------  Entête  ------------------------------------------------------------------------->
     <!---------------------------------------------------------------------------------------------------------------------------------------->
@@ -116,16 +118,23 @@
                 
                 <div class="edition_erreur"></div>
                 
-                <div class="groupe_btn">
-                    <div class="btn_annuler" id="edition_annul">Annuler</div>
-                    <div class="btn_valider" id="edition_valid">Valider</div>
-                </div>
+                <div class="groupe_btn" data-action="edition"></div>
+            </section>
+
+            <!-- Section pour confirmer un chargement d'un placement -->
+
+            <section class="charger_sec">
+                    <div class="titre_edition_sec">Charger une place</div>
+                    
+                    <div class="menu_message">Voulez vous chargez ce placement ?</div>
+                    
+                    <div class="groupe_btn" data-action="charger"></div>
             </section>
 
         </div>
 
         <!-- Bouton pour ouvrir/fermer le menu -->
-        <div class="button_menu_gauche">Mes listes</div>
+        <button class="button_menu_gauche">Mes listes</button>
     </div>
     <!----- Main ----->
     <main>
@@ -165,9 +174,7 @@
         <div class="verif_import" id="verif_etu"></div>
 
     <!--------------------------- Menu mapping ------------------------->
-
-    <div class="fond_sombre menu_import_close"></div>
-    <div class="menu_import_etu menu_import_close">
+    <div class="menu_import_etu menu_close">
         <div class="choix_colonnes">
             <span>Quels colonne correspond au NOM ?</span>
             <select name="" id="select_nom"></select>
@@ -181,10 +188,7 @@
             <select id="select_specialite"></select>
         </div>
         <div class="menu_erreur"></div>
-        <div class="groupe_btn">
-            <div class="btn_annuler" id="menu_import_annul">Annuler</div>
-            <div class="btn_valider" id="menu_import_valid">Valider</div>
-        </div>
+        <div class="groupe_btn" data-action="import"></div>
     </div>
 
     <hr id="import_salle">
@@ -227,23 +231,23 @@
         <div class="form_salle">
             <div class="input_txt">
                 <label for="nom_salle">Nom Salle :</label>
-                <input type="text" id="nom_salle">
+                <input type="text" id="nom_salle" placeholder="">
             </div>
             <div class="input_txt">
                 <label for="nbr_places">Nbr places :</label>
-                <input type="number" id="nbr_places">
+                <input type="number" id="nbr_places" placeholder="">
             </div>
             <div class="input_txt">
                 <label for="nbr_rangees">Nbr rangées :</label>
-                <input type="number" id="nbr_rangees">
+                <input type="number" id="nbr_rangees" placeholder="">
             </div>
             <div class="input_txt">
                 <label for="espace_siege">Sièges espacés :</label>
-                <input type="number" id="sieges_espaces">
+                <input type="number" id="sieges_espaces" placeholder="">
             </div>
         </div>
         <div class="verif_import" id="verif_salle"></div>
-        <div class="btn_creer-salle">
+        <button class="btn_creer-salle">
             <span>Générer la salle</span>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g id="gridicons:create">
@@ -251,7 +255,7 @@
                 <path id="Vector_2" d="M21 7H17V3H15V7H11V9H15V13H17V9H21V7Z" fill="var(--white)"/>
                 </g>
                 </svg>
-        </div>
+        </button>
     </div>
 
 
@@ -281,22 +285,25 @@
                 </div>
             </div>
         </div>
-        <div class="tiers_temps_filtre">
-            <label class="badge-checkbox" style="--checkcolor: var(--black)">
-                <input type="checkbox" id="tri_tiers_temps" class="tri_tiers_temps" checked>
-                <span class="badge-text">Tiers temps en premier</span>
-                <span class="custom-checkbox"></span>
-            </label>
-        </div>
         <div class="options_table">
-            <div class="filtres_table">
-                <!-- <div class="filtre_table">
-                    <label class="badge-checkbox" style="--checkcolor: blue">
-                        <input type="checkbox" id="specialite1" checked>
-                        <span class="badge-text">Spécialité 1</span>
+            <div class="zone_tous_les_filtres">
+            
+                <div class="tiers_temps_filtre">
+                    <label class="badge-checkbox" style="--checkcolor: var(--black)">
+                        <input type="checkbox" id="tri_tiers_temps" class="tri_tiers_temps" checked>
+                        <span class="badge-text">Tiers temps en premier</span>
                         <span class="custom-checkbox"></span>
                     </label>
-                </div> -->
+                </div>
+                <div class="filtres_spe">
+                    <!-- <div class="filtre_spe">
+                        <label class="badge-checkbox" style="--checkcolor: blue">
+                            <input type="checkbox" id="specialite1" checked>
+                            <span class="badge-text">Spécialité 1</span>
+                            <span class="custom-checkbox"></span>
+                        </label>
+                    </div> -->
+                </div>
             </div>
             <div class="btn-placement">
                 <span>Placement aléatoire</span>
@@ -306,9 +313,13 @@
             </div>
         </div>
     </div>
-    <div class="choix_affichage"></div>
-    <!---------------------- Tableau --------------------------->
-    <div class="section_tableau">
+    <div class="choix_affichage">
+        <button class="btn_affichage btn_affichage_click" id="tableau-btn">Tableau</button>
+        <button class="btn_affichage" id="plan-btn">Plan</button>
+    </div>
+    <!---------------------- Tableau et Plan Salle --------------------------->
+    <div class="section_affichage">
+        <!------ Tableau ----->
         <table class="exam-table">
             <thead>
                 <tr>
@@ -323,9 +334,60 @@
             <tbody>
             </tbody>
         </table>
+        <!----- Plan Salle ----->
+        <div class="plan_salle affichage_cache">
+            <div class="panneau_details">
+                <div class="conteneur_details">
+                    <span class="info_col" id="detail_nom">NOM</span>
+                    <span class="info_col" id="detail_prenom">PRENOM</span>
+                    <span class="info_col" id="detail_parcours">PARCOURS</span>
+                    <span class="info_col" id="detail_place">PLACE</span>
+                    
+                    <label class="badge-checkbox" id="label_absence" style="--checkcolor: transparent; display: none;">
+                        <input type="checkbox" id="check_absence">
+                        <span class="badge-text" style="color: var(--white);">Absence</span>
+                        <span class="custom-checkbox"></span>
+                    </label>
+                </div>
+                
+                <div class="mode_edition_plan">
+                    <label class="badge-checkbox" style="--checkcolor: transparent">
+                        <input type="checkbox" id="mode_indispo">
+                        <span class="badge-text" style="color: var(--white);">Désactiver des places</span>
+                        <span class="custom-checkbox"></span>
+                    </label>
+                </div>
+                <div class="icon_zoom">
+                        <svg class="icon_invisible" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--white)" stroke-width="2"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--white)" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                    </div>
+            </div>
+
+            <div class="plan_salles"></div>
+        </div>
     </div>
-    <!----------------- Section après le tableau ---------------->
-    <div class="after_table">
+    <!----------------- Section après l'affichage' ---------------->
+    <div class="after_plan affichage_cache">
+        
+        <div class="legende_plan">
+            <div class="item_legende">
+                <span class="cercle_legende"></span>
+                <span>Places prises</span>
+            </div>
+            <div class="item_legende">
+                <span class="cercle_legende"></span>
+                <span>Places vides</span>
+            </div>
+            <div class="item_legende">
+                <span class="cercle_legende"></span>
+                <span>Places indisponibles</span>
+            </div>
+        </div>
+
+        <div class="conteneur_btn-plans_salle">
+        </div>
+    </div>
+    <div class="after_affichage">
         <div>
             <div class="zero_etu">Aucun étudiants dans la liste</div>
             <div class="capacite_max">
@@ -337,7 +399,6 @@
 
             <div class="sections_salle_sup">
                 <div id="liste_salles_cumulees"></div>
-
                 <div class="ajout_salle_sup">
                     <select id="select_salle_sup">
                         <option value="">+ Ajouter une salle</option>
@@ -363,8 +424,8 @@
     <script src="js/variables.js"></script>
     <script src="js/script.js"></script> 
     <script src="js/menu_gauche.js"></script>
-    <script src="js/tableau.js"></script>
     <script src="js/importation.js"></script>
+    <script src="js/affichage.js"></script>
     <script src="js/placement.js"></script>
     <script src="js/exportation.js"></script>
 </body>

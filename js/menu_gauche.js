@@ -105,69 +105,6 @@ let type_edition = "";
 let index_edition = -1; 
 let ancien_nom_liste = ""; 
 
-// ECOUTEUR GLOBAL DES CLICS DU MENU -----------------------------------------------------------
-document.addEventListener("click", (e) => {
-    
-    // OUVRIR UNE SOUS-LISTE
-    if (e.target.classList.contains("nom_texte")) {
-        const li = e.target.closest("li");
-        const type_liste = li.dataset.type;
-        section_precedente = e.target.closest("section"); 
-        ouvrir_details_liste(li.dataset.name, type_liste);
-    }
-    
-    // CLIC SUR BOUTON RETOUR
-    else if (e.target.closest(".return_sec")) {
-        fermer_formulaire(section_precedente);
-    }
-
-    // CLIC SUR SUPPRIMER
-    else if (e.target.closest(".trash_element")) {
-        supprimer(e.target.closest(".trash_element")); 
-    }
-
-    // CLIC SUR MODIFIER
-    else if (e.target.closest(".rename_element")) {
-        const bloc = e.target.closest(".bloc_element"); 
-        const liListe = e.target.closest(".menu_ul > li"); 
-        
-        if (bloc) {
-            index_edition = parseInt(bloc.dataset.index, 10);
-            mode_edition = "modifier";
-            edition_formulaire();
-        } else if (liListe) {
-            const isEtu = e.target.closest(".etu_sec") !== null;
-            type_edition = isEtu ? "nom_liste_etu" : "nom_liste_salle";
-            index_edition = Array.from(liListe.parentNode.children).indexOf(liListe);
-            ancien_nom_liste = liListe.dataset.name;
-            mode_edition = "modifier_liste";
-            edition_formulaire();
-        }
-    }
-
-    // CLIC POUR AJOUTER
-    else if (e.target.closest(".btn_ajouter")) {
-        mode_edition = "ajouter";
-        index_edition = -1;
-        edition_formulaire();
-    }
-    
-    // CLIC POUR ANNULER l'EDITION
-    else if (e.target.id === "edition_annul") {
-        edition_erreur.textContent = "";
-        let selecteur_retour = ".sous_sec";
-        
-        // Sécurité : Si on annulait la modification du nom d'une liste, on retourne au menu général
-        if (mode_edition === "modifier_liste") {
-            selecteur_retour = ".etu_sec";
-        } else if (CONFIG_SECTION[type_edition]) {
-            selecteur_retour = CONFIG_SECTION[type_edition].section_retour;
-        }
-        
-        fermer_formulaire(document.querySelector(selecteur_retour));
-    }
-});
-
 
 
 // AFFICHER LES DÉTAILS D'UNE LISTE DANS LE MENU -------------------------------------------------------------------------------------------------------------------------------
@@ -230,8 +167,14 @@ function ouvrir_details_liste(nom_cible, typeListe) {
         }
 
         li_val += `<li>
-                    <div class="ul_icons">
-                        <svg class="trash_element" title="supprimer l'élément" width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33333 9.33333H26.6667M13.3333 14.6667V22.6667M18.6667 14.6667V22.6667M6.66666 9.33333L7.99999 25.3333C7.99999 26.0406 8.28095 26.7189 8.78104 27.219C9.28114 27.719 9.95942 28 10.6667 28H21.3333C22.0406 28 22.7188 27.719 23.2189 27.219C23.719 26.7189 24 26.0406 24 25.3333L25.3333 9.33333M12 9.33333V5.33333C12 4.97971 12.1405 4.64057 12.3905 4.39052C12.6406 4.14048 12.9797 4 13.3333 4H18.6667C19.0203 4 19.3594 4.14048 19.6095 4.39052C19.8595 4.64057 20 4.97971 20 5.33333V9.33333" stroke="#FBFDFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <div class="ul_icons">`;
+        
+        //  ajoute l'icône de chargement uniquement pour l'historique
+        if (typeListe === "historique") {
+            li_val += `<svg class="load_element" title="Charger ce placement" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path id="Vector" d="M11.6667 3.66667H3.66667C2.95942 3.66667 2.28115 3.94762 1.78105 4.44771C1.28095 4.94781 1 5.62609 1 6.33333V19.6667C1 20.3739 1.28095 21.0522 1.78105 21.5523C2.28115 22.0524 2.95942 22.3333 3.66667 22.3333H17C17.7072 22.3333 18.3855 22.0524 18.8856 21.5523C19.3857 21.0522 19.6667 20.3739 19.6667 19.6667V11.6667M10.3333 13L22.3333 1M22.3333 7.66667V1H15.6667" stroke="#EBF5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        }
+
+        li_val += `     <svg class="trash_element" title="supprimer l'élément" width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33333 9.33333H26.6667M13.3333 14.6667V22.6667M18.6667 14.6667V22.6667M6.66666 9.33333L7.99999 25.3333C7.99999 26.0406 8.28095 26.7189 8.78104 27.219C9.28114 27.719 9.95942 28 10.6667 28H21.3333C22.0406 28 22.7188 27.719 23.2189 27.219C23.719 26.7189 24 26.0406 24 25.3333L25.3333 9.33333M12 9.33333V5.33333C12 4.97971 12.1405 4.64057 12.3905 4.39052C12.6406 4.14048 12.9797 4 13.3333 4H18.6667C19.0203 4 19.3594 4.14048 19.6095 4.39052C19.8595 4.64057 20 4.97971 20 5.33333V9.33333" stroke="#FBFDFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         <svg class="rename_element" title="modifier l'élément" width="24" height="24" viewBox="0 0 50 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M31.25 24.3333L22.9167 32.6667H43.75V24.3333H31.25ZM25.125 5.97915L6.25 24.8541V32.6667H14.0625L32.9375 13.7916L25.125 5.97915ZM38.9792 7.74998C39.7917 6.93748 39.7917 5.58332 38.9792 4.81248L34.1042 -0.0625169C33.7138 -0.45054 33.1858 -0.668335 32.6354 -0.668335C32.085 -0.668335 31.557 -0.45054 31.1667 -0.0625169L27.3542 3.74998L35.1667 11.5625L38.9792 7.74998Z" fill="#FBFDFF"/></svg>
                     </div>
                     </li>
@@ -358,89 +301,41 @@ function edition_formulaire() {
 
 //FONCTION POUR VALIDER UN AJOUT/MODIFICATION D'UNE LISTE/ELEMENT --------------------------------------------------------------------------------------------------------
 
-edition_valid.addEventListener("click", () => {
-    edition_erreur.textContent = ""; // On nettoie les anciennes erreurs
-    
-    let nouvel_objet = {};
-    let nouveau_nom_liste = "";
+function valider_edition() {
+    edition_erreur.textContent = ""; 
 
-    // A. Si on modifie une liste entière (le nom du fichier)
+    // CAS 1 : Renommer le titre d'une liste entière
     if (mode_edition === "modifier_liste") {
-        nouveau_nom_liste = document.getElementById("input_nom_liste")?.value.trim();
+        const nouveau_nom_liste = document.getElementById("input_nom_liste")?.value.trim();
         if (!nouveau_nom_liste) {
             edition_erreur.textContent = "Le nom ne peut pas être vide.";
             return;
         }
-    } 
-    // Si on modifie un élément avec le formulaire (salle, étudiant, matière...)
-    else {
-        const champs_config = CONFIG_SECTION[type_edition].champs;
-        champs_config.forEach(champ => {
-            let input_element = document.getElementById(`input_${champ.id}`);
-            if (input_element) {
-                let valeur = input_element.value.trim();
-                // Sécurité : on convertit en chiffre si le champ est un 'number'
-                if (champ.type === "number") valeur = parseInt(valeur) || 0; 
-                nouvel_objet[champ.id] = valeur;
-            }
-        });
-    }
-
-    const nom_liste = document.querySelector(".nom_liste").textContent;
-
-    // Sauvegarde en fonction du type
-    switch (type_edition) {
-        case "nom_liste_etu":
+        if (type_edition === "nom_liste_etu") {
             tab_etu[index_edition].nom_fichier = nouveau_nom_liste;
             sauvegarder("tab_etu", tab_etu);
             rafraichir_menu_principal(".etu_sec");
-            break;
+        }
+        return;
+    } 
+    
+    let nouvel_objet = {};
+    const config = CONFIG_SECTION[type_edition];
 
-        case "matiere":
-            if (mode_edition === "ajouter") tab_matiere.push(nouvel_objet.nom);
-            else tab_matiere[index_edition] = nouvel_objet.nom;
-            sauvegarder("tab_matiere", tab_matiere);
-            fermer_et_recharger(nom_liste);
-            break;
+    // 1. On récupère les valeurs tapées
+    config.champs.forEach(champ => {
+        let input_element = document.getElementById(`input_${champ.id}`);
+        if (input_element) {
+            let valeur = input_element.value.trim();
+            if (champ.type === "number") valeur = parseInt(valeur) || 0; 
+            nouvel_objet[champ.id] = valeur;
+        }
+    });
 
-        case "historique":
-            tab_placer[index_edition].titre = nouvel_objet.titre;
-            sauvegarder("tab_placement", tab_placer);
-            fermer_et_recharger(nom_liste);
-            break;
-
-        case "etu":
-            let listeEtu = getListeEtu(nom_liste);
-            let etu_data = { 
-                nom: nouvel_objet.nom, 
-                prenom: nouvel_objet.prenom, 
-                specialite: nouvel_objet.specialite, 
-                tiers_temps: false 
-            };
-            
-            if (mode_edition === "ajouter") {
-                listeEtu.donnees.push(etu_data);
-            } else {
-                etu_data.tiers_temps = listeEtu.donnees[index_edition].tiers_temps;
-                listeEtu.donnees[index_edition] = etu_data;
-            }
-            sauvegarder("tab_etu", tab_etu);
-            if (select_etu.value === nom_liste) generer_filtres(); 
-            fermer_et_recharger(nom_liste);
-            break;
-
-        case "salle":
-            if (mode_edition === "modifier") {
-                nouvel_objet.places_banni = tab_salles[index_edition].places_banni || null; // récupère les places bloquées
-                tab_salles[index_edition] = nouvel_objet; //On remplace les anciennes données par les nouvelles
-                
-                sauvegarder("tab_salles", tab_salles);
-                if (typeof verifier_capacite === "function") verifier_capacite();
-                fermer_et_recharger("Salles"); // On recharge l'onglet Salles
-            }
-            break;
-    }
-});
+    // 2. On délègue la sauvegarde magique
+    const nom_liste = document.querySelector(".nom_liste").textContent;
+    config.sauvegarder_element(nouvel_objet, mode_edition, index_edition, nom_liste);
+}
 
 //Fonction pour générer un champ texte de formulaire
 function generer_champ_input(label, id, valeur = "", type = "text") {
@@ -450,19 +345,25 @@ function generer_champ_input(label, id, valeur = "", type = "text") {
             </label>`;
 }
 
-
+// Fonction pour fermer le formulaire
 function fermer_formulaire(section_a_rouvrir) {
     edition_sec.classList.remove("sec_open");
-    sous_sec.classList.remove("sec_open"); // S'assure que sous_sec est caché si on retourne à la racine
+    sous_sec.classList.remove("sec_open"); 
+    
+    const charger_sec = document.querySelector(".charger_sec");
+    if (charger_sec) charger_sec.classList.remove("sec_open");
+    
     if (section_a_rouvrir) section_a_rouvrir.classList.add("sec_open");
 }
 
+// Fonction pour fermer un sous menu et 
 function fermer_et_recharger(nom_liste) {
     const type_el = document.querySelector(".nom_liste").dataset.type; // On récupère le type
     ouvrir_details_liste(nom_liste, type_el);
     fermer_formulaire(document.querySelector(".sous_sec"));
 }
 
+// Fonction pour rafraichir le menu gauche
 function rafraichir_menu_principal(selecteur_section) {
     afficher_listes();
     remplir_select();

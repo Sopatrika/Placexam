@@ -36,6 +36,21 @@ body {
     font-family: var(--font-family);
 }
 
+.no_scroll {
+    overflow: hidden;
+}
+
+button {
+    outline: none;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font-family)
+}
+
+button:focus-visible {
+    background: var(--hover);
+}
+
 /* Barre de scroll */
 
 ::-webkit-scrollbar {
@@ -302,7 +317,7 @@ main {
     justify-content: space-around;
     align-items: center;
     margin: 20px 0px;
-    width: 250px;
+    width: 300px;
 }
 
 .return_sec {
@@ -460,9 +475,14 @@ main {
     display: none;
 }
 
+.menu_message {
+    text-align: center;
+    margin: 70px 5px;
+}
+
 /* Section edition (ajouter ou modifier un élément) */
 
-.edition_sec {
+.edition_sec, .charger_sec {
     display: none;
     padding: 30px 20px;
     display: flex;
@@ -471,7 +491,7 @@ main {
     gap: 35px;
 }
 
-.edition_sec.sec_open {
+.edition_sec.sec_open, .charger_sec.sec_open {
     display: flex; 
 }
 
@@ -714,7 +734,7 @@ h2 {
     margin-bottom: 20px;
 }
 
-.menu_import_close {
+.menu_close {
     opacity: 0;
     pointer-events: none;
 }
@@ -838,16 +858,24 @@ h3 {
 
 /* Filtres de la tables pour les spécialités ou étudiants en tier temps */
 
-.filtres_table {
-    width: 90%;
-    display: flex;      
-    flex-wrap: wrap;   
-    justify-content: flex-start;
+.zone_tous_les_filtres {
+    display: flex; 
+    gap: 10px; 
+    flex-wrap: wrap; 
+    align-items: center; 
+    width: 100%;
 }
 
-.filtre_table {
-    display: flex;
+.filtres_spe {
+    display: flex;      
+    flex-wrap: wrap;   
     gap: 10px;
+    flex: 1; 
+}
+
+.filtre_spe {
+    display: flex;
+    gap: 5px;
     padding: 10px;
 }
 
@@ -960,23 +988,54 @@ select:focus, select:hover {
 }
 
 
-/* --------------------- Tableau -------------------*/
+/* --------------------- Tableau et Plan Salle -------------------*/
 
-.section_tableau {
-    background: var(--white);
+.choix_affichage {
     margin-top: 15px;
+    display: flex;
+    padding: var(--darkblue);
+    margin-left: 20px;
+    border-radius: 15px 15px 0px 0px;
+}
+
+.btn_affichage {
+    padding: 15px 50px;
+    background: var(--darkblue);
+    color: var(--white);
+    border-bottom: solid 2px var(--background);
+    opacity: 0.7;
+}
+
+.btn_affichage:first-child {
+    border-radius: 16px 0px 0px 0px;
+}
+
+.btn_affichage:last-child {
+    border-radius: 0px 16px 0px 0px;
+}
+
+.btn_affichage_click {
+    opacity: 1;
+    border-bottom: none;
+}
+
+.section_affichage {
+    background: var(--white);
     width: 100%;
-    max-height: 350px;
+    max-height: 400px;
     overflow-y: auto;
     border-radius: 8px;
     box-shadow: var(--shadow);
 }
+
+/* ------- Tableau -------- */
 
 .exam-table {
     width: 100%;
     border-collapse: collapse;
     color: var(--black);
     text-align: left;
+    max-height: 350px;
     overflow-y: auto;
 }
 
@@ -1021,11 +1080,194 @@ select:focus, select:hover {
     margin: 0 30%;
 }
 
-/* ------ Section après le tableau ----------- */
-.after_table {
+/* ----- Plan de salle ------ */
+
+.plan_salle {
+    background: var(--white);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.panneau_details {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: 15px 30px;
+    background: var(--darkblue);
+    color: var(--white);
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: bold;
 }
+
+.conteneur_details {
+    display: flex;
+    gap: 40px; 
+    flex: 1;
+    text-transform: uppercase;
+}
+
+.info_col {
+    min-width: 100px;
+}
+
+.icon_zoom {
+    display: flex;
+    transition: 0.2s ease;
+    margin-left: 50px;
+}
+
+.icon_zoom:hover {
+    transform: scale(1.2);
+}
+
+.icon_invisible {
+    display: none;
+}
+
+.plan_salles {
+    width: 100%;
+    padding: 30px;
+    box-sizing: border-box;
+    overflow-x: auto;
+}
+
+.plan_salle {
+    display: grid;
+}
+
+.grille_salle {
+    display: grid;
+    gap: 15px;
+    justify-content: center;
+}
+
+.place {
+    width: 100%;
+    max-width: 35px;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Place prise  */
+.place[data-etat="prise"] {
+    background: var(--darkblue);
+}
+
+/* Place vide */
+.place[data-etat="vide"] {
+    background: #9CA3AF; /* Un joli gris neutre */
+}
+
+/* Place Indisponible  */
+.place[data-etat="indispo"] {
+    background: transparent;
+    border: 2px solid var(--black);
+}
+
+.place:hover {
+    opacity: 0.6;
+    transform: scale(1.1);
+}
+
+/* Zoom sur le plan */
+
+.plan_salle.zoom_plan {
+    position: fixed;
+    top: 0;
+    left: 1;
+    width: 60vw;
+    height: auto;
+    z-index: 9999;
+    background: var(--background);
+}
+
+.plan_salle.zoom_plan .plan_salles {
+    max-height: none;
+    height: calc(100vh - 80px); /* Laisse la place au bandeau bleu */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centre la grille verticalement en plein écran */
+}
+
+/* ----------------------------- Séction après l'affichage ---------------------- */
+/* ------ Section après le visuel ------*/
+.after_plan {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Pour cacher le tableau ou le plan de salle */
+.affichage_cache {
+    display: none;
+}
+
+.legende_plan {
+    display: flex;
+    gap: 40px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.item_legende {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cercle_legende {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+
+.cercle_legende:first-child {
+    background: var(--darkblue);
+}
+
+.cercle_legende:nth-child(2) {
+    background: #9CA3AF;
+}
+
+.cercle_legende:last-child {
+    border: 2px solid var(--black); 
+    background: transparent;
+}
+
+.conteneur_btn-plans_salle {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.btn-plan_salle {
+    padding: 8px 30px;
+    background: var(--darkblue);
+    color: var(--white);
+    border-radius: 20px;
+    font-weight: bold;
+    transition: 0.2s ease;
+    opacity: 0.5;
+}
+
+.btn-plan_salle.btn_affichage_click {
+    box-shadow: var(--shadow);
+    opacity: 1;
+}
+
+/* Capacité */
 
 .capacite_max {
     display: flex;
