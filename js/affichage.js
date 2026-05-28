@@ -14,10 +14,9 @@ if (conteneur_filtres) {
 
             tab_filtres_spe[nom_liste_actuelle][nomSpecialite] = e.target.checked;
             sauvegarder('tab_filtres_spe', tab_filtres_spe);
-            
-            placement_actuel_donnees = []; 
-            afficher_tableau();
-            if (typeof verifier_capacite === "function") verifier_capacite(); // Met à jour le texte de capacité
+
+            reset_placement();
+            verifier_capacite();
         }
     });
 }
@@ -34,17 +33,25 @@ function creer_option(element, liste) {
 function remplir_select() {
     select_etu.innerHTML = "";
     select_salle.innerHTML = "";
-    if (select_matiere) select_matiere.innerHTML = "";
+    select_matiere.innerHTML = "";
 
-    Object.values(tab_etu).forEach( liste_etu => { 
+    Object.values(tab_etu).forEach(liste_etu => { 
         creer_option(liste_etu.nom_fichier, select_etu);
     });
-    Object.values(tab_salles).forEach( salle_obj => { 
+    Object.values(tab_salles).forEach(salle_obj => { 
         creer_option(salle_obj.nom_salle, select_salle); 
     });
     if (select_matiere) {
-        Object.values(tab_matiere).forEach(matiere => { 
-            creer_option(matiere, select_matiere);
+        Object.values(tab_matiere).forEach(matiere => {
+            let affichage = "";
+            if (typeof matiere === "string") {
+                affichage = matiere;
+            } else {
+                const nom = matiere.nom || "Inconnu";
+                const prof = matiere.prof || "Non renseigné";
+                affichage = `${nom} (${prof})`;
+            }
+            creer_option(affichage, select_matiere);
         });
     }
 }
@@ -52,7 +59,16 @@ function remplir_select() {
 // FONCTION POUR GERER LES FILTRES DE PARCOURS DYNAMIQUE ------------------------------------------------------------------------------------------------------------------
 // Les filtres parcours sont générés dynamiquement par rapport à la liste étudiant choisis
 const filtres_color = ['#3B82F6', '#EF4444', '#1ac58c', '#F59E0B', '#8B5CF6', '#06B6D4']; //Couleurs des filtres
-select_etu.addEventListener("change", generer_filtres);
+select_etu.addEventListener("change", () => {
+    sauvegarder("select_etu", select_etu.value);
+    reset_placement();
+    generer_filtres();
+});
+
+select_salle.addEventListener("change", () => {
+    sauvegarder("select_salle", select_salle.value);
+    if (typeof verifier_capacite === "function") verifier_capacite();
+});
 
 function generer_filtres() {
     conteneur_filtres.innerHTML = "";
@@ -102,6 +118,8 @@ function nettoyer_filtres() {
 }
 
 // FONCTON POUR l'AFFICHAGE DU TABLEAU ----------------------------------------------------------------------------------------------------------------------------------
+const zero_etu_div = document.querySelector(".zero_etu");
+
 function afficher_tableau() {
     tableau_etu.innerHTML = "";
     
@@ -114,6 +132,7 @@ function afficher_tableau() {
         if (liste_select) {
             donnees_brutes = liste_select.donnees;
         } else {
+            zero_etu_div.classList.add("message_visible");
             return; 
         }
     }
@@ -122,6 +141,13 @@ function afficher_tableau() {
     const specialites_actives = Array.from(document.querySelectorAll(".check-specialite:checked")).map(cb => cb.value); 
     const donnees_filtrees = donnees_brutes.filter(etu => specialites_actives.includes(etu.specialite)); 
     const btn_tri_tiers = check_tiers_temps; 
+
+    //Si il y'a aucun étudiants à afficher
+    if (donnees_filtrees.length === 0) {
+        zero_etu_div.classList.add("message_visible");
+    } else {
+        zero_etu_div.classList.remove("message_visible");
+    }
     
     if (btn_tri_tiers && btn_tri_tiers.checked) {
         donnees_filtrees.sort((a, b) => {
@@ -130,14 +156,12 @@ function afficher_tableau() {
             return 0;
         });
     }
-
-    const svg_sablier = `<svg class="icon_tiers-temps" width="16" height="20" viewBox="0 0 16 20"><use href="#icon-sablier"></use></svg>`;
     let lignes_html = [];
 
     donnees_filtrees.forEach((etu) => {
-        const tiers_temps = etu.tiers_temps ? svg_sablier : "";
+        const tiers_temps = etu.tiers_temps ? svg_tier_temps : "";
         
-        // 🟢 BEAUCOUP PLUS SIMPLE : La place est déjà dans "etu" si c'est un placement !
+        // La place est déjà dans "etu" si c'est un placement
         let place_html = "";
         if (etu.place_attribuee && etu.place_attribuee !== "-") {
             if (salles_choisies.length > 1 && etu.salle_attribuee !== "Non placé") {
@@ -155,8 +179,8 @@ function afficher_tableau() {
                 <td>${place_html}</td>
                 <td class="icon_tiers_temps">${tiers_temps}</td>
                 <td>
-                    <label class="badge-checkbox" style="--checkcolor: var(--black);">
-                        <input type="checkbox" class="check-absence" data-nom="${etu.nom}" data-prenom="${etu.prenom}">
+                    <label class="badge-checkbox">
+                        <input type="checkbox" class="check-absence" data-nom="${etu.nom}" data-prenom="${etu.prenom}" ${etu.absent ? "checked" : ""}>
                         <span class="badge-text"></span>
                         <span class="custom-checkbox"></span>
                     </label>
@@ -204,67 +228,70 @@ function creer_btn_plan(nom_salle) {
     let salleObj = getListeSalle(nom_salle);
     if (!salleObj) return;
 
-    // 1. Le bouton
     const btn_plan = document.createElement("button");
     btn_plan.className = "btn-plan_salle";
     btn_plan.dataset.salle = nom_salle;
     btn_plan.textContent = nom_salle;
     conteneur_btn_plans.appendChild(btn_plan);
 
-    // 2. La grille
     const grille_salle = document.createElement("section");
     grille_salle.className = "grille_salle";
     grille_salle.dataset.salle = nom_salle;
     grille_salle.style.display = "none";
 
-    // Sécurité maximale avec parseInt
-    let capacite = parseInt(salleObj.capacite_max); 
+    let capacite = parseInt(salleObj.capacite_max);
     let rangees = parseInt(salleObj.nbr_rangees);
-
     let nb_colonnes = Math.ceil(capacite / rangees);
     grille_salle.style.gridTemplateColumns = `repeat(${nb_colonnes}, minmax(15px, 40px))`;
 
-    // 3. Les chaises
-    for (let r = rangees - 1; r >= 0; r--) { // On part de la rangée du haut vers celle du bas
-        for (let c = 1; c <= nb_colonnes; c++) { // On va de gauche à droite
-            
-            // Le calcul mathématique de la place
+    for (let r = rangees - 1; r >= 0; r--) {
+        for (let c = 1; c <= nb_colonnes; c++) {
             let num_place = (r * nb_colonnes) + c;
-
-            const place = document.createElement("div"); 
-            place.className = "place";
             
-            if (num_place <= capacite) {
-                // C'est une vraie place !
-                place.dataset.num_place = num_place;
-                place.dataset.etat = "vide"; 
-                place.title = `Place n°${num_place}`;
+            // Vérifie que la place existe
+            if (num_place > capacite) break;
 
-                if (salleObj.places_banni && salleObj.places_banni.includes(num_place)) {
-                    place.dataset.etat = "indispo";
-                }
+            const place = document.createElement("div");
+            place.classList.add("place");
+            place.dataset.num_place = num_place;
+
+            const estBannie = salleObj.places_banni && Array.isArray(salleObj.places_banni) && salleObj.places_banni.includes(num_place);
+
+            if (estBannie) {
+                place.dataset.etat = "indispo";
+                place.classList.add("place_vide");
             } else {
-                place.style.visibility = "hidden";
+                place.dataset.etat = "vide";
             }
-            
             grille_salle.appendChild(place);
         }
     }
     conteneur_grilles.appendChild(grille_salle);
 }
 
+//FONCTION POUR AJOUTER LES BOUTONS DES SALLES DANS LA SECTION PLAN DE SALLE ----------------------------------------------------------------------------------------
 function btn_plans(salles) {
     if (!conteneur_btn_plans || !conteneur_grilles) return;
+
+    if (!salles.includes(salle_active)) {
+        salle_active = salles[0] || "";
+    }
     
-    conteneur_btn_plans.innerHTML = ""; 
-    conteneur_grilles.innerHTML = ""; 
+    conteneur_btn_plans.innerHTML = "";
+    conteneur_grilles.innerHTML = "";
     
     salles.forEach(nom_salle => creer_btn_plan(nom_salle));
 
-    // Activation visuelle de la première salle
-    if (conteneur_btn_plans.firstChild) {
-        conteneur_btn_plans.firstChild.classList.add("btn_affichage_click");
-        conteneur_grilles.firstChild.style.display = "grid";
+    if (!salles.includes(salle_active) || !salle_active) {
+        salle_active = salles[0] || "";
+    }
+
+    const btnActif = conteneur_btn_plans.querySelector(`[data-salle="${salle_active}"]`);
+    const grilleActive = conteneur_grilles.querySelector(`[data-salle="${salle_active}"]`);
+    
+    if (btnActif && grilleActive) {
+        btnActif.classList.add("btn_affichage_click");
+        grilleActive.style.display = "grid";
     }
 }
 
@@ -272,6 +299,9 @@ function btn_plans(salles) {
     conteneur_btn_plans.addEventListener("click", (e) => {
         if (e.target.classList.contains("btn-plan_salle")) {
             const salle_cible = e.target.dataset.salle;
+            
+            // ✅ Mettre à jour la salle active
+            salle_active = salle_cible;
 
             document.querySelectorAll(".btn-plan_salle").forEach(btn => btn.classList.remove("btn_affichage_click"));
             e.target.classList.add("btn_affichage_click");
@@ -289,7 +319,10 @@ function colorier_places(donnees_placement) {
     placement_actuel_donnees = donnees_placement; 
 
     document.querySelectorAll(".place").forEach(place => {
-        if (place.dataset.etat !== "indispo") place.dataset.etat = "vide";
+        if (place.dataset.etat !== "indispo") {
+            place.dataset.etat = "vide";
+            place.innerHTML = "";
+        }
     });
 
     donnees_placement.forEach(item => {
@@ -298,6 +331,15 @@ function colorier_places(donnees_placement) {
             if (grille) {
                 const place = grille.querySelector(`.place[data-num_place="${item.place_attribuee}"]`);
                 if (place) place.dataset.etat = "prise";
+
+                if (item.absent) {
+                        // Priorité à l'absence : On écrit "ABS" en blanc et gras
+                        place.innerHTML = `<span>ABS</span>`;
+                    } else if (item.tiers_temps) {
+                        // Sinon, si l'étudiant est Tiers-temps, on met ton icône
+                        place.innerHTML = svg_tier_temps; 
+                        place.querySelector("svg").style.fill = "var(--white)";
+                    }
             }
         }
     });
@@ -327,6 +369,7 @@ if (conteneur_grilles) {
             detail_prenom.textContent = etu_trouve.prenom;
             detail_parcours.textContent = etu_trouve.specialite || "-";
             label_absence.style.display = "flex"; 
+            document.getElementById("check_absence").checked = etu_trouve.absent ? true : false;
         } else {
             detail_nom.textContent = "VIDE";
             detail_prenom.textContent = "-";
@@ -356,120 +399,108 @@ fond_sombre.addEventListener("click", () => {
     }
 });
 
-// FONCTION POUR CHARGER UN PLACEMENT -----------------------------------------------------------------------------------------------------------------------------------
+check_tiers_temps.addEventListener("change", () => {
+    reset_placement();
+    verifier_capacite();
+});
 
-function valider_chargement() {
-    const archive = tab_placer[index_edition];
-    if (!archive) return;
-    const donnees = archive.donnees_placement;
+// Fonction unique pour tout réafficher correctement
+function actualiser_affichage_complet() {
+    afficher_tableau();
 
-    // 1. DÉDUIRE LA LISTE ÉTUDIANTE (On cherche dans quelle liste se trouve le 1er étudiant)
-    if (donnees.length > 0) {
-        const premier_etu = donnees[0];
-        const liste_trouvee = Object.values(tab_etu).find(liste => 
-            liste.donnees.some(e => e.nom === premier_etu.nom && e.prenom === premier_etu.prenom)
-        );
-        select_etu.value = liste_trouvee ? liste_trouvee.nom_fichier : "";
-    } else {
-        select_etu.value = "";
+    if (placement_actuel_donnees && placement_actuel_donnees.length > 0) {
+        const salles_utilisees = [...new Set(placement_actuel_donnees.map(d => d.salle_attribuee))].filter(s => s !== "Non placé");
+        btn_plans(salles_utilisees);
+        setTimeout(() => {
+            colorier_places(placement_actuel_donnees);
+            console.log("sa marche !");
+        }, 50); 
     }
-
-    // 2. DÉDUIRE LA MATIÈRE (Depuis le titre de l'archive)
-    if (select_matiere) {
-        const titre_base = archive.titre.split(" - ")[0];
-        select_matiere.value = tab_matiere.includes(titre_base) ? titre_base : "";
-    }
-
-    // 3. DÉDUIRE LES SALLES
-    salles_choisies.length = 0; // On vide le tableau global des salles
-    
-    if (archive.salles_selectionnees) {
-        archive.salles_selectionnees.forEach(s => {
-            if (getListeSalle(s)) salles_choisies.push(s);
-        });
-    } else {
-        // Fallback de sécurité si c'est une vieille sauvegarde sans cette info
-        const salles_archive = [...new Set(donnees.map(d => d.salle_attribuee))].filter(s => s !== "Non placé");
-        salles_archive.forEach(s => {
-            if (getListeSalle(s)) salles_choisies.push(s);
-        });
-    }
-
-    select_salle.value = (salles_choisies.length > 0) ? salles_choisies[0] : "";
-    if (typeof dessiner_badges_salles === "function") dessiner_badges_salles();
-
-    // 4. METTRE A JOUR LES FILTRES (Spécialités et Tiers-Temps)
-    if (select_etu.value) {
-        if (!tab_filtres_spe[select_etu.value]) tab_filtres_spe[select_etu.value] = {};
-        
-        // On désactive toutes les spécialités par défaut
-        for (let s in tab_filtres_spe[select_etu.value]) {
-            tab_filtres_spe[select_etu.value][s] = false;
-        }
-        
-        // On réactive uniquement celles qui étaient cochées le jour du placement
-        if (archive.filtres && archive.filtres.specialites) {
-            archive.filtres.specialites.forEach(spe => {
-                tab_filtres_spe[select_etu.value][spe] = true;
-            });
-        } 
-        // (Sécurité : si c'est un très vieux placement fait avant cette mise à jour)
-        else {
-            const spe_archive = [...new Set(donnees.map(d => d.specialite))];
-            spe_archive.forEach(spe => { tab_filtres_spe[select_etu.value][spe] = true; });
-        }
-        
-        sauvegarder('tab_filtres_spe', tab_filtres_spe);
-        generer_filtres(); // Refait les badges visuels
-    }
-    
-    // 4. METTRE A JOUR LES FILTRES (Spécialités et Tiers-Temps)
-    if (select_etu.value) {
-        if (!tab_filtres_spe[select_etu.value]) tab_filtres_spe[select_etu.value] = {};
-        
-        // On désactive toutes les spécialités par défaut
-        for (let s in tab_filtres_spe[select_etu.value]) {
-            tab_filtres_spe[select_etu.value][s] = false;
-        }
-        
-        // On réactive uniquement celles qui étaient cochées le jour du placement
-        if (archive.filtres && archive.filtres.specialites) {
-            archive.filtres.specialites.forEach(spe => {
-                tab_filtres_spe[select_etu.value][spe] = true;
-            });
-        } 
-        else {
-            const spe_archive = [...new Set(donnees.map(d => d.specialite))];
-            spe_archive.forEach(spe => { tab_filtres_spe[select_etu.value][spe] = true; });
-        }
-        
-        sauvegarder('tab_filtres_spe', tab_filtres_spe);
-        generer_filtres(); 
-    }
-
-    // 5. MEMORISER LE PLACEMENT ET AFFICHER
-    placement_actuel_donnees = donnees;
-
-    if (typeof verifier_capacite === "function") verifier_capacite();
-    
-    afficher_tableau(); 
-    if (typeof btn_plans === "function") btn_plans(salles_choisies);
-    if (typeof colorier_places === "function") colorier_places(donnees);
-
-    // 6. BASCULER LA VUE ET FERMER LE MENU
-    document.getElementById("tableau-btn").click();
-    fermer_formulaire(document.querySelector(".sous_sec"));
 }
 
-if (check_tiers_temps) {
-    check_tiers_temps.addEventListener("change", () => {
-        placement_actuel_donnees = []; 
-        afficher_tableau();
-        if (typeof verifier_capacite === "function") verifier_capacite();
+// GESTION DU CLIC POUR DÉSACTIVER/RÉACTIVER LES PLACES
+if (conteneur_grilles) {
+    conteneur_grilles.addEventListener("click", (e) => {
+        const mode_indispo = document.getElementById("mode_indispo");
+        if (!mode_indispo || !mode_indispo.checked) return;
+
+        const place = e.target.closest(".place");
+        const grille = e.target.closest(".grille_salle");
+        
+        if (!place || !grille) return;
+
+        // Nettoyage des chaînes pour éviter les erreurs de comparaison (espaces, casse)
+        const nomSalle = String(grille.dataset.salle);
+        const numPlace = parseInt(place.dataset.num_place);
+
+        console.log(nomSalle);
+
+        // Recherche de la salle
+        let salleObj = tab_salles.find(s => String(s.nom_salle).trim() === nomSalle);
+        if (!salleObj) return;
+
+        // Si c'est null ou undefined, on force en tableau vide
+        if (!salleObj.places_banni || !Array.isArray(salleObj.places_banni)) {
+            salleObj.places_banni = [];
+        }
+
+        // Gestion des places indisponible
+        const index = salleObj.places_banni.indexOf(numPlace);
+        if (index > -1) {
+            salleObj.places_banni.splice(index, 1);
+            place.classList.remove("place_vide");
+            place.dataset.etat = "vide";
+        } else {
+            salleObj.places_banni.push(numPlace); //On enregistre les places banni
+            place.classList.add("place_vide");
+            place.dataset.etat = "indispo";
+            place.innerHTML = "";
+        }
+
+        sauvegarder("tab_salles", tab_salles);
+
+        // Sauvegarde immédiate
+        if (recuperer("placer_actuel", "") !== "") {
+            reset_placement(true);
+            // On attend une fraction de seconde pour recolorier les places restantes
+            setTimeout(() => {
+                if (typeof actualiser_affichage_complet === "function") actualiser_affichage_complet();
+            }, 50);
+        }
+        verifier_capacite();
     });
 }
 
-// INITIALISATION ---
-remplir_select();
-EnregChoix();
-generer_filtres();
+// Écouteur pour select_etu
+select_etu.addEventListener("change", () => {
+    sauvegarder("select_etu", select_etu.value);
+    salles_choisies = [];
+    reset_placement();
+    generer_filtres();
+    verifier_capacite();
+});
+
+// Écouteur unique pour select_salle
+select_salle.addEventListener("change", () => {
+    sauvegarder("select_salle", select_salle.value);
+    salles_choisies = [];
+    reset_placement();
+    verifier_capacite();
+});
+
+
+//ECOUTEUR GLOBAL POUR LES FILTRES
+document.addEventListener("change", (e) => {
+    if (e.target.classList.contains("check-specialite") || e.target.classList.contains("check_tier")) {
+        
+        if (recuperer("placer_actuel", "")) {
+            effacer_storage("placer_actuel");
+            if (typeof placement_actuel_donnees !== "undefined") placement_actuel_donnees = [];
+            if (typeof afficher_tableau === "function") afficher_tableau();
+        }
+        
+        if (typeof dessiner_badges_salles === "function") dessiner_badges_salles();
+        if (typeof maj_select_salles_sup === "function") maj_select_salles_sup();
+        verifier_capacite();
+    }
+});

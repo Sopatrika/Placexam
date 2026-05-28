@@ -132,19 +132,25 @@ function selection_colonnes(headers, rawData, fileName) {
 
         // crée un nouveau tableau JSON propre avec les clés
         const cleanEtudiants = rawData.map(ligne => {
-            return {
-                nom: ligne[colNom], prenom: ligne[colPrenom], specialite: ligne[colSpecialite]
+            // Les trois colonnes obligatoire (nom, prenom, parcours)
+            let etu = {
+                nom: ligne[colNom],
+                prenom: ligne[colPrenom],
+                specialite: ligne[colSpecialite] || "Aucun"
             };
+            // ajoute les autres colonnes comme propriétés de l'étudiant
+            for (let key in ligne) {
+                if (key !== colNom && key !== colPrenom && key !== colSpecialite) {
+                    etu[key] = ligne[key];
+                }
+            }
+            
+            return etu;
         });
 
-        let nom_final = fileName;
-        let compteur = 1;
-        while (tab_etu.some(liste => liste.nom_fichier === nom_final)) {
-            nom_final = fileName + "_" + compteur;
-            compteur++;
-        }
+        let nom_final = generer_nom_unique(fileName, tab_etu, "nom_fichier");
 
-        tab_etu.push({
+        tab_etu.unshift({
             nom_fichier: nom_final,
             date_import: new Date().toLocaleDateString(),
             donnees: cleanEtudiants
@@ -181,9 +187,9 @@ function sauvegarderSalles(rawData, fileName) {
     sauvegarder('tab_salles', tab_salles);
     verif_salle.textContent = rawData.length + " places importées";
 
-    remplir_select(); // met à jour le sélecteur de salles
-
+    sauvegarder("tab_salles", tab_salles);
     afficher_listes();
+    remplir_select();
 }
 
 

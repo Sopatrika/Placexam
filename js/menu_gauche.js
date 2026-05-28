@@ -3,7 +3,6 @@
 //=================================================================================================================================================================
 
 //FONCTION POUR OUVRIR LE MENU DEROULANT A GAUCHE ------------------------------------------------------------------------------------------------------------------
-
 const menu_listes = document.querySelector(".menu_listes");
 const button_menu_gauche = document.querySelector(".button_menu_gauche");
 
@@ -13,9 +12,7 @@ button_menu_gauche.addEventListener("click", () => {
 
 
 
-
 //FONCTION POUR OUVRIR/FERMER LES LISTES DANS LE MENU DEROULANT ------------------------------------------------------------------------------------------------------------
-
 const btn_sec_menu = document.querySelectorAll(".btn-section-menu");
 const menu_sec = document.querySelectorAll(".menu_deroulant_gauche > section");
 
@@ -44,9 +41,7 @@ btn_sec_menu.forEach(btn => {
 
 
 
-
-//FONCTION POUR CREER LES BLOCS DANS LE MENU --------------------------------------------------------------------------------------------------------------------------------
-
+//FONCTION POUR CREER LES BLOCS DE LISTE DANS LE MENU ----------------------------------------------------------------------------------------------------------------------
 function bloc_listes(liste, type) {
     let bloc_el = document.createElement("li");
     bloc_el.dataset.name = liste;
@@ -59,14 +54,7 @@ function bloc_listes(liste, type) {
             </svg>
             <span class="nom_texte"></span>
         </div>
-        <div class="ul_icons">
-            <svg class="trash_element" width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5.33333 9.33333H26.6667M13.3333 14.6667V22.6667M18.6667 14.6667V22.6667M6.66666 9.33333L7.99999 25.3333C7.99999 26.0406 8.28095 26.7189 8.78104 27.219C9.28114 27.719 9.95942 28 10.6667 28H21.3333C22.0406 28 22.7188 27.719 23.2189 27.219C23.719 26.7189 24 26.0406 24 25.3333L25.3333 9.33333M12 9.33333V5.33333C12 4.97971 12.1405 4.64057 12.3905 4.39052C12.6406 4.14048 12.9797 4 13.3333 4H18.6667C19.0203 4 19.3594 4.14048 19.6095 4.39052C19.8595 4.64057 20 4.97971 20 5.33333V9.33333" stroke="#FBFDFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <svg class="rename_element" width="28" height="28" viewBox="0 0 50 41" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M31.25 24.3333L22.9167 32.6667H43.75V24.3333H31.25ZM25.125 5.97915L6.25 24.8541V32.6667H14.0625L32.9375 13.7916L25.125 5.97915ZM38.9792 7.74998C39.7917 6.93748 39.7917 5.58332 38.9792 4.81248L34.1042 -0.0625169C33.7138 -0.45054 33.1858 -0.668335 32.6354 -0.668335C32.085 -0.668335 31.557 -0.45054 31.1667 -0.0625169L27.3542 3.74998L35.1667 11.5625L38.9792 7.74998Z" fill="#FBFDFF"/>
-            </svg>
-        </div>
+        ${creer_icones(false)}
     `;
 
     bloc_el.querySelector('.nom_texte').textContent = liste;
@@ -78,16 +66,54 @@ function bloc_listes(liste, type) {
 
 
 // FONCTION POUR AFFICHER LES LISTES DANS LE MENUS ----------------------------------------------------------------------------------------------------------------------
-function afficher_listes() {
+document.addEventListener("donneesMisesAJour", (e) => {
+    const type_modifie = e.detail.type; // Permet de savoir si on a touché "salle", "etu" ou "tout"
+    
+    // On vide le HTML pour le reconstruire
     if (conteneur_etu_ul) conteneur_etu_ul.innerHTML = "";
     if (conteneur_salle_ul) conteneur_salle_ul.innerHTML = "";
 
-    // Pour les étudiants, on ne change rien
+    // On repeuple les listes depuis les tableaux mémoire
     tab_etu.forEach(liste => {
-        const nom = liste.nom_fichier || "Liste sans nom";
-        const li = bloc_listes(nom, "etu"); 
+        const li = bloc_listes(liste.nom_fichier || "Liste sans nom", "etu");
         if (conteneur_etu_ul) conteneur_etu_ul.appendChild(li);
     });
+
+    tab_salles.forEach(salle => {
+        const li = bloc_listes(salle.nom_salle, "salle");
+        if (conteneur_salle_ul) conteneur_salle_ul.appendChild(li);
+    });
+
+    // On vérifie quelle section (détail) est actuellement ouverte
+    const type_ouvert = label_nom_liste.dataset.type;
+    const nom_ouvert = label_nom_liste.textContent;
+
+    // Si on a modifié la donnée qui est actuellement affichée, on rafraîchit la vue
+    if (type_ouvert === type_modifie || type_modifie === "tout") {
+        
+        // CORRECTIF MENU : Si on est sur une catégorie globale, on la recharge directement
+        if (nom_ouvert === "Salles" || nom_ouvert === "Matières" || nom_ouvert === "Historique des placements") {
+            ouvrir_details_liste(nom_ouvert, type_ouvert);
+        } else {
+            // Sinon, c'est qu'on regardait une liste étudiante précise, on vérifie si elle existe encore
+            const existe_encore = (type_ouvert === "salle") ? getListeSalle(nom_ouvert) : getListeEtu(nom_ouvert);
+            
+            if (existe_encore) {
+                ouvrir_details_liste(nom_ouvert, type_ouvert);
+            } else {
+                // Si la liste spécifique a été supprimée, on ferme le panneau latéral
+                fermer_formulaire(document.querySelector(".sous_sec")); 
+            }
+        }
+    }
+});
+
+// 2. On transforme afficher_listes() en un déclencheur d'événement (Dispatcher)
+// Ainsi, partout dans ton code (script.js, importation.js), quand tu appelleras afficher_listes(), 
+// ça déclenchera proprement l'Observateur ci-dessus !
+function afficher_listes() {
+    const event = new CustomEvent("donneesMisesAJour", { detail: { type: "tout" } });
+    document.dispatchEvent(event);
 }
 
 // Appel initial au chargement de la page pour afficher ce qui est dans le LocalStorage
@@ -105,89 +131,79 @@ let type_edition = "";
 let index_edition = -1; 
 let ancien_nom_liste = ""; 
 
-
-
 // AFFICHER LES DÉTAILS D'UNE LISTE DANS LE MENU -------------------------------------------------------------------------------------------------------------------------------
 function ouvrir_details_liste(nom_cible, typeListe) {
-
-    let elementsArray = CONFIG_SECTION[typeListe].get_donnees(nom_cible); //demande à CONFIG_SECTION de donner le bon tableau
+    const elementsArray = CONFIG_SECTION[typeListe].get_donnees(nom_cible);
     if (!elementsArray) return;
 
-    const regles = CONFIG_SECTION[typeListe]; // Récupère les règles
-
+    const regles = CONFIG_SECTION[typeListe];
     sec_first.style.display = (typeListe === "etu") ? "flex" : "none";
-    
-    //Si c'est une liste d'étudiante, la barre de recherche sera affiché
+
+    // Configurer l'interface (barre de recherche, boutons)
     conteneur_search_bar.style.display = regles.affichage.recherche ? "flex" : "none";
     if (regles.affichage.recherche && search_input_etu) search_input_etu.value = "";
-
-    //Si c'est l'historique des placements, on ajoute le bouton supprimer l'historique
     btn_supp_histo.style.display = regles.affichage.supp_histo ? "flex" : "none";
     if (tab_placer.length < 1) btn_supp_histo.style.display = "none";
-        
-    //si ce n'est pas l'historique des placements, on ajoute le bouton ajouter
     btn_ajouter.dataset.source = nom_cible;
     btn_ajouter.style.display = regles.affichage.bouton_ajout ? "flex" : "none";
-    
+
     label_nom_liste.textContent = nom_cible;
     label_nom_liste.dataset.type = typeListe;
-         
     conteneur_liste_elements.innerHTML = "";
 
-    //On affiche les blocs d'éléments
+    // Afficher les éléments
     elementsArray.forEach((item, index) => {
-        let classes = regles.affichage.ligne_simple ? "bloc_element ligne_simple" : "bloc_element";
-        let li_val = `<ul class="${classes}" data-index="${index}">`;
-        
-        if (typeListe === "matiere") {
-            li_val += `<li>${item}</li>`;
-        } else if (typeListe === "historique") {
-            li_val += `<li>${item.titre || "Placement n°" + (index+1)}</li>`;
-        } else if (typeListe === "salle") {
-            li_val += `<li><b>${item.nom_salle}</b></li>`;
-            li_val += `<li>Capacité max : <b>${item.capacite_max}</b> places</li>`;
-            li_val += `<li>Nombre de rangées : <b>${item.nbr_rangees}</b></li>`;
-            li_val += `<li>Espaces entre étudiants : <b>${item.sieges_espaces}</b> siège(s)</li>`;
-        } else {
-            // Affichage pour les Étudiants
-            Object.keys(item).forEach(key => {
-                // 🧹 On a supprimé la mention à "indisponible"
-                if (key !== "tiers_temps") {
-                    li_val += `<li>${item[key]}</li>`;
-                }
-            });
-            const estCoche = item.tiers_temps ? "checked" : "";
-            li_val += `<li>
-                <label class="badge-checkbox" style="--checkcolor: none">
-                    <input type="checkbox" class="check_tier" ${estCoche}>
-                    <span class="badge-text">Tiers-temps</span>
-                    <span class="custom-checkbox"></span>
-                </label>
-            </li>`;
+        const ul = document.createElement("ul");
+        ul.className = "bloc_element";
+        ul.dataset.index = index;
+
+        // Utiliser un générateur de contenu spécifique au type
+        const contenu = generer_contenu_element(item, typeListe, index);
+        contenu.forEach(html => {
+            const li = document.createElement("li");
+            li.innerHTML = html;
+            ul.appendChild(li);
+        });
+
+        // Ajouter icône tiers-temps si nécessaire
+        if (regles.affichage.icon_tierstemps && item.tiers_temps) {
+            ul.appendChild(creer_icone_tier_temps());
         }
 
-        li_val += `<li>
-                    <div class="ul_icons">`;
-        
-        //  ajoute l'icône de chargement uniquement pour l'historique
-        if (typeListe === "historique") {
-            li_val += `<svg class="load_element" title="Charger ce placement" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path id="Vector" d="M11.6667 3.66667H3.66667C2.95942 3.66667 2.28115 3.94762 1.78105 4.44771C1.28095 4.94781 1 5.62609 1 6.33333V19.6667C1 20.3739 1.28095 21.0522 1.78105 21.5523C2.28115 22.0524 2.95942 22.3333 3.66667 22.3333H17C17.7072 22.3333 18.3855 22.0524 18.8856 21.5523C19.3857 21.0522 19.6667 20.3739 19.6667 19.6667V11.6667M10.3333 13L22.3333 1M22.3333 7.66667V1H15.6667" stroke="#EBF5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-        }
-
-        li_val += `     <svg class="trash_element" title="supprimer l'élément" width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33333 9.33333H26.6667M13.3333 14.6667V22.6667M18.6667 14.6667V22.6667M6.66666 9.33333L7.99999 25.3333C7.99999 26.0406 8.28095 26.7189 8.78104 27.219C9.28114 27.719 9.95942 28 10.6667 28H21.3333C22.0406 28 22.7188 27.719 23.2189 27.219C23.719 26.7189 24 26.0406 24 25.3333L25.3333 9.33333M12 9.33333V5.33333C12 4.97971 12.1405 4.64057 12.3905 4.39052C12.6406 4.14048 12.9797 4 13.3333 4H18.6667C19.0203 4 19.3594 4.14048 19.6095 4.39052C19.8595 4.64057 20 4.97971 20 5.33333V9.33333" stroke="#FBFDFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <svg class="rename_element" title="modifier l'élément" width="24" height="24" viewBox="0 0 50 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M31.25 24.3333L22.9167 32.6667H43.75V24.3333H31.25ZM25.125 5.97915L6.25 24.8541V32.6667H14.0625L32.9375 13.7916L25.125 5.97915ZM38.9792 7.74998C39.7917 6.93748 39.7917 5.58332 38.9792 4.81248L34.1042 -0.0625169C33.7138 -0.45054 33.1858 -0.668335 32.6354 -0.668335C32.085 -0.668335 31.557 -0.45054 31.1667 -0.0625169L27.3542 3.74998L35.1667 11.5625L38.9792 7.74998Z" fill="#FBFDFF"/></svg>
-                    </div>
-                    </li>
-            </ul>`;
-        conteneur_liste_elements.insertAdjacentHTML("beforeend", li_val);
+        // Ajouter icônes d'action
+        const li_actions = document.createElement("li");
+        li_actions.innerHTML = creer_icones(typeListe === "historique");
+        ul.appendChild(li_actions);
+        conteneur_liste_elements.appendChild(ul);
     });
 
     document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => s.classList.remove("sec_open"));
     sous_sec.classList.add("sec_open");
 }
 
+// Nouvelle fonction utilitaire
+function generer_contenu_element(item, typeListe, index) {
+    const regles = CONFIG_SECTION[typeListe];
+    return regles.format_affichage ? regles.format_affichage(item, index) : [];
+}
 
 
+//FONCTION POUR CREER LES ICONES POUR LES LISTES ET ELEMENT --------------------------------------------------------------------------------------------------------------
+function creer_icones(afficher_charger = false) {
+    let html = `<div class="ul_icons">`;
+
+    // Ajoute l'icône "charger" uniquement pour l'historique
+    if (afficher_charger) {
+        html += `<svg class="load_element" title="Charger ce placement" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.6667 3.66667H3.66667C2.95942 3.66667 2.28115 3.94762 1.78105 4.44771C1.28095 4.94781 1 5.62609 1 6.33333V19.6667C1 20.3739 1.28095 21.0522 1.78105 21.5523C2.28115 22.0524 2.95942 22.3333 3.66667 22.3333H17C17.7072 22.3333 18.3855 22.0524 18.8856 21.5523C19.3857 21.0522 19.6667 20.3739 19.6667 19.6667V11.6667M10.3333 13L22.3333 1M22.3333 7.66667V1H15.6667" stroke="#EBF5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    }
+
+    // Ajoute les icônes supprimer et renommer
+    html += `<svg class="trash_element" title="supprimer l'élément" width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33333 9.33333H26.6667M13.3333 14.6667V22.6667M18.6667 14.6667V22.6667M6.66666 9.33333L7.99999 25.3333C7.99999 26.0406 8.28095 26.7189 8.78104 27.219C9.28114 27.719 9.95942 28 10.6667 28H21.3333C22.0406 28 22.7188 27.719 23.2189 27.219C23.719 26.7189 24 26.0406 24 25.3333L25.3333 9.33333M12 9.33333V5.33333C12 4.97971 12.1405 4.64057 12.3905 4.39052C12.6406 4.14048 12.9797 4 13.3333 4H18.6667C19.0203 4 19.3594 4.14048 19.6095 4.39052C19.8595 4.64057 20 4.97971 20 5.33333V9.33333" stroke="#FBFDFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg class="rename_element" title="modifier l'élément" width="24" height="24" viewBox="0 0 50 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M31.25 24.3333L22.9167 32.6667H43.75V24.3333H31.25ZM25.125 5.97915L6.25 24.8541V32.6667H14.0625L32.9375 13.7916L25.125 5.97915ZM38.9792 7.74998C39.7917 6.93748 39.7917 5.58332 38.9792 4.81248L34.1042 -0.0625169C33.7138 -0.45054 33.1858 -0.668335 32.6354 -0.668335C32.085 -0.668335 31.557 -0.45054 31.1667 -0.0625169L27.3542 3.74998L35.1667 11.5625L38.9792 7.74998Z" fill="#FBFDFF"/></svg>
+    </div>`;
+
+    return html;
+}
 
 
 
@@ -219,17 +235,15 @@ function supprimer(poubelle) {
     if (bloc_element) {
         const element_supp = parseInt(bloc_element.dataset.index, 10);
         const list_el = document.querySelector(".nom_liste").textContent;
+        // Cherche la config correspondante (Salles, Matières, Historique)
+        const config_speciale = Object.values(CONFIG_SECTION).find(c => c.nom_liste === list_el);
 
-        if (list_el === "Matières") {
-            tab_matiere.splice(element_supp, 1);
-            sauvegarder('tab_matiere', tab_matiere);
-        } else if (list_el === "Historique des placements") {
-            tab_placer.splice(element_supp, 1);
-            sauvegarder('tab_placement', tab_placer);
-        } else if (list_el === "Salles") { 
-            tab_salles.splice(element_supp, 1);
-            sauvegarder('tab_salles', tab_salles);
+        if (config_speciale) {
+            // Supprime directement dans le tableau correspondant
+            config_speciale.tableau.splice(element_supp, 1);
+            sauvegarder(config_speciale.storage_key, config_speciale.tableau);
         } else {
+            // Si c'est une liste d'étudiants
             let listeEtu = getListeEtu(list_el);
             if (listeEtu) {
                 listeEtu.donnees.splice(element_supp, 1);
@@ -267,7 +281,7 @@ function edition_formulaire() {
                 objet_a_editer = tab_salles[index_edition];
                 break;
             case "matiere":
-                objet_a_editer = { nom: tab_matiere[index_edition] };
+                objet_a_editer = tab_matiere[index_edition];
                 break;
             case "historique":
                 objet_a_editer = { titre: tab_placer[index_edition].titre };
@@ -284,9 +298,8 @@ function edition_formulaire() {
         const champs_config = CONFIG_SECTION[type_edition].champs;
         
         champs_config.forEach(champ => {
-            // On récupère l'ancienne valeur si on modifie, sinon on met vide
-            let valeur = (mode_edition === "modifier" && objet_a_editer[champ.id] !== undefined) 
-                         ? objet_a_editer[champ.id] : "";
+            //récupère l'ancienne valeur si on modifie, sinon met vide
+            let valeur = (mode_edition === "modifier" && objet_a_editer[champ.id] !== undefined) ? objet_a_editer[champ.id] : "";
                          
             html_formulaire += generer_champ_input(champ.label, `input_${champ.id}`, valeur, champ.type);
         });
@@ -376,7 +389,6 @@ function rafraichir_menu_principal(selecteur_section) {
 
 // FONCTION POUR RECHERCHER UN ETUDIANT A PARTIR DE LA BARRE DE RECHERCHE -----------------------------------------------------------------------------------
 const searchInput = document.querySelector(".search_bar input");
-if (searchInput) {
     searchInput.addEventListener("input", (e) => {
         const recherche = e.target.value.toLowerCase().trim();
         const bloc_etu = document.querySelectorAll(".liste_elements .bloc_element");
@@ -390,11 +402,10 @@ if (searchInput) {
             }
         });
     });
-}
 
 
 
-// FONCTION POUR GERER LES CHECKBOX TIERS-TEMPS/INDISPONIBLE DANS LE MENU GAUCHE -----------------------------------------------------------------------------------
+// FONCTION POUR GERER LES CHECKBOX TIERS-TEMPS DANS LE MENU GAUCHE -----------------------------------------------------------------------------------
 // Permet de cocher si un étudiant a un tiers-temps ou non et cocher si une place est indisponible
 document.addEventListener("change", (e) => {
     if (e.target.classList.contains("check_tier") || e.target.classList.contains("check_indispo")) {
@@ -403,23 +414,50 @@ document.addEventListener("change", (e) => {
         const nom_liste = document.querySelector(".nom_liste").textContent;
 
         let listeEtu = getListeEtu(nom_liste);
-        let listeSalle = getListeSalle(nom_liste);
 
         if (listeEtu && e.target.classList.contains("check_tier")) {
+            // Mettre à jour les données
             listeEtu.donnees[index].tiers_temps = e.target.checked;
             sauvegarder('tab_etu', tab_etu);
-            
+
+            // Mettre à jour le tableau si nécessaire
             if (select_etu.value === nom_liste) afficher_tableau();
 
+            // Mettre à jour l’icône dans le menu gauche
+            const existingIcon = bloc.querySelector(".icon_bloc_element");
+            if (e.target.checked) {
+                // Si l’icône n’existe pas, on l’ajoute
+                if (!existingIcon) {
+                    // Trouver le li contenant les icônes d'action (ul_icons)
+                    const actionsLi = bloc.querySelector(".ul_icons")?.closest("li");
+                    if (actionsLi) {
+                        // Insérer l’icône juste avant les icônes d’action
+                        bloc.insertBefore(creer_icone_tier_temps(), actionsLi);
+                    } else {
+                        // Si on ne trouve pas, on l’ajoute à la fin
+                        bloc.appendChild(creer_icone_tier_temps());
+                    }
+                }
+            } else {
+                // Si l’icône existe, on la supprime
+                if (existingIcon) {
+                    existingIcon.remove();
+                }
+            }
         }
     }
 });
 
+function creer_icone_tier_temps() {
+    const li = document.createElement("li");
+    li.className = "icon_bloc_element";
+    li.innerHTML = svg_tier_temps;
+    return li;
+}
+
 
 //FONCTION POUR SUPPRIMER TOUTE L'HISTORIQUE DES PLACEMENT ----------------------------------------------------------------------------------------------------------------
-
 btn_supp_histo.addEventListener("click", supp_histo_placement)
-
 function supp_histo_placement() {
     if (!confirm("Voulez-vous vraiment supprimer tout l'historique des placements ?")) return;
 

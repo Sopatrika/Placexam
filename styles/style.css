@@ -19,6 +19,7 @@
     /* couleur utilisé souvent lorsqu'on survol un bouton */
     --hover: #2a5694;
     --light-grey: #DADADA;
+    --gris: #9CA3AF;
     /* Police d'écriture du site */
     --font-family: "Mono";
     /* effet d'ombre extérieur sur certains éléments */
@@ -38,6 +39,18 @@ body {
 
 .no_scroll {
     overflow: hidden;
+}
+
+.fond_sombre {
+    transition: 0.2s ease;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: var(--black);
+    opacity: 0.5;
+    z-index: 4;
 }
 
 button {
@@ -111,28 +124,48 @@ header {
     width: 100%;
 }
 
-.btn-header-export {
+/* Boutons du header */
+.header-action-group {
     position: absolute;
     right: 30px;
+    display: flex;
+    background: var(--white);
+    border: solid 1px var(--darkblue);
+    border-radius: 25px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.btn-header-action {
     display: flex;
     gap: 10px;
     align-items: center;
     color: var(--darkblue);
-    background: var(--white);
-    padding: 10px 20px;
-    border-radius: 25px;
-    transition: 0.2s ease;
+    padding: 5px 10px;
+    font-size: 14px;
     cursor: pointer;
-    font-weight: bold;
+    transition: 0.2s ease;
+    user-select: none;
 }
 
-.btn-header-export:hover {
+.btn-import {
+    border-right: 1px solid var(--light-grey);
+}
+
+.btn-export {
+    background: var(--white);
+}
+
+.btn-header-action:hover {
     background: var(--light-grey);
 }
 
-.btn-header-export:hover svg {
-    transform: translateX(5px);
-    transition: 0.2s ease;
+.btn-header-action svg {
+    transition: transform 0.2s ease;
+}
+
+.btn-header-action:hover svg {
+    transform: scale(1.2)
 }
 
 /* Main */
@@ -155,7 +188,7 @@ main {
     align-items: center;
     transform: translateX(-300px);
     transition: transform 0.4s ease;
-    z-index: 10;
+    z-index: 15;
     color: var(--white);
 }
 
@@ -264,6 +297,7 @@ main {
 
 .menu_ul li {
     margin-bottom: 15px;
+    height: 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -283,10 +317,6 @@ main {
     cursor: pointer;
     width: 100px;
     transition: 0.2s ease;
-}
-
-.nom_texte:hover {
-    transform: translateX(10px);
 }
 
 .ul_icons {
@@ -346,11 +376,17 @@ main {
     max-width: 100px;
 }
 
+.nom_liste:hover, .nom_texte:hover {
+    overflow: auto;
+    text-overflow:clip;
+    white-space: wrap; 
+}
+
 .search_bar {
     display: flex;
     align-items: center;
     position: relative;
-    width: 100%;
+    margin: 0 25px;
 }
 
 .search_bar input {
@@ -395,6 +431,7 @@ main {
 }
 
 .bloc_element {
+    position: relative;
     margin: 0;
     padding: 15px 20px;
     display: flex;
@@ -429,7 +466,7 @@ main {
     font-size: 1rem;
 }
 
-/* ligne simple est réservé à la liste des matières et à l'historique des placement */
+/* ligne simple est réservé à la liste des matières */
 .bloc_element.ligne_simple {
     flex-direction: row;
     justify-content: space-between;
@@ -451,6 +488,16 @@ main {
 
 .bloc_element.ligne_simple li {
     margin-top: 0;
+}
+
+.icon_bloc_element {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.icon_bloc_element svg {
+    fill: var(--white);
 }
 
 .btn_ajouter, .btn_supp_historique {
@@ -669,18 +716,6 @@ h2 {
 
 /* ---- Menu Import étudiant ---- */
 
-.fond_sombre {
-    transition: 0.2s ease;
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    background: var(--black);
-    opacity: 0.5;
-    z-index: 4;
-}
-
 .menu_import_etu {
     border: solid 2px var(--white);
     border-radius: 16px;
@@ -713,6 +748,9 @@ h2 {
     border-radius: 16px;
     transition: 0.2s ease;
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .btn_annuler {
@@ -767,6 +805,7 @@ h3 {
 
 .form_salle {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 30px;
 }
@@ -1080,6 +1119,15 @@ select:focus, select:hover {
     margin: 0 30%;
 }
 
+td .badge-checkbox:has(.check-absence) {
+    --checkcolor: var(--black);
+    transition: 0.2s ease;
+}
+
+td .badge-checkbox:has(.check-absence:checked) {
+    --checkcolor: var(--rouge);
+}
+
 /* ----- Plan de salle ------ */
 
 .plan_salle {
@@ -1097,6 +1145,7 @@ select:focus, select:hover {
     background: var(--darkblue);
     color: var(--white);
     display: flex;
+    flex-wrap: nowrap;
     justify-content: space-between;
     align-items: center;
     font-size: 0.9rem;
@@ -1105,6 +1154,7 @@ select:focus, select:hover {
 
 .conteneur_details {
     display: flex;
+    align-items: center;
     gap: 40px; 
     flex: 1;
     text-transform: uppercase;
@@ -1118,6 +1168,7 @@ select:focus, select:hover {
     display: flex;
     transition: 0.2s ease;
     margin-left: 50px;
+    cursor: pointer;
 }
 
 .icon_zoom:hover {
@@ -1155,6 +1206,12 @@ select:focus, select:hover {
     display: flex;
     align-items: center;
     justify-content: center;
+    color: var(--white);
+}
+
+.place svg {
+    stroke: var(--white);
+    fill: var(--white) !important;
 }
 
 /* Place prise  */
@@ -1164,7 +1221,7 @@ select:focus, select:hover {
 
 /* Place vide */
 .place[data-etat="vide"] {
-    background: #9CA3AF; /* Un joli gris neutre */
+    background: var(--gris);
 }
 
 /* Place Indisponible  */
@@ -1186,7 +1243,7 @@ select:focus, select:hover {
     left: 1;
     width: 60vw;
     height: auto;
-    z-index: 9999;
+    z-index: 10;
     background: var(--background);
 }
 
@@ -1231,17 +1288,14 @@ select:focus, select:hover {
     height: 15px;
     border-radius: 50%;
     box-sizing: border-box;
+    background: var(--gris);
 }
 
-.cercle_legende:first-child {
+.place_occupe {
     background: var(--darkblue);
 }
 
-.cercle_legende:nth-child(2) {
-    background: #9CA3AF;
-}
-
-.cercle_legende:last-child {
+.place_vide {
     border: 2px solid var(--black); 
     background: transparent;
 }
@@ -1279,6 +1333,11 @@ select:focus, select:hover {
 .zero_etu, .capacite_max, .ajout_salle, #liste_salles_cumulees, .ajout_salle_sup {
     margin-top: 20px;
     display: none;
+}
+
+.after_affichage {
+    display: flex;
+    justify-content: space-between;
 }
 
 .message_visible {
@@ -1348,10 +1407,138 @@ select:focus, select:hover {
     cursor: pointer;
 }
 
+/* ------------ Menu exporter -----------  */
+
+#menu_exporter {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    max-height: 90vh;
+    transform: translate(-50%, -50%);
+    background: var(--darkblue);
+    color: var(--white);
+    padding: 30px;
+    border-radius: 15px;
+    width: 400px;
+    z-index: 1000;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    width: 90%;
+    max-width: 400px;
+    transition: 0.2s ease;
+}
+
+#menu_exporter h2 {
+    margin: 0;
+    text-align: center;
+    font-size: 1.5em;
+}
+
+.erreur_exporter {
+    color: var(--rouge);
+    font-size: 0.9em;
+    text-align: center;
+    font-weight: bold;
+    min-height: 15px;
+}
+
+#menu_exporter .groupe_inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#menu_exporter .groupe_inputs label {
+    font-weight: bold;
+    font-size: 0.9em;
+    color: var(--light-grey);
+    margin-top: 5px;
+}
+
+#menu_exporter .groupe_inputs input {
+    background: transparent;
+    border: 1px solid var(--light-grey);
+    color: var(--white);
+    padding: 10px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1em;
+    transition: 0.2s ease;
+}
+
+#menu_exporter .groupe_inputs input::placeholder {
+    color: var(--light-grey);
+}
+
+#menu_exporter .groupe_inputs input:focus {
+    outline: none;
+    border-color: var(--white);
+    background: var(--light-grey);
+}
+
+/* ------------------ popup absence ------------ */
+
+.popup_absence {
+    position: fixed;
+    right: 50px;
+    bottom: 25px;
+    background: var(--darkblue);
+    color: var(--white);
+    z-index: 20;
+    width: 320px;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    transform: translateX(500px);
+    transition: 0.5s ease;
+}
+
+.popup_absence.pop {
+    transform: translateX(0px);
+}
+
+.remove_popup {
+    transition: 0.2s ease;
+    cursor: pointer;
+}
+
+.remove_popup:hover {
+    transform: scale(1.2);
+}
+
+.btn_absence {
+    padding: 10px 20px;
+    border-radius: 16px;
+    background: var(--white);
+    display: flex;
+    margin-left: auto;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.btn_absence svg {
+    transition: 0.2s ease;
+}
+
+.btn_absence:hover svg {
+    transform: translateX(10px)
+}
+
 /* Pied de page */
 
 footer {
     margin-top: 200px;
     background: var(--darkblue);
     padding: 50px;
+}
+
+/* Responsive */
+
+@media (max-width: 1400px) {
+    main {
+        margin: 0% 0%;
+    }
 }
