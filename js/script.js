@@ -184,24 +184,34 @@ function EnregChoix() {
         const storageKey = "form: "+ element.id;
         const savedValue = recuperer(storageKey, "");
         
-        if (savedValue !== null) {
+        if (savedValue !== null && savedValue !== "") {
             if (element.type === 'checkbox') {
-                element.checked = (savedValue === 'true');
+                element.checked = (savedValue === true || savedValue === 'true');
             } else if (element.tagName === 'SELECT') {
-                // Vérifier si l'option existe avant de l'assigner
                 const options = Array.from(element.options);
-                if (options.some(opt => opt.value === savedValue)) {
-                    element.value = savedValue;
+                const optionTrouvee = options.find(opt => {
+                    return comparerNoms(opt.value, savedValue) || 
+                           opt.value.toLowerCase().includes(String(savedValue).toLowerCase()) ||
+                           String(savedValue).toLowerCase().includes(opt.value.toLowerCase());
+                });
+                
+                if (optionTrouvee) {
+                    element.value = optionTrouvee.value;
                 }
             } else {
                 element.value = savedValue; 
             }
         }
 
-        element.addEventListener('input', () => {
+        // Fonction unique de sauvegarde
+        const enregistrerValeur = () => {
             const val = (element.type === 'checkbox') ? element.checked : element.value;
             sauvegarder(storageKey, val);
-        });
+        };
+
+        // On écoute 'input' pour les champs texte ET 'change' pour les selects et checkboxes
+        element.addEventListener('input', enregistrerValeur);
+        element.addEventListener('change', enregistrerValeur);
     });
 }
 
@@ -353,102 +363,6 @@ btn_popup_absence.addEventListener("click", () => {
 
 
 
-// EXPORTER LES DONNÉES EN JSON ------------------------------------------------------------------------------------------------------------------------------------
-function exporterDonnees() {
-    const data = {
-        tab_etu: tab_etu,
-        tab_filtres_spe: tab_filtres_spe,
-        tab_matiere: tab_matiere,
-        tab_placement: tab_placer,
-        tab_salles: tab_salles
-    };
-
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    // Nom du fichier : Placexam_export_YYYYMMDD_HHMMSS.json
-    const now = new Date();
-    const dateStr = now.getFullYear() + 
-                    String(now.getMonth()+1).padStart(2,'0') + 
-                    String(now.getDate()).padStart(2,'0') + '_' +
-                    String(now.getHours()).padStart(2,'0') + 
-                    String(now.getMinutes()).padStart(2,'0') + 
-                    String(now.getSeconds()).padStart(2,'0');
-    const filename = `Placexam_export_${dateStr}.json`;
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-// IMPORTER LES DONNÉES DEPUIS UN JSON ------------------------------------------------------------------------------------------------------------------------------------
-function importerDonnees(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const data = JSON.parse(e.target.result);
-
-            // Vérifier que les clés existent
-            if (!data.tab_etu || !data.tab_filtres_spe || !data.tab_matiere || !data.tab_placement || !data.tab_salles) {
-                alert("Le fichier JSON ne contient pas toutes les données nécessaires (tab_salles manquant).");
-                return;
-            }
-
-            // Remplacer les données
-            tab_etu = data.tab_etu;
-            tab_filtres_spe = data.tab_filtres_spe;
-            tab_matiere = data.tab_matiere;
-            tab_placer = data.tab_placement;
-            tab_salles = data.tab_salles;
-
-            // Sauvegarder dans localStorage
-            sauvegarder("tab_etu", tab_etu);
-            sauvegarder("tab_filtres_spe", tab_filtres_spe);
-            sauvegarder("tab_matiere", tab_matiere);
-            sauvegarder("tab_placement", tab_placer);
-            sauvegarder("tab_salles", tab_salles);
-
-            // Rafraîchir l'interface
-            if (typeof afficher_listes === "function") afficher_listes();
-            if (typeof remplir_select === "function") remplir_select();
-            if (typeof generer_filtres === "function") generer_filtres();
-            if (typeof verifier_capacite === "function") verifier_capacite();
-            if (typeof actualiser_affichage_complet === "function") actualiser_affichage_complet();
-            if (typeof recup_placement_enreg === "function") recup_placement_enreg();
-            
-            // Réinitialiser le placement actuel
-            effacer_storage("placer_actuel");
-            placement_actuel_donnees = [];
-
-            alert("Import réussi !");
-        } catch (error) {
-            alert("Erreur lors de l'import : " + error.message);
-        }
-    };
-    reader.readAsText(file);
-    // Réinitialiser l'input pour permettre de réimporter le même fichier
-    event.target.value = "";
-}
-
-// Écouteur pour le bouton export
-document.querySelector("#btn-header-export").addEventListener("click", exporterDonnees);
-// Écouteur pour le bouton import (déclenche l'input file caché)
-document.querySelector("#btn-header-import").addEventListener("click", () => {
-    document.getElementById("import-json-input").click();
-});
-// Écouteur pour l'input file (quand un fichier est sélectionné)
-document.getElementById("import-json-input").addEventListener("change", importerDonnees);
-
-
-
 //FONCTION POUR GENERER UN NOM UNIQUE (éviter les doublons) -----------------------------------------------------------------------------------------------------------------
 function generer_nom_unique(nom_base, tableau_recherche, cle_recherche) {
     let nom_final = String(nom_base).trim();
@@ -461,6 +375,15 @@ function generer_nom_unique(nom_base, tableau_recherche, cle_recherche) {
     }
     return nom_final;
 }
+
+// Écouteur pour le bouton export
+document.querySelector("#btn-header-export").addEventListener("click", exporterDonnees);
+// Écouteur pour le bouton import (déclenche l'input file caché)
+document.querySelector("#btn-header-import").addEventListener("click", () => {
+    document.getElementById("import-json-input").click();
+});
+// Écouteur pour l'input file (quand un fichier est sélectionné)
+document.getElementById("import-json-input").addEventListener("change", importerDonnees);
 
 // INITIALISATION
 remplir_select();

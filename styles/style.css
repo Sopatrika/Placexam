@@ -222,7 +222,7 @@ main {
     left: 350px;
     top: 50%;
     border-radius: 0 0 8px 8px;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
     transition: 0.2s ease;
 }
 
@@ -529,7 +529,7 @@ main {
 
 /* Section edition (ajouter ou modifier un élément) */
 
-.edition_sec, .charger_sec {
+.supprimer_sec.sec_open .edition_sec, .charger_sec {
     display: none;
     padding: 30px 20px;
     display: flex;
@@ -538,11 +538,11 @@ main {
     gap: 35px;
 }
 
-.edition_sec.sec_open, .charger_sec.sec_open {
+.supprimer_sec.sec_open .edition_sec.sec_open, .charger_sec.sec_open {
     display: flex; 
 }
 
-.titre_edition_sec {
+.titre_sec {
     display: flex;
     justify-content: center;
     text-align: center;
@@ -716,7 +716,7 @@ h2 {
 
 /* ---- Menu Import étudiant ---- */
 
-.menu_import_etu {
+.menu_import {
     border: solid 2px var(--white);
     border-radius: 16px;
     position: fixed;
@@ -730,11 +730,24 @@ h2 {
     transition: 0.2s ease;
 }
 
+.titre_menu_mapping {
+    color: var(--white); 
+    text-align: center; 
+    margin-bottom: 20px;
+}
+
+#conteneur_selects_mapping {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 50px 0px;
+}
+
 .choix_colonnes {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
+    margin-bottom: 10px;
 }
 
 .groupe_btn {
@@ -780,7 +793,7 @@ h2 {
 hr {
     border: solid 1px var(--darkblue);
     width: 100%;
-    margin: 20vh 0;
+    margin: 10vh 0;
 }
 /*---------------------------------- Section Salles d'exam ---------------------*/
 

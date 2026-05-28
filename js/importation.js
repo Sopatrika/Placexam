@@ -1,13 +1,80 @@
-
 // =================================================================================================================================================================
 // GESTION DE L'IMPORTATION DE FICHIERS 
 //=================================================================================================================================================================
 
 
+// CONFIGURATION DES IMPORTS ---------------------------------------------------------------------------------------------------------------------------------------
+const CONFIG_IMPORT = {
+    "import_etudiants": {
+        titre: "Mapping - Liste Étudiante",
+        champs_requis: [
+            { id: "nom", label: "NOM"},
+            { id: "prenom", label: "PRÉNOM"},
+            { id: "specialite", label: "SPÉCIALITÉ"}
+        ],
+        formater_donnees: (ligne_excel, map_colonnes) => {
+            let etu = {
+                nom: ligne_excel[map_colonnes.nom],
+                prenom: ligne_excel[map_colonnes.prenom],
+                specialite: ligne_excel[map_colonnes.specialite] || "Aucun"
+            };
+            // On ajoute les autres colonnes comme propriétés bonus de l'étudiant
+            for (let key in ligne_excel) {
+                if (key !== map_colonnes.nom && key !== map_colonnes.prenom && key !== map_colonnes.specialite) {
+                    etu[key] = ligne_excel[key];
+                }
+            }
+            return etu;
+        },
+        sauvegarder: (cleanData, fileName) => {
+            let nom_final = generer_nom_unique(fileName, tab_etu, "nom_fichier");
+            tab_etu.unshift({
+                nom_fichier: nom_final,
+                date_import: new Date().toLocaleDateString(),
+                donnees: cleanData
+            });
+            sauvegarder('tab_etu', tab_etu);
+            const verif_etu = document.querySelector("#verif_etu");
+            if (verif_etu) verif_etu.textContent = cleanData.length + " étudiants importés avec succès !"; 
+        }
+    },
+    "import_matieres": {
+        titre: "Mapping - Liste des Matières",
+        champs_requis: [
+            { id: "nom", label: "NOM DE LA MATIÈRE"},
+            { id: "prof", label: "NOM DU PROFESSEUR"} 
+        ],
+        formater_donnees: (ligne_excel, map_colonnes) => {
+            return {
+                nom: ligne_excel[map_colonnes.nom],
+                prof: map_colonnes.prof ? ligne_excel[map_colonnes.prof] : "Non renseigné"
+            };
+        },
+        sauvegarder: (cleanData, fileName) => {
+            let nb_ajouts = 0;
+            cleanData.forEach(mat => {
+                if (!tab_matiere.some(m => comparerNoms(m.nom, mat.nom))) {
+                    tab_matiere.push(mat);
+                    nb_ajouts++;
+                }
+            });
+            sauvegarder('tab_matiere', tab_matiere);
+            
+            // On cible la div pour afficher le message au lieu de l'alert
+            const verif_matiere = document.querySelector("#verif_matiere");
+            if (verif_matiere) {
+                verif_matiere.textContent = `${nb_ajouts} nouvelles matières importées avec succès !`;
+                // Optionnel : on peut forcer la couleur verte de ton CSS
+                verif_matiere.style.color = "var(--valide)"; 
+            }
+        }
+    }
+};
+
 //FONCTION POUR IMPORTER UN FICHIER EXCEL ------------------------------------------------------------------------------------------------------------------
 
 const importFields = document.querySelectorAll(".import-field");
-const allowedExtensions = /(\.xlsx|\.xls|\.csv)$/i; //Extensions autorisés
+const allowedExtensions = /(\.xlsx|\.xls|\.csv|\.json)$/i;
 
 importFields.forEach(field => {
     const fileInput = field.querySelector("input[type='file']");
@@ -15,9 +82,8 @@ importFields.forEach(field => {
     const btnReset = field.querySelector(".btn-reset");
     const btnSubmit = field.querySelector(".btn-submit");
 
-    const text_defaut = fileNameDisplay.textContent;// On sauvegarde le texte par défaut
+    const text_defaut = fileNameDisplay.textContent;
 
-    // quand on met le fichier, son nom apparait 
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -27,175 +93,190 @@ importFields.forEach(field => {
         }
     });
 
-    // Pour supprimer le fichier avec la croix
     btnReset.addEventListener('click', () => {
         fileInput.value = ""; 
         fileNameDisplay.textContent = text_defaut;
     });
 
-    // On Clique sur OK
     btnSubmit.addEventListener('click', () => {
         const file = fileInput.files[0];
         
-        if (!file) { //Si il n'y a pas de fichier importé
+        if (!file) {
             fileNameDisplay.textContent = "Veuillez mettre un fichier Excel";
             return; 
         }
 
-        if (!allowedExtensions.exec(file.name)) { //Si le format est invalide, on met un message d'erreur
-            fileNameDisplay.textContent = "Format invalide (.xlsx, .xls, .csv, .json uniquement)"; //Message pour montrer les formats autorisés
+        if (!allowedExtensions.exec(file.name)) {
+            fileNameDisplay.textContent = "Format invalide (.xlsx, .xls, .csv, .json)";
             fileInput.value = '';
             return;
         } 
 
-        conversionExcel(file, fileInput.id);  //On lance la fonction pour convertir le fichier en Excel
+        conversionExcel(file, fileInput.id); 
 
         fileInput.value = ""; 
         fileNameDisplay.textContent = text_defaut; 
     });
 });
 
-
-
-
 //FONCTION POUR CONVERTIR LE FICHIER EXCEL EN JSON ------------------------------------------------------------------------------------------------------------------------
-//la fonction utilise la librairie Sheet.js (xlsx js) pour convertir un fichier Excel en format json
 function conversionExcel(file, inputId) {
-    
-    const reader = new FileReader();// FileReader est un outil du navigateur pour lire les fichiers locaux
+    const reader = new FileReader();
 
-    reader.onload = (e) => { //Lorsqu'on lit le fichier
-        const data = new Uint8Array(e.target.result); //Conversion du fichier en un tableau que SheetJS peut comprendre
-        const workbook = XLSX.read(data, { type: 'array' }); //workbook est le fichier global
-        const firstSheetName = workbook.SheetNames[0]; //Recupère le nom du premier onglet (sheet) du fichier
-        const worksheet = workbook.Sheets[firstSheetName]; //sélectionne l'onglet pour lire ce qu'il contient
+    reader.onload = (e) => {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
 
-        const rawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" }); //transforme le fichier excel en format json (defval si une case est vide)
-        
-        const headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0];//extrait les premières colonnes pour récupérer les titres des colonnes
+        const rawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+        const headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0];
 
-        if (inputId === "import_etudiants") { // selon le bouton sur lequel on a cliqué (si c'est étudiant)
-            selection_colonnes(headers, rawData, file.name); // On lance le menu de mapping pour les étudiants
-        } 
-        else if (inputId === "import_salles") { //(si c'est salle)
-            sauvegarderSalles(rawData, file.name); //on sauvegarde directement sans menu mapping
+        // Vérifie si l'ID de l'input (import_etudiants ou import_matieres) existe dans notre configuration dynamique
+        if (CONFIG_IMPORT[inputId]) { 
+            let nomFichierPropre = file.name.replace(/\.(xlsx|xls|csv)$/i, ''); // retire l'extension du nom du fichier (.xlsx, .xls, .csv)
+            selection_colonnes(headers, rawData, nomFichierPropre, inputId);
+        } else {
+            console.error("Aucune configuration d'import trouvée pour l'ID : " + inputId);
         }
     };
 
-    reader.readAsArrayBuffer(file); //Lance la lecture du fichier
+    reader.readAsArrayBuffer(file);
 }
 
-
-
-const selectNom = document.getElementById('select_nom');
-const selectPrenom = document.getElementById('select_prenom');
-const selectSpecialite = document.getElementById('select_specialite');
 const fond_sombre = document.querySelector('.fond_sombre');
-const menu_import = document.querySelector('.menu_import_etu');
+const menu_import = document.querySelector('.menu_import');
 const menu_erreur = document.querySelector(".menu_erreur");
-const verif_etu = document.querySelector("#verif_etu");
-const verif_salle = document.querySelector("#verif_salle");
+const conteneur_selects = document.getElementById("conteneur_selects_mapping");
+const titre_menu_mapping = document.getElementById("titre_menu_mapping");
 
+// FONCTION POUR GERER LE MENU MAPPING DYNAMIQUE --------------------------------------------------------------------------------------------
+// FONCTION POUR GERER LE MENU MAPPING DYNAMIQUE --------------------------------------------------------------------------------------------
+function selection_colonnes(headers, rawData, fileName, inputId) {
+    
+    const config = CONFIG_IMPORT[inputId];
+    
+    titre_menu_mapping.textContent = config.titre;
+    conteneur_selects.innerHTML = ""; 
 
-// FONCTION POUR GERER LE MENU MAPPING ET SAUVEGARDER LES LISTES ETUDIANTS --------------------------------------------------------------------------------------------
-// Cette fonction permet de choisir quel colonnes correspond à quel noms (NOM, PRENOM, SPECIALITE) pour éviter des erreurs
-function selection_colonnes(headers, rawData, fileName) {
-
-    //Remplir les select avec les colonnes trouvées dans l'Excel
     const options_colonnes = '<option value="">-- Choisir --</option>' + 
                         headers.map(h => `<option value="${h}">${h}</option>`).join('');
     
-    selectNom.innerHTML = options_colonnes;
-    selectPrenom.innerHTML = options_colonnes;
-    selectSpecialite.innerHTML = options_colonnes;
+    const memoire_mapping = recuperer(`mapping_memoire_${inputId}`, {});
 
-    // Affiche le menu
+    config.champs_requis.forEach(champ => {
+        const html = `
+            <div class="choix_colonnes">
+                <span>Quelle colonne correspond à ${champ.label} ? ${champ.optionnel ? "(Optionnel)" : ""}</span>
+                <select id="select_map_${champ.id}">${options_colonnes}</select>
+            </div>
+        `;
+        conteneur_selects.insertAdjacentHTML("beforeend", html);
+        
+        // 🌟 NOUVEAU : Si on a une mémoire pour ce champ, et que la colonne existe toujours dans ce fichier Excel, on la pré-sélectionne
+        const select_cree = document.getElementById(`select_map_${champ.id}`);
+        if (memoire_mapping[champ.id] && headers.includes(memoire_mapping[champ.id])) {
+            select_cree.value = memoire_mapping[champ.id];
+        }
+    });
+
     fond_sombre.classList.remove('menu_close');
     menu_import.classList.remove('menu_close');
 
-    // gère la validation
     window.action_valider_import = () => {
-        // récupère le choix de l'utilisateur
-        const colNom = selectNom.value;
-        const colPrenom = selectPrenom.value;
-        const colSpecialite = selectSpecialite.value;
+        let map_colonnes = {};
+        let erreur = false;
 
-        // vérifie que tout a été rempli
-        if (!colNom || !colPrenom || !colSpecialite) {
-            menu_erreur.textContent = "Veuillez attribuer une colonne pour chaque champ.";
+        config.champs_requis.forEach(champ => {
+            const val = document.getElementById(`select_map_${champ.id}`).value;
+            if (!val && !champ.optionnel) {
+                erreur = true; 
+            }
+            map_colonnes[champ.id] = val;
+        });
+
+        if (erreur) {
+            menu_erreur.textContent = "Veuillez attribuer une colonne pour chaque champ obligatoire.";
             return;
         }
-        if (colNom === colPrenom || colNom === colSpecialite || colPrenom === colSpecialite) {
+
+        let valeurs_selectionnees = Object.values(map_colonnes).filter(v => v !== "");
+        let valeurs_uniques = new Set(valeurs_selectionnees);
+        
+        if (valeurs_uniques.size !== valeurs_selectionnees.length) {
             menu_erreur.textContent = "Les choix des colonnes doivent être différents.";
             return;
         }
 
-        // crée un nouveau tableau JSON propre avec les clés
-        const cleanEtudiants = rawData.map(ligne => {
-            // Les trois colonnes obligatoire (nom, prenom, parcours)
-            let etu = {
-                nom: ligne[colNom],
-                prenom: ligne[colPrenom],
-                specialite: ligne[colSpecialite] || "Aucun"
-            };
-            // ajoute les autres colonnes comme propriétés de l'étudiant
-            for (let key in ligne) {
-                if (key !== colNom && key !== colPrenom && key !== colSpecialite) {
-                    etu[key] = ligne[key];
-                }
-            }
-            
-            return etu;
-        });
+        // 🌟 NOUVEAU : On sauvegarde les sélections pour la prochaine fois !
+        sauvegarder(`mapping_memoire_${inputId}`, map_colonnes);
 
-        let nom_final = generer_nom_unique(fileName, tab_etu, "nom_fichier");
+        const cleanData = rawData.map(ligne => config.formater_donnees(ligne, map_colonnes));
+        config.sauvegarder(cleanData, fileName);
 
-        tab_etu.unshift({
-            nom_fichier: nom_final,
-            date_import: new Date().toLocaleDateString(),
-            donnees: cleanEtudiants
-        });
-
-        sauvegarder('tab_etu', tab_etu);
-        verif_etu.textContent = cleanEtudiants.length + " étudiants importés"; 
-        afficher_listes();
+        if (typeof afficher_listes === "function") afficher_listes(); 
         fermer_mapping();
-        remplir_select(); 
+        if (typeof remplir_select === "function") remplir_select(); 
     };
-
-    remplir_select();
 }
-
-
-// FONCTION POUR SAUVEGARDER LES SALLES ----------------------------------------------------------------------------------------------------------------------------------
-function sauvegarderSalles(rawData, fileName) {
-    const nom_salle = fileName.replace('.xlsx', '').replace('.csv', '');
-
-    let nom_final = nom_salle ;
-    let compteur = 1;
-    // Tant qu'il existe déjà une salle avec "nom_final" dans tab_salles, on ajoute _1, _2...
-    while (tab_salles.some(liste => liste.nom_salle === nom_final)) {
-        nom_final = nom_salle  + "_" + compteur;
-        compteur++;
-    }
-
-    tab_salles.push({ // Ajoute à la table salles
-        nom_salle: nom_final, // Nom unique garanti !
-        places: rawData 
-    });
-
-    sauvegarder('tab_salles', tab_salles);
-    verif_salle.textContent = rawData.length + " places importées";
-
-    sauvegarder("tab_salles", tab_salles);
-    afficher_listes();
-    remplir_select();
-}
-
 
 // FONCTION POUR FERMER LE MENU MAPPING ---------------------------------------------------------------------------------------------------------------------------------------
 function fermer_mapping() {
     fond_sombre.classList.add('menu_close');
     menu_import.classList.add('menu_close');
     menu_erreur.textContent = "";
+}
+
+
+
+// IMPORTER LES DONNÉES DEPUIS UN JSON ------------------------------------------------------------------------------------------------------------------------------------
+function importerDonnees(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+
+            // Vérifier que les clés existent
+            if (!data.tab_etu || !data.tab_filtres_spe || !data.tab_matiere || !data.tab_placement || !data.tab_salles) {
+                alert("Le fichier JSON ne contient pas toutes les données nécessaires (tab_salles manquant).");
+                return;
+            }
+
+            // Remplacer les données
+            tab_etu = data.tab_etu;
+            tab_filtres_spe = data.tab_filtres_spe;
+            tab_matiere = data.tab_matiere;
+            tab_placer = data.tab_placement;
+            tab_salles = data.tab_salles;
+
+            // Sauvegarder dans localStorage
+            sauvegarder("tab_etu", tab_etu);
+            sauvegarder("tab_filtres_spe", tab_filtres_spe);
+            sauvegarder("tab_matiere", tab_matiere);
+            sauvegarder("tab_placement", tab_placer);
+            sauvegarder("tab_salles", tab_salles);
+
+            // Rafraîchir l'interface
+            if (typeof afficher_listes === "function") afficher_listes();
+            if (typeof remplir_select === "function") remplir_select();
+            if (typeof generer_filtres === "function") generer_filtres();
+            if (typeof verifier_capacite === "function") verifier_capacite();
+            if (typeof actualiser_affichage_complet === "function") actualiser_affichage_complet();
+            if (typeof recup_placement_enreg === "function") recup_placement_enreg();
+            
+            // Réinitialiser le placement actuel
+            effacer_storage("placer_actuel");
+            placement_actuel_donnees = [];
+
+            alert("Import réussi !");
+        } catch (error) {
+            alert("Erreur lors de l'import : " + error.message);
+        }
+    };
+    reader.readAsText(file);
+    // Réinitialiser l'input pour permettre de réimporter le même fichier
+    event.target.value = "";
 }

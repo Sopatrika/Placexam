@@ -22,37 +22,54 @@ if (conteneur_filtres) {
 }
 
 // FONCTION POUR REMPLIR LES SELECTIONS -------------------------------------------------------------------------------------------------------------------------------------
-function creer_option(element, liste) {
+function creer_option(texte_a_afficher, liste_html, valeur = texte_a_afficher) {
     const option = document.createElement("option");
-    option.value = element;
-    option.textContent = element;
-    liste.appendChild(option);
+    option.value = valeur;
+    option.textContent = texte_a_afficher;
+    liste_html.appendChild(option);
 }
 
-//On rempli les selects
+//FONCTION POUR REMPLIR LES SELECTS DU TABLEAU ------------------------------------------------------------------------------------------------------------------------------
 function remplir_select() {
     select_etu.innerHTML = "";
     select_salle.innerHTML = "";
-    select_matiere.innerHTML = "";
+    if (select_matiere) select_matiere.innerHTML = "";
 
-    Object.values(tab_etu).forEach(liste_etu => { 
-        creer_option(liste_etu.nom_fichier, select_etu);
-    });
-    Object.values(tab_salles).forEach(salle_obj => { 
-        creer_option(salle_obj.nom_salle, select_salle); 
-    });
-    if (select_matiere) {
-        Object.values(tab_matiere).forEach(matiere => {
-            let affichage = "";
-            if (typeof matiere === "string") {
-                affichage = matiere;
-            } else {
-                const nom = matiere.nom || "Inconnu";
-                const prof = matiere.prof || "Non renseigné";
-                affichage = `${nom} (${prof})`;
-            }
-            creer_option(affichage, select_matiere);
+    //Remplir la section des liste étudiants
+    if (!tab_etu || tab_etu.length === 0) {
+        creer_option("(aucune données)", select_etu, ""); // Value vide pour forcer l'état invalide
+    } else {
+        Object.values(tab_etu).forEach(liste_etu => { 
+            creer_option(liste_etu.nom_fichier, select_etu);
         });
+    }
+
+    //Remplir la section des salles
+    if (!tab_salles || tab_salles.length === 0) {
+        creer_option("(aucune données)", select_salle, "");
+    } else {
+        Object.values(tab_salles).forEach(salle_obj => { 
+            creer_option(salle_obj.nom_salle, select_salle); 
+        });
+    }
+
+    //Remplir la section des matières
+    if (select_matiere) {
+        if (!tab_matiere || tab_matiere.length === 0) {
+            creer_option("(aucune données)", select_matiere, "");
+        } else {
+            Object.values(tab_matiere).forEach(matiere => {
+                let affichage = "";
+                if (typeof matiere === "string") {
+                    affichage = matiere;
+                } else {
+                    const nom = matiere.nom || "Inconnu";
+                    const prof = matiere.prof || "Non renseigné";
+                    affichage = `${nom} (${prof})`;
+                }
+                creer_option(affichage, select_matiere);
+            });
+        }
     }
 }
 
@@ -87,15 +104,17 @@ function generer_filtres() {
     }
 
     list_specialite.forEach((parcours, index) => {
-        const couleur = filtres_color[index % filtres_color.length];
-        const etatSpecifique = tab_filtres_spe[nom_liste_actuelle][parcours];
-        const estCoche = (etatSpecifique === false) ? '' : 'checked';
+    const couleur = filtres_color[index % filtres_color.length];
+    const etatSpecifique = tab_filtres_spe[nom_liste_actuelle][parcours];
+    const estCoche = (etatSpecifique === false) ? '' : 'checked';
+    
+    let nom_parcours = parcours || "sans specialite"; 
 
         const htmlFiltre = `
             <div class="filtre_spe">
                 <label class="badge-checkbox" style="--checkcolor: ${couleur}">
                     <input type="checkbox" value="${parcours}" class="check-specialite" ${estCoche}>
-                    <span class="badge-text">${parcours}</span>
+                    <span class="badge-text">${nom_parcours}</span>
                     <span class="custom-checkbox"></span>
                 </label>
             </div>
@@ -106,7 +125,7 @@ function generer_filtres() {
     afficher_tableau();
 }
 
-//Fonction pour supprimer les filtres de listes qui n'existent plus
+//FONCTION POUR SUPPRIMER LES FILTRES QUI N'EXISTENT PLUS -------------------------------------------------------------------------------------------------------------------
 function nettoyer_filtres() {
     const noms_listes_existantes = tab_etu.map(liste => liste.nom_fichier);
     for (let nom_liste_sauvegardee in tab_filtres_spe) {
@@ -162,21 +181,21 @@ function afficher_tableau() {
         const tiers_temps = etu.tiers_temps ? svg_tier_temps : "";
         
         // La place est déjà dans "etu" si c'est un placement
-        let place_html = "";
+        let place_attribue = "";
         if (etu.place_attribuee && etu.place_attribuee !== "-") {
             if (salles_choisies.length > 1 && etu.salle_attribuee !== "Non placé") {
-                place_html = `<div class="place_attribue">${etu.salle_attribuee}</div><div class="place-number">${etu.place_attribuee}</div>`;
+                place_attribue = `<div class="place_attribue">${etu.salle_attribuee}</div><div class="place-number">${etu.place_attribuee}</div>`;
             } else {
-                place_html = `<span>${etu.place_attribuee}</span>`;
+                place_attribue = `<span>${etu.place_attribuee}</span>`;
             }
         }
 
         lignes_html.push(`
             <tr>
-                <td>${etu.nom}</td>
-                <td>${etu.prenom}</td>
-                <td>${etu.specialite}</td>
-                <td>${place_html}</td>
+                <td>${echapperHTML(etu.nom)}</td>
+                <td>${echapperHTML(etu.prenom)}</td>
+                <td>${echapperHTML(etu.specialite)}</td>
+                <td>${place_attribue}</td>
                 <td class="icon_tiers_temps">${tiers_temps}</td>
                 <td>
                     <label class="badge-checkbox">

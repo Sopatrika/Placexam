@@ -110,11 +110,19 @@
                 </div>
             </section>
 
-            <!-- Section pour  -->
+            <!------------ Section pour supprimer ------------>
 
-            <!-------------- Section pour ajouter ou modifier un élément -------------->
+            <section class="supprimer_sec">
+                    <div class="titre_sec">Supprimer</div>
+                    
+                    <div class="menu_message">Voulez vous supprimer ?</div>
+                    
+                    <div class="groupe_btn" data-action="charger"></div>
+            </section>
+
+            <!-------------- Section pour ajouter ou modifier un élément ----------------->
             <section class="edition_sec">
-                <div class="titre_edition_sec">Ajouter un étudiant</div>
+                <div class="titre_edition_sec"></div>
                 
                 <div class="form_edition">
                     <!-- <label class="champ_edition">
@@ -128,10 +136,10 @@
                 <div class="groupe_btn" data-action="edition"></div>
             </section>
 
-            <!-- Section pour confirmer un chargement d'un placement -->
+            <!------------ Section pour confirmer un chargement d'un placement ------------>
 
             <section class="charger_sec">
-                    <div class="titre_edition_sec">Charger une place</div>
+                    <div class="titre_sec">Charger une place</div>
                     
                     <div class="menu_message">Voulez vous chargez ce placement ?</div>
                     
@@ -143,7 +151,18 @@
         <!-- Bouton pour ouvrir/fermer le menu -->
         <button class="button_menu_gauche">Mes listes</button>
     </div>
-    <!----- Main ----->
+    <!--------------------------------------------------------------------------------------------------------------------------------------------->
+    <!--------------------------------------------------------------------- Menu mapping ---------------------------------------------------------->
+    <!--------------------------------------------------------------------------------------------------------------------------------------------->
+    <div class="menu_import menu_close">
+        <h3 id="titre_menu_mapping">Configuration de l'importation</h3>
+        
+        <div id="conteneur_selects_mapping"></div>
+        
+        <div class="menu_erreur"></div>
+        <div class="groupe_btn" data-action="import"></div>
+    </div>
+    <!------------------------------------------------------------------------- Main -------------------------------------------------------------------->
     <main>
         <!------------------------------------------------------------------------------------------------------------------------------------------------->
         <!-------------------------------------------------------------------- Accueil -------------------------------------------------------------------->
@@ -179,24 +198,6 @@
         </div>
 
         <div class="verif_import" id="verif_etu"></div>
-
-    <!--------------------------- Menu mapping ------------------------->
-    <div class="menu_import_etu menu_close">
-        <div class="choix_colonnes">
-            <span>Quels colonne correspond au NOM ?</span>
-            <select name="" id="select_nom"></select>
-        </div>
-        <div class="choix_colonnes">
-            <span>Quels colonne correspond au PRENOM ?</span>
-            <select id="select_prenom"></select>
-        </div>
-        <div class="choix_colonnes">
-            <span>Quels colonne correspond à la SPECIALITE ?</span>
-            <select id="select_specialite"></select>
-        </div>
-        <div class="menu_erreur"></div>
-        <div class="groupe_btn" data-action="import"></div>
-    </div>
 
     <hr id="import_salle">
     <!----------------------------------------------------------------------------------------------------------------------------------------------------------------->
@@ -267,6 +268,7 @@
                     </div>
                 </div>
             </form>
+            <div class="verif_import" id="verif_matiere"></div>
         </div>
     </div>
 

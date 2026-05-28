@@ -285,3 +285,39 @@ function creer_feuille_emargement(salle, etudiants_salle, infos) {
     
     return ws;
 }
+
+
+
+
+// EXPORTER LES DONNÉES EN JSON ------------------------------------------------------------------------------------------------------------------------------------
+function exporterDonnees() {
+    const data = {
+        tab_etu: tab_etu,
+        tab_filtres_spe: tab_filtres_spe,
+        tab_matiere: tab_matiere,
+        tab_placement: tab_placer,
+        tab_salles: tab_salles
+    };
+
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    // Nom du fichier : Placexam_export_YYYYMMDD_HHMMSS.json
+    const now = new Date();
+    const dateStr = now.getFullYear() + 
+                    String(now.getMonth()+1).padStart(2,'0') + 
+                    String(now.getDate()).padStart(2,'0') + '_' +
+                    String(now.getHours()).padStart(2,'0') + 
+                    String(now.getMinutes()).padStart(2,'0') + 
+                    String(now.getSeconds()).padStart(2,'0');
+    const filename = `Placexam_export_${dateStr}.json`;
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}

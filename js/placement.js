@@ -150,15 +150,21 @@ function charger_placement() {
 
     // 2. DÉDUIRE LA MATIÈRE (Depuis le titre de l'archive)
     if (select_matiere) {
-        // On force la récupération prioritaire depuis la sauvegarde locale d'EnregChoix
-        const matiere_sauvee = localStorage.getItem("form: select_matiere");
+        const titre_base = archive.titre.split(" - ")[0].trim();
         
-        if (matiere_sauvee) {
-            select_matiere.value = matiere_sauvee;
+        // Recherche ultra-souple parmi les options existantes du sélecteur
+        const options = Array.from(select_matiere.options);
+        const optionTrouvee = options.find(opt => {
+            return comparerNoms(opt.value, titre_base) || 
+                   opt.value.toLowerCase().includes(titre_base.toLowerCase()) || 
+                   titre_base.toLowerCase().includes(opt.value.toLowerCase());
+        });
+
+        if (optionTrouvee) {
+            select_matiere.value = optionTrouvee.value;
+            sauvegarder("form: select_matiere", optionTrouvee.value); // On met à jour la mémoire du formulaire propre
         } else {
-            //si rien n'est sauvegardé
-            const titre_base = archive.titre.split(" - ")[0];
-            select_matiere.value = typeof tab_matiere !== "undefined" && tab_matiere.includes(titre_base) ? titre_base : "";
+            select_matiere.value = "";
         }
     }
 
@@ -293,7 +299,7 @@ function dessiner_badges_salles() {
             e.stopPropagation();
             // retire la salle concernée
             salles_choisies = salles_choisies.filter(s => s !== salle_cible);
-            reset_placement();
+            reset_placement(true);
             verifier_capacite();
             maj_select_salles_sup();
         });
@@ -386,14 +392,6 @@ function placement_aleatoire() {
         etudiants_standard = [...etudiants_a_placer];
     }
 
-    function melanger(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
-
     melanger(etudiants_tiers);
     melanger(etudiants_standard);
     const etudiants_finaux = [...etudiants_tiers, ...etudiants_standard];
@@ -412,10 +410,7 @@ function placement_aleatoire() {
         //trim() retire les espaces et toLowerCase() met en minuscule
         const tdNom = ligne.cells[0].textContent.trim().toLowerCase(); //Le nom de l'étudiant
         const tdPrenom = ligne.cells[1].textContent.trim().toLowerCase(); //Le prenom de l'étudiant
-        const etu = etudiants_finaux.find(e => 
-             String(e.nom).trim().toLowerCase() === tdNom && 
-             String(e.prenom).trim().toLowerCase() === tdPrenom
-        );
+        const etu = etudiants_finaux.find(e => comparerNoms(e.nom, tdNom) && comparerNoms(e.prenom, tdPrenom));
 
         if (etu && etu.place_attribuee) {
             // On sauvegarde les infos de tri
@@ -488,7 +483,7 @@ function placement_aleatoire() {
     const tiers_temps_actif = check_tiers_temps ? check_tiers_temps.checked : false; //Si le tier-temps est actif
 
     // ajoute le placement dans tab_placer
-    tab_placer.unshift({
+    tab_placer.push({
         titre: titre_placement,
         date: date_jour,
         donnees_placement: donnees_sauvegarde,
@@ -499,6 +494,10 @@ function placement_aleatoire() {
         }
     });
     
+    // Garde uniquement les 15 derniers placements
+    if (tab_placer.length > 15) {
+        tab_placer.pop(); // Supprime le plus ancien
+    }
     sauvegarder('tab_placement', tab_placer);
     sauvegarder('placer_actuel', titre_placement);
 

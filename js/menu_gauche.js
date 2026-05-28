@@ -84,25 +84,27 @@ document.addEventListener("donneesMisesAJour", (e) => {
         if (conteneur_salle_ul) conteneur_salle_ul.appendChild(li);
     });
 
-    // On vérifie quelle section (détail) est actuellement ouverte
+    // vérifie quelle section est actuellement ouverte
     const type_ouvert = label_nom_liste.dataset.type;
     const nom_ouvert = label_nom_liste.textContent;
+
+    // empêche l'exécution si aucune section n'est encore définie (chargement initial)
+    if (!type_ouvert) return; 
 
     // Si on a modifié la donnée qui est actuellement affichée, on rafraîchit la vue
     if (type_ouvert === type_modifie || type_modifie === "tout") {
         
-        // CORRECTIF MENU : Si on est sur une catégorie globale, on la recharge directement
         if (nom_ouvert === "Salles" || nom_ouvert === "Matières" || nom_ouvert === "Historique des placements") {
             ouvrir_details_liste(nom_ouvert, type_ouvert);
         } else {
-            // Sinon, c'est qu'on regardait une liste étudiante précise, on vérifie si elle existe encore
             const existe_encore = (type_ouvert === "salle") ? getListeSalle(nom_ouvert) : getListeEtu(nom_ouvert);
             
             if (existe_encore) {
                 ouvrir_details_liste(nom_ouvert, type_ouvert);
             } else {
-                // Si la liste spécifique a été supprimée, on ferme le panneau latéral
-                fermer_formulaire(document.querySelector(".sous_sec")); 
+                // CORRECTIF BUG 1 (Sécurité) : On retourne à la bonne liste de base, pas à la sous-section
+                let selecteur_retour = (type_ouvert === "salle") ? document.querySelector(".salle_sec") : document.querySelector(".etu_sec");
+                fermer_formulaire(selecteur_retour); 
             }
         }
     }
@@ -206,56 +208,132 @@ function creer_icones(afficher_charger = false) {
 }
 
 
+//=================================================================================================================================================================
+// GESTION DE L'INTERFACE DE SUPPRESSION (Remplacement de window.confirm)
+//=================================================================================================================================================================
+let action_suppression_en_attente = null; 
+let section_precedente_suppression = null; // 🌟 NOUVEAU : Mémorise la section d'où l'on vient !
 
-// FONCTION POUR SUPPRIMER UNE LISTE OU UN ELEMENT ---------------------------------------------------------------------------------------------------------------------
+function ouvrir_menu_suppression(message_html, callback_action) {
+    const supprimer_sec = document.querySelector(".supprimer_sec");
+    if (!supprimer_sec) return;
+
+    // 1. On mémorise la section actuellement ouverte (avant d'ouvrir la page de suppression)
+    const sections = document.querySelectorAll(".menu_deroulant_gauche section");
+    section_precedente_suppression = Array.from(sections).find(s => 
+        s.classList.contains("sec_open") && !s.classList.contains("supprimer_sec")
+    );
+
+    // 2. On insère le message personnalisé 
+    const msg_container = supprimer_sec.querySelector(".menu_message");
+    if (msg_container) msg_container.innerHTML = message_html;
+    
+    // 3. On sauvegarde l'action
+    action_suppression_en_attente = callback_action;
+
+    // 4. On bascule l'affichage
+    sections.forEach(s => s.classList.remove("sec_open"));
+    supprimer_sec.classList.add("sec_open");
+}
+
+function fermer_menu_suppression() {
+    const supprimer_sec = document.querySelector(".supprimer_sec");
+    if (!supprimer_sec) return;
+    
+    supprimer_sec.classList.remove("sec_open");
+    action_suppression_en_attente = null; 
+
+    if (section_precedente_suppression) {
+        section_precedente_suppression.classList.add("sec_open");
+    } else {
+        // Sécurité au cas où
+        const sec_etu = document.querySelector(".etu_sec");
+        if (sec_etu) sec_etu.classList.add("sec_open");
+    }
+}
+
+// ÉCOUTEUR GLOBAL SUR LA SECTION SUPPRIMER
+const section_supprimer = document.querySelector(".supprimer_sec");
+if (section_supprimer) {
+    section_supprimer.addEventListener("click", (e) => {
+        const btn = e.target.closest(".groupe_btn > *"); 
+        if (!btn) return;
+
+        const texte_btn = btn.textContent.toLowerCase().trim();
+
+        if (texte_btn.includes("annuler")) {
+            fermer_menu_suppression();
+        } else {
+            if (action_suppression_en_attente) {
+                action_suppression_en_attente(); 
+            }
+            fermer_menu_suppression();
+        }
+    });
+}
+
+// FONCTION SUPPRIMER ADAPTÉE
 function supprimer(poubelle) {
-    if (!confirm("Voulez-vous vraiment supprimer cet élément ?")) return;
-
-    // Suppression d'une liste entière
+    // A. Cas de la suppression d'une liste entière (depuis le menu principal, ex: etu_sec)
     const liListe = poubelle.closest(".menu_ul > li");
     if (liListe) {
-        const element = poubelle.closest(".etu_sec") !== null;
+        const estListeEtu = poubelle.closest(".etu_sec") !== null;
         const numero_list = Array.from(liListe.parentNode.children).indexOf(liListe);
+        const nom_liste_supp = liListe.dataset.name || "cette liste";
 
-        if (element) {
-            tab_etu.splice(numero_list, 1);
-            sauvegarder('tab_etu', tab_etu);
-        }
-
-        afficher_listes();
-        nettoyer_filtres();
-        remplir_select();
-        generer_filtres();
-        verifier_capacite();
+        ouvrir_menu_suppression(`Voulez-vous vraiment supprimer la liste <b>${nom_liste_supp}</b> ?`, () => {
+            if (estListeEtu) {
+                tab_etu.splice(numero_list, 1);
+                sauvegarder('tab_etu', tab_etu);
+            }
+            afficher_listes();
+            if (typeof nettoyer_filtres === "function") nettoyer_filtres();
+            remplir_select();
+            if (typeof generer_filtres === "function") generer_filtres();
+            verifier_capacite();
+        });
         return;
     }
 
-    // Suppression d'un élément spécifique (étudiant/place)
+    // B. Cas de la suppression d'un élément spécifique (depuis sous_sec)
     const bloc_element = poubelle.closest(".bloc_element");
     if (bloc_element) {
         const element_supp = parseInt(bloc_element.dataset.index, 10);
         const list_el = document.querySelector(".nom_liste").textContent;
-        // Cherche la config correspondante (Salles, Matières, Historique)
+        const type_el = document.querySelector(".nom_liste").dataset.type;
+        
+        let nom_element_affiche = "cet élément";
         const config_speciale = Object.values(CONFIG_SECTION).find(c => c.nom_liste === list_el);
-
+        
         if (config_speciale) {
-            // Supprime directement dans le tableau correspondant
-            config_speciale.tableau.splice(element_supp, 1);
-            sauvegarder(config_speciale.storage_key, config_speciale.tableau);
+            // C'est une Salle, Matière, Historique...
+            let obj = config_speciale.tableau[element_supp];
+            if (obj) nom_element_affiche = obj.nom_salle || obj.nom || obj.titre || "cet élément";
         } else {
-            // Si c'est une liste d'étudiants
+            // C'est un étudiant dans une liste !
             let listeEtu = getListeEtu(list_el);
-            if (listeEtu) {
-                listeEtu.donnees.splice(element_supp, 1);
-                sauvegarder('tab_etu', tab_etu);
+            if (listeEtu && listeEtu.donnees[element_supp]) {
+                nom_element_affiche = `${listeEtu.donnees[element_supp].nom} ${listeEtu.donnees[element_supp].prenom}`;
             }
         }
 
-        const type_el = document.querySelector(".nom_liste").dataset.type; // On récupère le type sauvegardé
-        ouvrir_details_liste(list_el, type_el);
-        remplir_select();
-        generer_filtres();
-        verifier_capacite();
+        ouvrir_menu_suppression(`Voulez-vous vraiment supprimer <b>${nom_element_affiche}</b> ?`, () => {
+            if (config_speciale) {
+                config_speciale.tableau.splice(element_supp, 1);
+                sauvegarder(config_speciale.storage_key, config_speciale.tableau);
+            } else {
+                let listeEtu = getListeEtu(list_el);
+                if (listeEtu) {
+                    listeEtu.donnees.splice(element_supp, 1);
+                    sauvegarder('tab_etu', tab_etu);
+                }
+            }
+
+            ouvrir_details_liste(list_el, type_el);
+            remplir_select();
+            if (typeof generer_filtres === "function") generer_filtres();
+            verifier_capacite();
+        });
     }
 }
 
@@ -459,9 +537,9 @@ function creer_icone_tier_temps() {
 //FONCTION POUR SUPPRIMER TOUTE L'HISTORIQUE DES PLACEMENT ----------------------------------------------------------------------------------------------------------------
 btn_supp_histo.addEventListener("click", supp_histo_placement)
 function supp_histo_placement() {
-    if (!confirm("Voulez-vous vraiment supprimer tout l'historique des placements ?")) return;
-
-    tab_placer = [];
-    sauvegarder("tab_placement", tab_placer);
-    ouvrir_details_liste("Historique des placements", "historique");
+    ouvrir_menu_suppression("Voulez-vous vraiment supprimer <b>tout l'historique des placements</b> ?", () => {
+        tab_placer = [];
+        sauvegarder("tab_placement", tab_placer);
+        ouvrir_details_liste("Historique des placements", "historique");
+    });
 }
