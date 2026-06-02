@@ -37,6 +37,10 @@ body {
     font-family: var(--font-family);
 }
 
+a {
+    text-decoration: none;
+}
+
 .no_scroll {
     overflow: hidden;
 }
@@ -88,18 +92,20 @@ button:focus-visible {
 
 header {
     background: var(--darkblue);
-    padding: 50px;
+    padding: 30px 5%;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    position: relative;
-    left: 0;
-    right: 0;
+    flex-wrap: wrap;
+    gap: 20px;
 }
 
 .header_navs {
     display: flex;
-    gap: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    flex: 1;
 }
 
 .header_lien {
@@ -107,6 +113,7 @@ header {
     color: var(--white);
     position: relative;
     font-weight: 500;
+    white-space: nowrap;
 }
 
 .header_lien::after {
@@ -126,8 +133,6 @@ header {
 
 /* Boutons du header */
 .header-action-group {
-    position: absolute;
-    right: 30px;
     display: flex;
     background: var(--white);
     border: solid 1px var(--darkblue);
@@ -459,7 +464,6 @@ main {
     padding: 0;
     font-size: 0.95rem;
 }
-
 /* Nom de l'élement en gras */
 .bloc_element li:first-child {
     font-weight: bold;
@@ -522,9 +526,12 @@ main {
     display: none;
 }
 
-.menu_message {
+.message_vide_menu {
     text-align: center;
-    margin: 70px 5px;
+    color: var(--gris);
+    padding: 30px 10px;
+    font-style: italic;
+    font-size: 0.9em;
 }
 
 /* Section edition (ajouter ou modifier un élément) */
@@ -542,13 +549,18 @@ main {
     display: flex; 
 }
 
-.titre_sec {
+.titre_sec, .titre_edition_sec {
     display: flex;
     justify-content: center;
     text-align: center;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 500;
     letter-spacing: 0.5px;
+}
+
+.menu_message {
+    margin: 30px 20px;
+    text-align: center;
 }
 
 .form_edition {
@@ -596,7 +608,7 @@ main {
 /* ---------------------------- ACCUEIL ------------------------------- */
 
 .accueil {
-    padding-top: 100px;
+    padding-top: 90px;
 }
 
 h1 {
@@ -613,10 +625,37 @@ h2 {
     font-weight: normal;
 }
 
+.notice_utile {
+    position: relative;
+    color: var(--black);
+    display: flex;
+    justify-content: center;
+    margin: 50px auto;
+    width: 150px;
+    transition: 0.2s ease;
+}
+
+.notice_utile:hover {
+    color: var(--hover);
+}
+
+.notice_utile::after {
+    position: absolute;
+    bottom: -5px;
+    content: "";
+    background: var(--hover);
+    width: 0px;
+    height: 3px;
+    transition: 0.2s ease;
+}
+
+.notice_utile:hover::after {
+    width: 100%;
+}
 /* ------- Formulaire importer des fichiers --------- */
 
 .form_import {
-    margin: 50px 0;
+    margin: 20px 0;
     display: flex;
     justify-content: center;
 }
@@ -730,7 +769,7 @@ h2 {
     transition: 0.2s ease;
 }
 
-.titre_menu_mapping {
+#titre_menu_mapping {
     color: var(--white); 
     text-align: center; 
     margin-bottom: 20px;
@@ -754,6 +793,7 @@ h2 {
     display: flex;
     justify-content: right;
     gap: 20px;
+    margin: 10px;
 }
 
 .groupe_btn div {
@@ -793,7 +833,7 @@ h2 {
 hr {
     border: solid 1px var(--darkblue);
     width: 100%;
-    margin: 10vh 0;
+    margin: 15vh 0;
 }
 /*---------------------------------- Section Salles d'exam ---------------------*/
 
@@ -883,10 +923,10 @@ h3 {
     background: var(--hover);
 }
 
-/*--------- Options du tableau ----------------*/
+/*--------------------- Options du tableau ----------------------*/
 
 .options_table {
-    margin: 20px 0px;
+    margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -961,7 +1001,7 @@ h3 {
 .custom-checkbox {
     width: 18px;
     height: 18px;
-    border: 2px solid rgba(255, 255, 255, 0.6);
+    border: 2px solid var(--light-grey);
     border-radius: 2px;
     position: relative;
     display: inline-block;
@@ -970,7 +1010,7 @@ h3 {
 .custom-checkbox::after {
     content: "";
     position: absolute;
-    display: none;
+    opacity: 0;
     left: 5px;
     top: 1px;
     width: 5px;
@@ -978,6 +1018,7 @@ h3 {
     border: solid var(--white);
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
+    transition: 0.1s ease;
 }
 
 .badge-checkbox input:checked + .badge-text + .custom-checkbox {
@@ -985,7 +1026,7 @@ h3 {
 }
 
 .badge-checkbox input:checked + .badge-text + .custom-checkbox::after {
-    display: block;
+    opacity: 1;
 }
 
 .btn-placement.placement_disable {
@@ -1043,7 +1084,6 @@ select:focus, select:hover {
 /* --------------------- Tableau et Plan Salle -------------------*/
 
 .choix_affichage {
-    margin-top: 15px;
     display: flex;
     padding: var(--darkblue);
     margin-left: 20px;
@@ -1078,6 +1118,7 @@ select:focus, select:hover {
     overflow-y: auto;
     border-radius: 8px;
     box-shadow: var(--shadow);
+    overflow-x: hidden;
 }
 
 /* ------- Tableau -------- */
@@ -1122,6 +1163,10 @@ select:focus, select:hover {
     background-color: var(--light-grey);
 }
 
+td .badge-checkbox .badge-text{
+    margin: 0;
+}
+
 .place_attribue {
     font-size:0.75rem; 
     color:var(--darkblue); 
@@ -1154,21 +1199,23 @@ td .badge-checkbox:has(.check-absence:checked) {
     position: sticky;
     top: 0;
     z-index: 10;
-    padding: 15px 30px;
+    padding: 15px 20px;
     background: var(--darkblue);
     color: var(--white);
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    gap: 15px;
     font-size: 0.9rem;
     font-weight: bold;
 }
 
 .conteneur_details {
-    display: flex;
+   display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 40px; 
+    gap: 20px;
     flex: 1;
     text-transform: uppercase;
 }
@@ -1194,7 +1241,7 @@ td .badge-checkbox:has(.check-absence:checked) {
 
 .plan_salles {
     width: 100%;
-    padding: 30px;
+    padding: 20px;
     box-sizing: border-box;
     overflow-x: auto;
 }
@@ -1210,6 +1257,7 @@ td .badge-checkbox:has(.check-absence:checked) {
 }
 
 .place {
+    position: relative;
     width: 100%;
     max-width: 35px;
     aspect-ratio: 1 / 1;
@@ -1222,9 +1270,27 @@ td .badge-checkbox:has(.check-absence:checked) {
     color: var(--white);
 }
 
-.place svg {
+.place_tiers_temps svg {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    fill: var(--black) !important;
+    overflow: visible;
+}
+
+.place_tiers_temps svg path {
     stroke: var(--white);
-    fill: var(--white) !important;
+    stroke-width: 0.5px;
+}
+
+.abs {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    font-size: 8px;
+    padding: 5px;
+    background: var(--rouge);
+    border-radius: 50px;
 }
 
 /* Place prise  */
@@ -1241,35 +1307,47 @@ td .badge-checkbox:has(.check-absence:checked) {
 .place[data-etat="indispo"] {
     background: transparent;
     border: 2px solid var(--black);
+    color: var(--black);
 }
 
-.place:hover {
+
+.place:hover, .place_cliquer {
     opacity: 0.6;
     transform: scale(1.1);
 }
 
 /* Zoom sur le plan */
-
-.plan_salle.zoom_plan {
+.zoom_plan {
     position: fixed;
-    top: 0;
-    left: 1;
-    width: 60vw;
-    height: auto;
-    z-index: 10;
-    background: var(--background);
-}
-
-.plan_salle.zoom_plan .plan_salles {
-    max-height: none;
-    height: calc(100vh - 80px); /* Laisse la place au bandeau bleu */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 95vw;
+    max-width: 1400px;
+    height: 90vh;
+    max-height: 900px;
+    background-color: var(--white, #fff);
+    border-radius: 12px;
+    z-index: 1000;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Centre la grille verticalement en plein écran */
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+.zoom_plan .plan_salles {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    padding: 10px;
 }
 
 /* ----------------------------- Séction après l'affichage ---------------------- */
-/* ------ Section après le visuel ------*/
 .after_plan {
     margin-top: 20px;
     display: flex;
@@ -1313,6 +1391,20 @@ td .badge-checkbox:has(.check-absence:checked) {
     background: transparent;
 }
 
+.erreur_plan_salle {
+    display:flex; 
+    justify-content:center; 
+    align-items:center; 
+    height:100%; 
+    padding: 40px; 
+    width: 100%;
+}
+
+.erreur_plan_salle h4 {
+    color:var(--gris); 
+    text-align:center;
+}
+
 .conteneur_btn-plans_salle {
     display: flex;
     justify-content: center;
@@ -1341,6 +1433,10 @@ td .badge-checkbox:has(.check-absence:checked) {
     gap: 10px;
     align-items: center;
     margin: 10px;
+}
+
+.zero_etu {
+    color: var(--rouge);
 }
 
 .zero_etu, .capacite_max, .ajout_salle, #liste_salles_cumulees, .ajout_salle_sup {
@@ -1548,10 +1644,30 @@ footer {
     padding: 50px;
 }
 
-/* Responsive */
+/*---------------------------------------------------------------------- RESPONSIVE ------------------------------------------------------------------------*/
 
 @media (max-width: 1400px) {
     main {
-        margin: 0% 0%;
+        margin: 0% 2%;
+    }
+}
+
+@media (max-width: 1100px) {
+    header {
+        justify-content: center;
+    }
+    .options_table {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .zone_tous_les_filtres {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .btn-placement {
+        align-self: flex-end;
     }
 }

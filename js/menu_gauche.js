@@ -6,40 +6,27 @@
 const menu_listes = document.querySelector(".menu_listes");
 const button_menu_gauche = document.querySelector(".button_menu_gauche");
 
-button_menu_gauche.addEventListener("click", () => {
-    menu_listes.classList.toggle("menu_open");
-})
-
-
-
 //FONCTION POUR OUVRIR/FERMER LES LISTES DANS LE MENU DEROULANT ------------------------------------------------------------------------------------------------------------
 const btn_sec_menu = document.querySelectorAll(".btn-section-menu");
-const menu_sec = document.querySelectorAll(".menu_deroulant_gauche > section");
+const menu_sec = document.querySelectorAll(".menu_deroulant_gauche section");
 
-btn_sec_menu.forEach(btn => {
-    btn.addEventListener("click", () => {
-        // On enlève la classe active de tous les boutons et on la met sur celui cliqué
-        btn_sec_menu.forEach(e => e.classList.remove("btn_open"));
-        btn.classList.add("btn_open");
+function gerer_onglets_menu_gauche(btn) {
+    btn_sec_menu.forEach(e => e.classList.remove("btn_open"));
+    btn.classList.add("btn_open");
 
-        const nom_onglet = btn.textContent.trim(); 
-        const type_onglet = btn.dataset.type;
+    const nom_onglet = btn.textContent.trim(); 
+    const type_onglet = btn.dataset.type;
 
-        // Si on clique sur la liste de étudiants
-        if (type_onglet === "matiere" || type_onglet === "historique" || type_onglet === "salle") {
-            ouvrir_details_liste(nom_onglet, type_onglet);
-            return;
-        }
+    if (type_onglet === "matiere" || type_onglet === "historique" || type_onglet === "salle") {
+        ouvrir_details_liste(nom_onglet, type_onglet);
+        return;
+    }
 
-        // Comportement classique pour Etudiants et Salles
-        menu_sec.forEach(sec => {
-            if (sec.classList.contains(btn.dataset.sec)) sec.classList.add("sec_open");
-            else sec.classList.remove("sec_open");
-        });
+    menu_sec.forEach(sec => {
+        if (sec.classList.contains(btn.dataset.sec)) sec.classList.add("sec_open");
+        else sec.classList.remove("sec_open");
     });
-});
-
-
+}
 
 //FONCTION POUR CREER LES BLOCS DE LISTE DANS LE MENU ----------------------------------------------------------------------------------------------------------------------
 function bloc_listes(liste, type) {
@@ -61,220 +48,203 @@ function bloc_listes(liste, type) {
     return bloc_el;
 }
 
-
-
-
-
 // FONCTION POUR AFFICHER LES LISTES DANS LE MENUS ----------------------------------------------------------------------------------------------------------------------
-document.addEventListener("donneesMisesAJour", (e) => {
-    const type_modifie = e.detail.type; // Permet de savoir si on a touché "salle", "etu" ou "tout"
-    
-    // On vide le HTML pour le reconstruire
+function rafraichir_menu_apres_maj(type_modifie) {
     if (conteneur_etu_ul) conteneur_etu_ul.innerHTML = "";
     if (conteneur_salle_ul) conteneur_salle_ul.innerHTML = "";
 
-    // On repeuple les listes depuis les tableaux mémoire
-    tab_etu.forEach(liste => {
-        const li = bloc_listes(liste.nom_fichier || "Liste sans nom", "etu");
-        if (conteneur_etu_ul) conteneur_etu_ul.appendChild(li);
-    });
+    if (tab_etu.length === 0) {
+        etu_sec.innerHTML = "<div class='message_vide_menu'>Aucune donnée disponible</div>";
+    } else {
+        tab_etu.forEach(liste => {
+            const li = bloc_listes(liste.nom_fichier || "Liste sans nom", "etu");
+            if (conteneur_etu_ul) conteneur_etu_ul.appendChild(li);
+        });
+    }
 
-    tab_salles.forEach(salle => {
-        const li = bloc_listes(salle.nom_salle, "salle");
-        if (conteneur_salle_ul) conteneur_salle_ul.appendChild(li);
-    });
+    const sous_sec_element = document.querySelector(".sous_sec");
+    if (!sous_sec_element || !sous_sec_element.classList.contains("sec_open")) return;
 
-    // vérifie quelle section est actuellement ouverte
-    const type_ouvert = label_nom_liste.dataset.type;
-    const nom_ouvert = label_nom_liste.textContent;
+    const label = document.querySelector(".nom_liste");
+    const type_ouvert = label ? label.dataset.type : null;
+    const nom_ouvert = label ? label.textContent : null;
 
-    // empêche l'exécution si aucune section n'est encore définie (chargement initial)
     if (!type_ouvert) return; 
 
-    // Si on a modifié la donnée qui est actuellement affichée, on rafraîchit la vue
     if (type_ouvert === type_modifie || type_modifie === "tout") {
-        
         if (nom_ouvert === "Salles" || nom_ouvert === "Matières" || nom_ouvert === "Historique des placements") {
             ouvrir_details_liste(nom_ouvert, type_ouvert);
         } else {
             const existe_encore = (type_ouvert === "salle") ? getListeSalle(nom_ouvert) : getListeEtu(nom_ouvert);
-            
-            if (existe_encore) {
-                ouvrir_details_liste(nom_ouvert, type_ouvert);
-            } else {
-                // CORRECTIF BUG 1 (Sécurité) : On retourne à la bonne liste de base, pas à la sous-section
+            if (existe_encore) ouvrir_details_liste(nom_ouvert, type_ouvert);
+            else {
                 let selecteur_retour = (type_ouvert === "salle") ? document.querySelector(".salle_sec") : document.querySelector(".etu_sec");
                 fermer_formulaire(selecteur_retour); 
             }
         }
     }
-});
+}
 
-// 2. On transforme afficher_listes() en un déclencheur d'événement (Dispatcher)
-// Ainsi, partout dans ton code (script.js, importation.js), quand tu appelleras afficher_listes(), 
-// ça déclenchera proprement l'Observateur ci-dessus !
 function afficher_listes() {
     const event = new CustomEvent("donneesMisesAJour", { detail: { type: "tout" } });
     document.dispatchEvent(event);
 }
 
-// Appel initial au chargement de la page pour afficher ce qui est dans le LocalStorage
-document.addEventListener("DOMContentLoaded", () => {
-    afficher_listes();
-});
-
-
-
-
-// Variables global pour l'édition
+// Variables globales pour l'édition
 let section_precedente; 
 let mode_edition = ""; 
 let type_edition = ""; 
 let index_edition = -1; 
 let ancien_nom_liste = ""; 
 
+
 // AFFICHER LES DÉTAILS D'UNE LISTE DANS LE MENU -------------------------------------------------------------------------------------------------------------------------------
 function ouvrir_details_liste(nom_cible, typeListe) {
+    if(!CONFIG_SECTION[typeListe]) return;
     const elementsArray = CONFIG_SECTION[typeListe].get_donnees(nom_cible);
     if (!elementsArray) return;
 
     const regles = CONFIG_SECTION[typeListe];
-    sec_first.style.display = (typeListe === "etu") ? "flex" : "none";
+    if(sec_first) sec_first.style.display = (typeListe === "etu") ? "flex" : "none";
 
-    // Configurer l'interface (barre de recherche, boutons)
-    conteneur_search_bar.style.display = regles.affichage.recherche ? "flex" : "none";
+    if(conteneur_search_bar) conteneur_search_bar.style.display = regles.affichage.recherche ? "flex" : "none";
     if (regles.affichage.recherche && search_input_etu) search_input_etu.value = "";
-    btn_supp_histo.style.display = regles.affichage.supp_histo ? "flex" : "none";
-    if (tab_placer.length < 1) btn_supp_histo.style.display = "none";
-    btn_ajouter.dataset.source = nom_cible;
-    btn_ajouter.style.display = regles.affichage.bouton_ajout ? "flex" : "none";
+    if(btn_supp_histo) {
+        btn_supp_histo.style.display = regles.affichage.supp_histo ? "flex" : "none";
+        if (tab_placer.length < 1) btn_supp_histo.style.display = "none";
+    }
+    
+    if(btn_ajouter) {
+        btn_ajouter.dataset.source = nom_cible;
+        btn_ajouter.style.display = regles.affichage.bouton_ajout ? "flex" : "none";
+    }
 
-    label_nom_liste.textContent = nom_cible;
-    label_nom_liste.dataset.type = typeListe;
-    conteneur_liste_elements.innerHTML = "";
+    if(label_nom_liste) {
+        label_nom_liste.textContent = nom_cible;
+        label_nom_liste.dataset.type = typeListe;
+    }
+    
+    if(conteneur_liste_elements) conteneur_liste_elements.innerHTML = "";
 
-    // Afficher les éléments
-    elementsArray.forEach((item, index) => {
-        const ul = document.createElement("ul");
-        ul.className = "bloc_element";
-        ul.dataset.index = index;
+    if (!elementsArray || elementsArray.length === 0) { //Si il n'y a pas de données, on affiche ce message
+        if(conteneur_liste_elements) conteneur_liste_elements.innerHTML = "<div class='message_vide_menu'>Aucune donnée disponible</div>";
+    } else {
+        elementsArray.forEach((item, index) => {
+            const ul = document.createElement("ul");
+            ul.className = "bloc_element";
+            ul.dataset.index = index;
 
-        // Utiliser un générateur de contenu spécifique au type
-        const contenu = generer_contenu_element(item, typeListe, index);
-        contenu.forEach(html => {
-            const li = document.createElement("li");
-            li.innerHTML = html;
-            ul.appendChild(li);
+            const contenu = generer_contenu_element(item, typeListe, index);
+            contenu.forEach(html => {
+                const li = document.createElement("li");
+                li.innerHTML = html;
+                ul.appendChild(li);
+            });
+
+            if (regles.affichage.icon_tierstemps && item.tiers_temps) {
+                ul.appendChild(creer_icone_tier_temps());
+            }
+
+            const li_actions = document.createElement("li");
+            li_actions.innerHTML = creer_icones(typeListe === "historique");
+            ul.appendChild(li_actions);
+            if(conteneur_liste_elements) conteneur_liste_elements.appendChild(ul);
         });
-
-        // Ajouter icône tiers-temps si nécessaire
-        if (regles.affichage.icon_tierstemps && item.tiers_temps) {
-            ul.appendChild(creer_icone_tier_temps());
-        }
-
-        // Ajouter icônes d'action
-        const li_actions = document.createElement("li");
-        li_actions.innerHTML = creer_icones(typeListe === "historique");
-        ul.appendChild(li_actions);
-        conteneur_liste_elements.appendChild(ul);
-    });
+    }
 
     document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => s.classList.remove("sec_open"));
-    sous_sec.classList.add("sec_open");
+    if(sous_sec) sous_sec.classList.add("sec_open");
 }
 
-// Nouvelle fonction utilitaire
 function generer_contenu_element(item, typeListe, index) {
     const regles = CONFIG_SECTION[typeListe];
     return regles.format_affichage ? regles.format_affichage(item, index) : [];
 }
 
-
 //FONCTION POUR CREER LES ICONES POUR LES LISTES ET ELEMENT --------------------------------------------------------------------------------------------------------------
 function creer_icones(afficher_charger = false) {
     let html = `<div class="ul_icons">`;
-
-    // Ajoute l'icône "charger" uniquement pour l'historique
     if (afficher_charger) {
-        html += `<svg class="load_element" title="Charger ce placement" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.6667 3.66667H3.66667C2.95942 3.66667 2.28115 3.94762 1.78105 4.44771C1.28095 4.94781 1 5.62609 1 6.33333V19.6667C1 20.3739 1.28095 21.0522 1.78105 21.5523C2.28115 22.0524 2.95942 22.3333 3.66667 22.3333H17C17.7072 22.3333 18.3855 22.0524 18.8856 21.5523C19.3857 21.0522 19.6667 20.3739 19.6667 19.6667V11.6667M10.3333 13L22.3333 1M22.3333 7.66667V1H15.6667" stroke="#EBF5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        html += `<svg class="load_element" title="Charger ce placement" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.6667 3.66667H3.66667C2.95942 3.66667 2.28115 3.94762 1.78105 4.44771C1.28095 4.94781 1 5.62609 1 6.33333V19.6667C1 20.3739 1.28095 21.0522 1.78105 21.5523C2.28115 22.0524 2.95942 22.3333 3.66667 22.3333H17C17.7072 22.3333 18.3855 22.0524 18.8856 21.5523C19.3857 21.0522 19.6667 20.3739 19.6667 19.6667V11.6667M10.3333 13L22.3333 1M22.3333 7.66667V1H15.6667" stroke="#EBF5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     }
-
-    // Ajoute les icônes supprimer et renommer
     html += `<svg class="trash_element" title="supprimer l'élément" width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33333 9.33333H26.6667M13.3333 14.6667V22.6667M18.6667 14.6667V22.6667M6.66666 9.33333L7.99999 25.3333C7.99999 26.0406 8.28095 26.7189 8.78104 27.219C9.28114 27.719 9.95942 28 10.6667 28H21.3333C22.0406 28 22.7188 27.719 23.2189 27.219C23.719 26.7189 24 26.0406 24 25.3333L25.3333 9.33333M12 9.33333V5.33333C12 4.97971 12.1405 4.64057 12.3905 4.39052C12.6406 4.14048 12.9797 4 13.3333 4H18.6667C19.0203 4 19.3594 4.14048 19.6095 4.39052C19.8595 4.64057 20 4.97971 20 5.33333V9.33333" stroke="#FBFDFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <svg class="rename_element" title="modifier l'élément" width="24" height="24" viewBox="0 0 50 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M31.25 24.3333L22.9167 32.6667H43.75V24.3333H31.25ZM25.125 5.97915L6.25 24.8541V32.6667H14.0625L32.9375 13.7916L25.125 5.97915ZM38.9792 7.74998C39.7917 6.93748 39.7917 5.58332 38.9792 4.81248L34.1042 -0.0625169C33.7138 -0.45054 33.1858 -0.668335 32.6354 -0.668335C32.085 -0.668335 31.557 -0.45054 31.1667 -0.0625169L27.3542 3.74998L35.1667 11.5625L38.9792 7.74998Z" fill="#FBFDFF"/></svg>
     </div>`;
-
     return html;
 }
 
+// GESTION DES ACTIONS (Édition, Suppression, Chargement) ------------------------------------------------------------------------------------------------
+let action_en_attente = null;
 
-//=================================================================================================================================================================
-// GESTION DE L'INTERFACE DE SUPPRESSION (Remplacement de window.confirm)
-//=================================================================================================================================================================
-let action_suppression_en_attente = null; 
-let section_precedente_suppression = null; // 🌟 NOUVEAU : Mémorise la section d'où l'on vient !
-
-function ouvrir_menu_suppression(message_html, callback_action) {
-    const supprimer_sec = document.querySelector(".supprimer_sec");
-    if (!supprimer_sec) return;
-
-    // 1. On mémorise la section actuellement ouverte (avant d'ouvrir la page de suppression)
+//MEMORISER LA SECTION PRECEDENTE
+function memoriser_section_precedente() {
     const sections = document.querySelectorAll(".menu_deroulant_gauche section");
-    section_precedente_suppression = Array.from(sections).find(s => 
-        s.classList.contains("sec_open") && !s.classList.contains("supprimer_sec")
+    // Recherche de la vraie section source qui n'est pas un panneau modale d'action
+    const sec_ouverte = Array.from(sections).find(s => 
+        s.classList.contains("sec_open") && 
+        !s.classList.contains("supprimer_sec") && 
+        !s.classList.contains("edition_sec") &&
+        !s.classList.contains("charger_sec")
     );
-
-    // 2. On insère le message personnalisé 
-    const msg_container = supprimer_sec.querySelector(".menu_message");
-    if (msg_container) msg_container.innerHTML = message_html;
     
-    // 3. On sauvegarde l'action
-    action_suppression_en_attente = callback_action;
-
-    // 4. On bascule l'affichage
-    sections.forEach(s => s.classList.remove("sec_open"));
-    supprimer_sec.classList.add("sec_open");
+    // Sécurité vitale : On n'écrase que si on a trouvé une source valide
+    if (sec_ouverte) {
+        section_precedente = sec_ouverte;
+    }
 }
 
-function fermer_menu_suppression() {
-    const supprimer_sec = document.querySelector(".supprimer_sec");
-    if (!supprimer_sec) return;
-    
-    supprimer_sec.classList.remove("sec_open");
-    action_suppression_en_attente = null; 
+// OUVRIR LA SECTION D'ACTION (Édition, Suppression, Chargement)
+function ouvrir_panneau_action(selecteur_panneau, callback_valider) {
+    const panneau = document.querySelector(selecteur_panneau);
+    if (!panneau) return;
 
-    if (section_precedente_suppression) {
-        section_precedente_suppression.classList.add("sec_open");
+    memoriser_section_precedente(); 
+    action_en_attente = callback_valider; 
+
+    // Cache TOUT (y compris etu_sec, historique_sec et sous_sec)
+    document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => {
+        s.classList.remove("sec_open");
+    });
+    
+    panneau.classList.add("sec_open");
+}
+
+// FERMER LA SECTION D'ACTION --------------------------------------------------------------------------------------------------------------------------------------------------
+function fermer_panneaux_action() {
+    // Cache tous les panneaux d'actions possibles
+    document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => {
+        s.classList.remove("sec_open");
+    });
+    
+    action_en_attente = null; 
+
+    // Force la réouverture stricte de la section d'origine
+    if (section_precedente) {
+        section_precedente.classList.add("sec_open");
     } else {
-        // Sécurité au cas où
         const sec_etu = document.querySelector(".etu_sec");
         if (sec_etu) sec_etu.classList.add("sec_open");
     }
 }
 
-// ÉCOUTEUR GLOBAL SUR LA SECTION SUPPRIMER
-const section_supprimer = document.querySelector(".supprimer_sec");
-if (section_supprimer) {
-    section_supprimer.addEventListener("click", (e) => {
-        const btn = e.target.closest(".groupe_btn > *"); 
-        if (!btn) return;
-
-        const texte_btn = btn.textContent.toLowerCase().trim();
-
-        if (texte_btn.includes("annuler")) {
-            fermer_menu_suppression();
-        } else {
-            if (action_suppression_en_attente) {
-                action_suppression_en_attente(); 
-            }
-            fermer_menu_suppression();
-        }
-    });
+// -------------------------------------------------------------------------
+// RACCOURCIS
+// -------------------------------------------------------------------------
+function ouvrir_menu_suppression(message_html, callback_action) {
+    const msg_container = document.querySelector(".supprimer_sec .menu_message");
+    if (msg_container) msg_container.innerHTML = message_html;
+    ouvrir_panneau_action(".supprimer_sec", callback_action);
 }
 
-// FONCTION SUPPRIMER ADAPTÉE
+function ouvrir_menu_edition(titre_html, callback_action) {
+    const titre_container = document.querySelector(".edition_sec .titre_edition_sec");
+    if (titre_container) titre_container.innerHTML = titre_html;
+    // CRUCIAL : On connecte le bouton valider à l'action d'édition
+    ouvrir_panneau_action(".edition_sec", callback_action);
+}
+
+// FONCTION POUR SUPPRIMER UNE LISTE OU UN ELEMENT --------------------------------------------------------------------------------------------------------------------------
 function supprimer(poubelle) {
-    // A. Cas de la suppression d'une liste entière (depuis le menu principal, ex: etu_sec)
     const liListe = poubelle.closest(".menu_ul > li");
     if (liListe) {
         const estListeEtu = poubelle.closest(".etu_sec") !== null;
@@ -288,14 +258,14 @@ function supprimer(poubelle) {
             }
             afficher_listes();
             if (typeof nettoyer_filtres === "function") nettoyer_filtres();
-            remplir_select();
+            if (typeof remplir_select === "function") remplir_select();
             if (typeof generer_filtres === "function") generer_filtres();
-            verifier_capacite();
+            if (typeof verifier_capacite === "function") verifier_capacite();
+            return true;
         });
         return;
     }
 
-    // B. Cas de la suppression d'un élément spécifique (depuis sous_sec)
     const bloc_element = poubelle.closest(".bloc_element");
     if (bloc_element) {
         const element_supp = parseInt(bloc_element.dataset.index, 10);
@@ -306,11 +276,10 @@ function supprimer(poubelle) {
         const config_speciale = Object.values(CONFIG_SECTION).find(c => c.nom_liste === list_el);
         
         if (config_speciale) {
-            // C'est une Salle, Matière, Historique...
-            let obj = config_speciale.tableau[element_supp];
+            let tableau_a_jour = config_speciale.get_donnees(); //récupère la référence
+            let obj = tableau_a_jour[element_supp]; //met à jour le tableau
             if (obj) nom_element_affiche = obj.nom_salle || obj.nom || obj.titre || "cet élément";
         } else {
-            // C'est un étudiant dans une liste !
             let listeEtu = getListeEtu(list_el);
             if (listeEtu && listeEtu.donnees[element_supp]) {
                 nom_element_affiche = `${listeEtu.donnees[element_supp].nom} ${listeEtu.donnees[element_supp].prenom}`;
@@ -319,8 +288,19 @@ function supprimer(poubelle) {
 
         ouvrir_menu_suppression(`Voulez-vous vraiment supprimer <b>${nom_element_affiche}</b> ?`, () => {
             if (config_speciale) {
-                config_speciale.tableau.splice(element_supp, 1);
-                sauvegarder(config_speciale.storage_key, config_speciale.tableau);
+                let tableau_a_jour = config_speciale.get_donnees(); //récupère la référence
+                tableau_a_jour.splice(element_supp, 1); // On supprime dans le tableau
+                sauvegarder(config_speciale.storage_key, tableau_a_jour);
+                
+                // Si on supprime une salle, on la retire des salles choisies
+                if (type_el === "salle" && typeof salles_choisies !== "undefined") {
+                    const index_salle = salles_choisies.findIndex(s => comparerNoms(s, nom_element_affiche));
+                    if (index_salle !== -1) {
+                        salles_choisies.splice(index_salle, 1);
+                        if (typeof maj_select_salles_sup === "function") maj_select_salles_sup();
+                        if (typeof dessiner_badges_salles === "function") dessiner_badges_salles();
+                    }
+                }
             } else {
                 let listeEtu = getListeEtu(list_el);
                 if (listeEtu) {
@@ -330,25 +310,38 @@ function supprimer(poubelle) {
             }
 
             ouvrir_details_liste(list_el, type_el);
-            remplir_select();
+            if (typeof remplir_select === "function") remplir_select();
             if (typeof generer_filtres === "function") generer_filtres();
-            verifier_capacite();
+            if (typeof verifier_capacite === "function") verifier_capacite();
+            
+            // On s'assure que le retour sera fait vers la liste des détails
+            section_precedente = document.querySelector(".sous_sec");
+            return true;
         });
     }
 }
 
-
+//FONCTION DE CLIC SUR L'ICONE MODIFIER ------------------------------------------------------------------------------------------------------------------------
+function preparer_chargement_placement(cible) {
+    const bloc = cible.closest(".bloc_element");
+    if (bloc) {
+        index_edition = parseInt(bloc.dataset.index, 10);
+        ouvrir_panneau_action(".charger_sec", () => {
+            charger_placement();
+            return true;
+        });
+    }
+}
 
 // FONCTION POUR AJOUTER/MODIFIER UNE LISTE/ELEMENT --------------------------------------------------------------------------------------------------------------------------
 function edition_formulaire() {
-    const nom_liste = label_nom_liste.textContent; 
+    const nom_liste = label_nom_liste ? label_nom_liste.textContent : ""; 
     
-    if (mode_edition !== "modifier_liste") type_edition = label_nom_liste.dataset.type; 
+    if (mode_edition !== "modifier_liste") type_edition = label_nom_liste ? label_nom_liste.dataset.type : ""; 
 
-    titre_edition_sec.textContent = (mode_edition === "modifier_liste") ? 
-        "Renommer la liste" : CONFIG_SECTION[type_edition].titres[mode_edition];
+    const texte_titre = (mode_edition === "modifier_liste") ? 
+        "Renommer la liste" : (CONFIG_SECTION[type_edition] ? CONFIG_SECTION[type_edition].titres[mode_edition] : "Edition");
 
-    // 1. On récupère l'objet qu'on est en train d'éditer
     let objet_a_editer = {}; 
     if (mode_edition === "modifier") {
         switch (type_edition) {
@@ -367,53 +360,72 @@ function edition_formulaire() {
         }
     }
 
-    // Générer la liste des inputs en fonction des valeurs dans CONFIG_SECTION
     let html_formulaire = "";
     
+    // ON CRÉE LE CODE HTML DU FORMULAIRE (au lieu de le lire)
     if (mode_edition === "modifier_liste") {
-        html_formulaire += generer_champ_input("Nouveau nom", "input_nom_liste", ancien_nom_liste, "text");
+        html_formulaire = generer_champ_input("Nouveau nom", "input_nom_liste", ancien_nom_liste);
     } else {
-        const champs_config = CONFIG_SECTION[type_edition].champs;
-        
-        champs_config.forEach(champ => {
-            //récupère l'ancienne valeur si on modifie, sinon met vide
-            let valeur = (mode_edition === "modifier" && objet_a_editer[champ.id] !== undefined) ? objet_a_editer[champ.id] : "";
-                         
-            html_formulaire += generer_champ_input(champ.label, `input_${champ.id}`, valeur, champ.type);
-        });
+        const config = CONFIG_SECTION[type_edition];
+        if (config && config.champs) {
+            config.champs.forEach(champ => {
+                let valeur_champ = (mode_edition === "modifier" && objet_a_editer[champ.id] !== undefined) ? objet_a_editer[champ.id] : "";
+                html_formulaire += generer_champ_input(champ.label, `input_${champ.id}`, valeur_champ, champ.type);
+            });
+        }
     }
 
-    form_edition.innerHTML = html_formulaire;
+    const form_edition = document.querySelector(".form_edition");
+    const edition_erreur = document.querySelector(".edition_erreur");
+    
+    if (form_edition) form_edition.innerHTML = html_formulaire;
+    if (edition_erreur) edition_erreur.textContent = ""; 
 
-    document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => s.classList.remove("sec_open"));
-    edition_sec.classList.add("sec_open");
+    ouvrir_menu_edition(texte_titre, valider_edition); // ouvre la section appropriée
 }
 
-
 //FONCTION POUR VALIDER UN AJOUT/MODIFICATION D'UNE LISTE/ELEMENT --------------------------------------------------------------------------------------------------------
-
 function valider_edition() {
-    edition_erreur.textContent = ""; 
+    const edition_erreur = document.querySelector(".edition_erreur");
+    if(edition_erreur) edition_erreur.textContent = ""; 
 
-    // CAS 1 : Renommer le titre d'une liste entière
+    // CAS 1 : Renommer le titre d'une liste
     if (mode_edition === "modifier_liste") {
-        const nouveau_nom_liste = document.getElementById("input_nom_liste")?.value.trim();
+        const input_nom = document.getElementById("input_nom_liste");
+        let nouveau_nom_liste = input_nom ? input_nom.value.trim() : "";
+        
         if (!nouveau_nom_liste) {
-            edition_erreur.textContent = "Le nom ne peut pas être vide.";
-            return;
+            if(edition_erreur) edition_erreur.textContent = "Le nom ne peut pas être vide.";
+            return false; // Renvoie false pour bloquer la fermeture du panneau !
         }
+
         if (type_edition === "nom_liste_etu") {
+            // Application de la vérification de nom unique
+            nouveau_nom_liste = generer_nom_unique(nouveau_nom_liste, tab_etu, "nom_fichier", index_edition);
+
+            let ancien_nom = tab_etu[index_edition].nom_fichier;
             tab_etu[index_edition].nom_fichier = nouveau_nom_liste;
             sauvegarder("tab_etu", tab_etu);
+
+            // Si cette liste était actuellement sélectionnée, on met à jour !
+            if (recuperer("select_etu") === ancien_nom) sauvegarder("select_etu", nouveau_nom_liste);
+            if (recuperer("form: select_etu") === ancien_nom) sauvegarder("form: select_etu", nouveau_nom_liste);
+            
+            if (typeof remplir_select === "function") remplir_select();
             rafraichir_menu_principal(".etu_sec");
+
+        } else if (type_edition === "nom_liste_salle") {
+            tab_salles[index_edition].nom_liste = nouveau_nom_liste;
+            sauvegarder("tab_salles", tab_salles);
         }
-        return;
+        
+        return true; // Action réussie, le panneau peut se fermer
     } 
     
+    // CAS 2 : Modification d'un élément interne
     let nouvel_objet = {};
     const config = CONFIG_SECTION[type_edition];
 
-    // 1. On récupère les valeurs tapées
     config.champs.forEach(champ => {
         let input_element = document.getElementById(`input_${champ.id}`);
         if (input_element) {
@@ -423,12 +435,14 @@ function valider_edition() {
         }
     });
 
-    // 2. On délègue la sauvegarde magique
     const nom_liste = document.querySelector(".nom_liste").textContent;
     config.sauvegarder_element(nouvel_objet, mode_edition, index_edition, nom_liste);
+    
+    fermer_et_recharger(nom_liste);
+
+    return true; // Action réussie
 }
 
-//Fonction pour générer un champ texte de formulaire
 function generer_champ_input(label, id, valeur = "", type = "text") {
     return `<label class="champ_edition">
                 <span class="label_texte">${label}</span>
@@ -436,110 +450,110 @@ function generer_champ_input(label, id, valeur = "", type = "text") {
             </label>`;
 }
 
-// Fonction pour fermer le formulaire
+// FONCTIONS DE RAFRAICHISSEMENT CIBLÉ -------------------------------------------------------------------------------------------------
 function fermer_formulaire(section_a_rouvrir) {
-    edition_sec.classList.remove("sec_open");
-    sous_sec.classList.remove("sec_open"); 
-    
-    const charger_sec = document.querySelector(".charger_sec");
-    if (charger_sec) charger_sec.classList.remove("sec_open");
-    
-    if (section_a_rouvrir) section_a_rouvrir.classList.add("sec_open");
+    if (section_a_rouvrir) section_precedente = section_a_rouvrir;
+    fermer_panneaux_action();
 }
 
-// Fonction pour fermer un sous menu et 
 function fermer_et_recharger(nom_liste) {
-    const type_el = document.querySelector(".nom_liste").dataset.type; // On récupère le type
+    const type_el = document.querySelector(".nom_liste").dataset.type; 
     ouvrir_details_liste(nom_liste, type_el);
-    fermer_formulaire(document.querySelector(".sous_sec"));
+    //force la mémoire pour revenir dans la liste des détails
+    section_precedente = document.querySelector(".sous_sec");
 }
 
-// Fonction pour rafraichir le menu gauche
 function rafraichir_menu_principal(selecteur_section) {
     afficher_listes();
-    remplir_select();
-    generer_filtres();
-    fermer_formulaire(document.querySelector(selecteur_section));
+    if (typeof remplir_select === "function") remplir_select();
+    if (typeof generer_filtres === "function") generer_filtres();
+    //force la mémoire pour revenir dans le bon menu principal
+    section_precedente = document.querySelector(selecteur_section);
 }
 
 
 
+// FONCTION POUR RECHERCHER UN ETUDIANT A PARTIR DE LA BARRE DE RECHERCHE --------------------------------------------------------------------------------------------
+const searchInputMenu = document.querySelector(".search_bar input");
+function rechercher_dans_menu(recherche) {
+    recherche = recherche.toLowerCase().trim();
+    const bloc_etu = document.querySelectorAll(".liste_elements .bloc_element");
 
-// FONCTION POUR RECHERCHER UN ETUDIANT A PARTIR DE LA BARRE DE RECHERCHE -----------------------------------------------------------------------------------
-const searchInput = document.querySelector(".search_bar input");
-    searchInput.addEventListener("input", (e) => {
-        const recherche = e.target.value.toLowerCase().trim();
-        const bloc_etu = document.querySelectorAll(".liste_elements .bloc_element");
-
-        bloc_etu.forEach(bloc => {
-            const texteBloc = bloc.textContent.toLowerCase();
-            if (texteBloc.includes(recherche)) {
-                bloc.classList.remove("bloc_invisible");
-            } else {
-                bloc.classList.add("bloc_invisible");
-            }
-        });
+    bloc_etu.forEach(bloc => {
+        if (bloc.textContent.toLowerCase().includes(recherche)) {
+            bloc.classList.remove("bloc_invisible");
+        } else {
+            bloc.classList.add("bloc_invisible");
+        }
     });
+}
 
 
 
 // FONCTION POUR GERER LES CHECKBOX TIERS-TEMPS DANS LE MENU GAUCHE -----------------------------------------------------------------------------------
-// Permet de cocher si un étudiant a un tiers-temps ou non et cocher si une place est indisponible
-document.addEventListener("change", (e) => {
-    if (e.target.classList.contains("check_tier") || e.target.classList.contains("check_indispo")) {
-        const bloc = e.target.closest(".bloc_element");
-        const index = parseInt(bloc.dataset.index, 10);
-        const nom_liste = document.querySelector(".nom_liste").textContent;
+function maj_option_etudiant(cible) {
+    const bloc = cible.closest(".bloc_element");
+    const index = parseInt(bloc.dataset.index, 10);
+    const nom_liste = document.querySelector(".nom_liste").textContent;
+    let listeEtu = getListeEtu(nom_liste);
 
-        let listeEtu = getListeEtu(nom_liste);
+    if (listeEtu && cible.classList.contains("check_tier")) {
+        listeEtu.donnees[index].tiers_temps = cible.checked;
+        sauvegarder('tab_etu', tab_etu);
 
-        if (listeEtu && e.target.classList.contains("check_tier")) {
-            // Mettre à jour les données
-            listeEtu.donnees[index].tiers_temps = e.target.checked;
-            sauvegarder('tab_etu', tab_etu);
+        if (typeof select_etu !== 'undefined' && select_etu.value === nom_liste) {
+            if (typeof afficher_tableau === "function") afficher_tableau();
+        }
 
-            // Mettre à jour le tableau si nécessaire
-            if (select_etu.value === nom_liste) afficher_tableau();
-
-            // Mettre à jour l’icône dans le menu gauche
-            const existingIcon = bloc.querySelector(".icon_bloc_element");
-            if (e.target.checked) {
-                // Si l’icône n’existe pas, on l’ajoute
-                if (!existingIcon) {
-                    // Trouver le li contenant les icônes d'action (ul_icons)
-                    const actionsLi = bloc.querySelector(".ul_icons")?.closest("li");
-                    if (actionsLi) {
-                        // Insérer l’icône juste avant les icônes d’action
-                        bloc.insertBefore(creer_icone_tier_temps(), actionsLi);
-                    } else {
-                        // Si on ne trouve pas, on l’ajoute à la fin
-                        bloc.appendChild(creer_icone_tier_temps());
-                    }
-                }
-            } else {
-                // Si l’icône existe, on la supprime
-                if (existingIcon) {
-                    existingIcon.remove();
-                }
-            }
+        const existingIcon = bloc.querySelector(".icon_bloc_element");
+        if (cible.checked && !existingIcon) {
+            const actionsLi = bloc.querySelector(".ul_icons")?.closest("li");
+            if (actionsLi) bloc.insertBefore(creer_icone_tier_temps(), actionsLi);
+            else bloc.appendChild(creer_icone_tier_temps());
+        } else if (!cible.checked && existingIcon) {
+            existingIcon.remove();
         }
     }
-});
-
-function creer_icone_tier_temps() {
-    const li = document.createElement("li");
-    li.className = "icon_bloc_element";
-    li.innerHTML = svg_tier_temps;
-    return li;
 }
 
 
-//FONCTION POUR SUPPRIMER TOUTE L'HISTORIQUE DES PLACEMENT ----------------------------------------------------------------------------------------------------------------
-btn_supp_histo.addEventListener("click", supp_histo_placement)
+//FONCTION POUR CREER L'ICONE TIER-TEMPS ----------------------------------------------------------------------------------------------------------------------------------
+function creer_icone_tier_temps() {
+    const li = document.createElement("li");
+    li.className = "icon_bloc_element";
+    li.innerHTML = typeof svg_tier_temps !== 'undefined' ? svg_tier_temps : 'T';
+    return li;
+}
+
+//FONCTION DE CLIC SUR L'ICONE CHARGER ---------------------------------------------------------------------------------------------------------------------------------------
+function preparer_edition_element(cible) {
+    const bloc = cible.closest(".bloc_element"); 
+    const liListe = cible.closest(".menu_ul > li"); 
+    
+    if (bloc) {
+        index_edition = parseInt(bloc.dataset.index, 10);
+        mode_edition = "modifier";
+        edition_formulaire();
+    } else if (liListe) {
+        const isEtu = cible.closest(".etu_sec") !== null;
+        type_edition = isEtu ? "nom_liste_etu" : "nom_liste_salle";
+        index_edition = Array.from(liListe.parentNode.children).indexOf(liListe);
+        ancien_nom_liste = liListe.dataset.name;
+        mode_edition = "modifier_liste";
+        edition_formulaire();
+    }
+}
+
+//FONCTION POUR SUPPRIMER TOUT L'HISTORIQUE DES PLACEMENTS ----------------------------------------------------------------------------------------------------------------
+
 function supp_histo_placement() {
     ouvrir_menu_suppression("Voulez-vous vraiment supprimer <b>tout l'historique des placements</b> ?", () => {
         tab_placer = [];
         sauvegarder("tab_placement", tab_placer);
         ouvrir_details_liste("Historique des placements", "historique");
+        
+        // On force le retour dans sous_sec
+        section_precedente = document.querySelector(".sous_sec");
+        return true;
     });
 }

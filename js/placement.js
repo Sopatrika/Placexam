@@ -11,7 +11,6 @@ const select_salle_sup = document.querySelector("#select_salle_sup");
 
 // Par défaut, au chargement de la page, le bouton est bloqué
 btn_placement.classList.add("placement_disable");
-btn_placement.addEventListener("click", placement_aleatoire);
 
 // RÉINITIALISATION DE L'INTERFACE ------------------------------------------------------------------------------------------------
 function reinitialiser_etat_ui() {
@@ -73,9 +72,13 @@ function verifier_capacite() {
         return;
     }
 
-    // Calcul de la capacité totale en utilisant directement salles_choisies
+    // Calcul de la capacité totale en utilisant salles_choisies
     let capa_totale = 0;
-    salles_choisies.forEach(nom_salle => {
+    let salles_necessaires = []; // Nouveau tableau temporaire
+
+    for (let nom_salle of salles_choisies) {
+        salles_necessaires.push(nom_salle);
+        
         let s_obj = tab_salles.find(s => String(s.nom_salle).trim() === String(nom_salle).trim());
         if (s_obj) {
             let espaces = parseInt(s_obj.sieges_espaces) || 0;
@@ -92,7 +95,15 @@ function verifier_capacite() {
                 }
             }
         }
-    });
+        
+        // Dès que la capacité cumulée suffit pour placer tout le monde, ça stoppe la boucle
+        if (capa_totale >= nb_etu) {
+            break; 
+        }
+    }
+
+    // On écrase l'ancienne liste par la liste épurée (les salles en trop sont ainsi supprimées)
+    salles_choisies = salles_necessaires;
 
     if (nb_etu > capa_totale) {
         msg_capacite.textContent = `Capacités insuffisantes : ${nb_etu} étudiants pour ${capa_totale} places.`;
@@ -136,16 +147,46 @@ function charger_placement() {
     if (!archive) return;
     sauvegarder("placer_actuel", archive.titre);
     const donnees = archive.donnees_placement;
+    salles_choisies = [...archive.salles_choisies];
+
+    // 2. EXTRACTION DES DONNÉES DE L'HISTORIQUE
+    // On récupère les noms depuis l'archive (avec fallback sur le titre si besoin)
+    const nom_etu = archive.nom_liste_etu || archive.titre.split(" - ")[0];
+    const nom_salle = salles_choisies[0];
+    const nom_matiere = archive.nom_matiere || archive.titre.split(" - ")[0];
+
+    // 3. APPLICATION DES OPTIONS (avec gestion des fantômes)
+    // C'est ici que tu appelles la fonction pour chaque select
+    restaurer_option_fantome(select_etu, nom_etu);
+    restaurer_option_fantome(select_salle, nom_salle);
+    
+    if (typeof select_matiere !== "undefined" && select_matiere) {
+        restaurer_option_fantome(select_matiere, nom_matiere);
+    }
+
+    // 4. RESTAURATION DU TIERS-TEMPS
+    const checkbox_tiers = document.getElementById("tri_tiers_temps");
+    if (checkbox_tiers && archive.filtres) {
+        checkbox_tiers.checked = archive.filtres.tiers_temps || false;
+        sauvegarder("form: tri_tiers_temps", checkbox_tiers.checked);
+    }
 
     // DÉDUIRE LA LISTE ÉTUDIANTE (On cherche dans quelle liste se trouve le 1er étudiant)
-    if (donnees.length > 0) {
-        const premier_etu = donnees[0];
-        const liste_trouvee = Object.values(tab_etu).find(liste => 
-            liste.donnees.some(e => e.nom === premier_etu.nom && e.prenom === premier_etu.prenom)
-        );
-        select_etu.value = liste_trouvee ? liste_trouvee.nom_fichier : "";
+    let liste_trouvee = tab_etu.find(liste => comparerNoms(liste.nom_fichier, nom_etu));
+    
+    if (liste_trouvee) {
+        select_etu.value = liste_trouvee.nom_fichier;
     } else {
-        select_etu.value = "";
+        // Fallback: Si la liste a été renommée ou supprimée, on cherche par le 1er étudiant
+        if (donnees.length > 0) {
+            const premier_etu = donnees[0];
+            const fallback_liste = tab_etu.find(liste => 
+                liste.donnees.some(e => e.nom === premier_etu.nom && e.prenom === premier_etu.prenom)
+            );
+            select_etu.value = fallback_liste ? fallback_liste.nom_fichier : "";
+        } else {
+            select_etu.value = "";
+        }
     }
 
     // 2. DÉDUIRE LA MATIÈRE (Depuis le titre de l'archive)
@@ -219,36 +260,54 @@ function charger_placement() {
     }
 }
 
-select_salle_sup.addEventListener("change", (e) => {
-    const salle = e.target.value;
-    if (salle) {
-        if (!salles_choisies.includes(salle)) {
-            salles_choisies.push(salle);
-        }
-        e.target.value = "";
-        verifier_capacite();
+// FONCTION POUR CRÉER UNE OPTION "FANTÔME" (Si une donnée a été supprimée mais est dans l'historique)
+function restaurer_option_fantome(select_html, valeur) {
+    if (!select_html || !valeur) return;
+    const options = Array.from(select_html.options);
+    const trouve = options.some(opt => comparerNoms(opt.value, valeur) || opt.value.includes(valeur));
+    
+    // Si l'option n'existe plus, on la recrée visuellement en rouge
+    if (!trouve) {
+        const opt = document.createElement("option");
+        opt.value = valeur;
+        opt.textContent = `${valeur} (Supprimé)`;
+        opt.style.color = "var(--rouge)"; 
+        select_html.appendChild(opt);
     }
-});
+    
+    // On force le select à se positionner sur cette option
+    const option_trouvee = Array.from(select_html.options).find(opt => comparerNoms(opt.value, valeur) || opt.value.includes(valeur));
+    if(option_trouvee) select_html.value = option_trouvee.value;
+}
+
+
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FONCTION POUR CREER LES SELECTIONS DE SALLE SUPPLEMENTAIRE -------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function maj_select_salles_sup() {
-    // 1. On vide le select actuel pour le reconstruire proprement
+    // vide le select actuel pour le refaire
     select_salle_sup.innerHTML = '<option value="">+ Ajouter une salle</option>';
     
-    // 2. On parcourt toutes les salles disponibles
-    tab_salles.forEach(s => {
+    // filtre pour ne garder que les salles qui ne sont pas encore choisies
+    let salles_disponibles = tab_salles.filter(s => {
         const nomSalle = String(s.nom_salle || s.nom).trim();
-        
-        // vérifie si cette salle est déjà dans salles_choisies
-        const salles_prise = salles_choisies.some(s_choisie => 
-            String(s_choisie).trim() === nomSalle
-        );
+        return !salles_choisies.some(s_choisie => String(s_choisie).trim() === nomSalle);
+    });
 
-        if (!salles_prise) {
-            creer_option(nomSalle, select_salle_sup);
-        }
+    // trie les salles disponibles par ordre décroissant de capacité maximale
+    salles_disponibles.sort((a, b) => {
+        let capA = parseInt(a.capacite_max) || 0;
+        let capB = parseInt(b.capacite_max) || 0;
+        return capB - capA; // b - a donne l'ordre décroissant
+    });
+    
+    // parcourt le tableau trié pour créer les options
+    salles_disponibles.forEach(s => {
+        const nomSalle = String(s.nom_salle || s.nom).trim();
+        const capacite = parseInt(s.capacite_max) || 0;
+        const texte_affichage = `${nomSalle} (${capacite} places)`; // texte (ex: "Amphi A (150 places)")
+        creer_option(texte_affichage, select_salle_sup, nomSalle); // On passe nomSalle en 3ème argument pour que la valeur <option value="..."> reste juste le nom de la salle
     });
 }
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -307,37 +366,16 @@ function dessiner_badges_salles() {
     }
 }
 
-//---------------------------------------------------------------------------------------------------------------------------------------------------------------
-// RESET DU PLACEMENT LORSQU'ON CHANGE L'OPTION DANS LES SELECT -----------------------------------------------------------------------------------------------
-//---------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-select_etu.addEventListener("change", () => { 
-    salles_choisies = [];
-    reset_placement();
-    verifier_capacite();
-});
-
-select_salle.addEventListener("change", () => {
-    const newSalle = select_salle.value;
-    salles_choisies = salles_choisies.filter(s => s !== newSalle);
-    salles_choisies.unshift(newSalle);
-    reset_placement();
-    verifier_capacite();
-    maj_select_salles_sup();
-});
-
-
-window.addEventListener("DOMContentLoaded", () => { 
-    setTimeout(verifier_capacite, 200);
-});
-
-
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // FONCTION POUR PLACER ALEATOIREMENT LES ETUDIANTS SUR LES PLACES D'EXAMENS -------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function placement_aleatoire() {
     if (btn_placement.classList.contains("placement_disable")) return;
+
+    if (mode_indispo && mode_indispo.checked) {
+        mode_indispo.checked = false; //On décoche mode_indispo
+    }
 
     msg_capacite.textContent = "";
     const nom_liste_etu = select_etu.value;
@@ -469,7 +507,7 @@ function placement_aleatoire() {
     const titre_placement = `${nom_matiere} - ${titre_salles} (${date_jour})`;
     
     // On prépare les données
-    const donnees_sauvegarde = etudiants_finaux.map(etu => ({
+    const donnees_sauvegarde = etudiants_a_placer.map(etu => ({
         nom: etu.nom,
         prenom: etu.prenom,
         specialite: etu.specialite,
@@ -483,9 +521,11 @@ function placement_aleatoire() {
     const tiers_temps_actif = check_tiers_temps ? check_tiers_temps.checked : false; //Si le tier-temps est actif
 
     // ajoute le placement dans tab_placer
-    tab_placer.push({
+    tab_placer.unshift({
         titre: titre_placement,
         date: date_jour,
+        nom_liste_etu: nom_liste_etu,
+        nom_matiere: nom_matiere,
         donnees_placement: donnees_sauvegarde,
         salles_choisies: [...salles_choisies],
         filtres: {
@@ -501,6 +541,9 @@ function placement_aleatoire() {
     sauvegarder('tab_placement', tab_placer);
     sauvegarder('placer_actuel', titre_placement);
 
+    // On définit l'index sur le nouveau placement
+    index_edition = 0; 
+
     let detail_placement_array = [];
     salles_choisies.forEach(nom_salle => { //affiche le nombre d'étudiants par salles.
         let nb_places_salle = etudiants_finaux.filter(etu => etu.salle_attribuee === nom_salle).length;
@@ -511,7 +554,7 @@ function placement_aleatoire() {
 
     let detail_texte_placement = detail_placement_array.join("<br>");
 
-    // 2. On affiche le message de succès détaillé avec du HTML (innerHTML)
+    // affiche le message de succès
     msg_capacite.innerHTML = `${detail_texte_placement}`;
     
     msg_capacite.classList.remove("texte_rouge");
@@ -519,18 +562,27 @@ function placement_aleatoire() {
     icon_attention.classList.add("svg_attention_invisible");
     boite_capacite.classList.add("message_visible");
 
-    colorier_places(donnees_sauvegarde);
+    // --- NOUVEAU CODE D'ACTUALISATION ---
+    placement_actuel_donnees = donnees_sauvegarde; // Crucial pour l'affichage
+    if (typeof actualiser_affichage_complet === "function") {
+        actualiser_affichage_complet(); // Met à jour le tableau ET le plan proprement
+    } else {
+        colorier_places(donnees_sauvegarde);
+    }
+    // ------------------------------------
+
     // on rafraîchit la section Historique des placements
     if (label_nom_liste.textContent === "Historique des placements") {
         ouvrir_details_liste("Historique des placements", "historique");
     }
+    if (typeof maj_absences === "function") maj_absences();
 }
 
 //FONCTION POUR MELANGER UNE LISTE (Mélange de Fisher-Yates)
-    function melanger(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
+function melanger(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
     }
+    return array;
+}

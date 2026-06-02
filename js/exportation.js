@@ -7,43 +7,20 @@ const menu_exporter = document.getElementById("menu_exporter");
 const erreur_exporter = document.querySelector(".erreur_exporter");
 
 
-// 1. OUVERTURE DU MENU
-if (btn_exporter_header) {
-    btn_exporter_header.addEventListener("click", () => {
-        // On utilise ta fonction personnalisée 'recuperer'
-        let titre_actuel = recuperer("placer_actuel");
-        
-        if (!titre_actuel) {
-            alert("Aucun placement n'est actuellement affiché. Veuillez charger un placement.");
-            return;
-        }
-
-        if (erreur_exporter) erreur_exporter.textContent = ""; 
-        
-        // 🟢 AFFICHAGE : On enlève la classe qui cache les éléments
-        if (menu_exporter) menu_exporter.classList.remove("menu_close");
-        if (fond_sombre) fond_sombre.classList.remove("menu_close");
-    });
+//OUVERTURE DU MENU MAPPING ----------------------------------------------------------------------------------------------------------------------------------------------
+function ouvrir_menu_export() {
+    let titre_actuel = recuperer("placer_actuel");
+    if (!titre_actuel) {
+        alert("Aucun placement n'est actuellement affiché. Veuillez charger un placement.");
+        return;
+    }
+    const erreur_exporter = document.querySelector(".erreur_exporter");
+    if (erreur_exporter) erreur_exporter.textContent = ""; 
+    document.getElementById("menu_exporter").classList.remove("menu_close");
+    document.querySelector(".fond_sombre").classList.remove("menu_close");
 }
 
-// 2. GESTION DES BOUTONS (Annuler / Valider)
-if (menu_exporter) {
-    menu_exporter.addEventListener("click", (e) => {
-        // Si on clique sur "Annuler"
-        if (e.target.closest(".btn_annuler")) {
-            // 🟢 MASQUAGE : On remet la classe qui cache
-            menu_exporter.classList.add("menu_close");
-            if (fond_sombre) fond_sombre.classList.add("menu_close");
-        }
-
-        // Si on clique sur "Valider"
-        if (e.target.closest(".btn_valider")) {
-            valider_et_lancer_export();
-        }
-    });
-}
-
-// 3. VALIDATION DES CHAMPS ET LANCEMENT
+//VALIDATION DES CHAMPS -------------------------------------------------------------------------------------------------------------------------------------
 function valider_et_lancer_export() {
     const annee = document.getElementById("export_annee").value.trim();
     const date = document.getElementById("export_date").value.trim();
@@ -57,7 +34,7 @@ function valider_et_lancer_export() {
 
     if (erreur_exporter) erreur_exporter.textContent = ""; 
     
-    // 🟢 MASQUAGE : On ferme le menu car tout est bon
+    // On ferme le menu car tout est bon
     if (menu_exporter) menu_exporter.classList.add("menu_close");
     if (fond_sombre) fond_sombre.classList.add("menu_close");
     
@@ -65,15 +42,12 @@ function valider_et_lancer_export() {
     exporter_placement_final(annee, date, debut, duree);
 }
 
-// 4. FONCTION FINALE D'EXPORTATION
+// FONCTION D'EXPORTATION ----------------------------------------------------------------------------------------------------------------------------------------------------
 function exporter_placement_final(annee_choisie, date_choisie, debut_choisi, duree_choisie) {
     let titre_actuel = recuperer("placer_actuel");
     if (!titre_actuel) return;
     
-    // Nettoyage du titre
     titre_actuel = String(titre_actuel).replace(/^"|"$/g, '').trim();
-    
-    // On récupère l'historique proprement
     const historique_placements = recuperer("tab_placement") || [];
     const archive = historique_placements.find(p => String(p.titre).replace(/^"|"$/g, '').trim() === titre_actuel);
 
@@ -88,6 +62,7 @@ function exporter_placement_final(annee_choisie, date_choisie, debut_choisi, dur
     let nom_matiere = select_matiere_val;
     let nom_prof = "Non renseigné";
 
+    // "met bien le nom du prof entre () de la matière" : Extraction du prof
     const match = select_matiere_val.match(/(.*?)\s*\((.*?)\)/);
     if (match) {
         nom_matiere = match[1].trim();
@@ -106,27 +81,34 @@ function exporter_placement_final(annee_choisie, date_choisie, debut_choisi, dur
 
     const zip = new JSZip();
 
-    // EXCEL 1 : Globale
+    // Globale
     const wb_global = XLSX.utils.book_new();
     const ws_global = creer_feuille_complete(archive.donnees_placement);
     XLSX.utils.book_append_sheet(wb_global, ws_global, "Liste Globale");
-    const excel_global_buffer = XLSX.write(wb_global, { bookType: 'xlsx', type: 'array' });
-    zip.file("Liste_Complete_Etudiants.xlsx", excel_global_buffer);
+    zip.file("Liste_Complete_Etudiants.xlsx", XLSX.write(wb_global, { bookType: 'xlsx', type: 'array' }));
 
-    // EXCEL 2 : Émargements
+    // EXCEL 2 : Émargements (Feuilles par salles)
     archive.salles_choisies.forEach(salle => {
         let etudiants_salle = archive.donnees_placement.filter(e => e.salle_attribuee === salle);
         if (etudiants_salle.length > 0) {
             const wb_salle = XLSX.utils.book_new();
             const ws_salle = creer_feuille_emargement(salle, etudiants_salle, infos_en_tete);
             XLSX.utils.book_append_sheet(wb_salle, ws_salle, "Emargement");
-            
-            const excel_salle_buffer = XLSX.write(wb_salle, { bookType: 'xlsx', type: 'array' });
             let nom_fichier_salle = salle.replace(/[^a-z0-9]/gi, '_');
-            zip.file(`Emargement_${nom_fichier_salle}.xlsx`, excel_salle_buffer);
+            zip.file(`Emargement_${nom_fichier_salle}.xlsx`, XLSX.write(wb_salle, { bookType: 'xlsx', type: 'array' }));
         }
     });
 
+    // création du PV d'Examen 
+    const pv_excel = generer_pv_examen(
+        archive.donnees_placement,  // Tableau de placement
+        infos_en_tete,              // Date, début, durée, prof...
+        archive.salles_choisies,    // Salles
+        archive.filtres.specialites // Les options (spécialités cochées)
+    );
+    zip.file("PV_Examen.xlsx", pv_excel);
+
+    // Génération finale du ZIP
     zip.generateAsync({ type: "blob" }).then(function(content) {
         const url = window.URL.createObjectURL(content);
         const a = document.createElement("a");
@@ -140,7 +122,11 @@ function exporter_placement_final(annee_choisie, date_choisie, debut_choisi, dur
     });
 }
 
-// 5. FONCTIONS DE FORMATAGE (Stylisées)
+
+
+
+
+// FONCTION POUR GENERER LA FEUILLE COMPLETE DES ETUDIANTS -----------------------------------------------------------------------------------------------------------------
 function creer_feuille_complete(etudiants) {
     let ws_data = [];
     const bordure = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
@@ -150,14 +136,13 @@ function creer_feuille_complete(etudiants) {
 
     ws_data.push([
         { v: "NOM", s: styleEnteteTab }, { v: "PRÉNOM", s: styleEnteteTab }, { v: "SPÉCIALITÉ", s: styleEnteteTab },
-        { v: "TIERS-TEMPS", s: styleEnteteTab }, { v: "SALLE", s: styleEnteteTab }
+        { v: "TIERS-TEMPS", s: styleEnteteTab }
     ]);
     
     etudiants.forEach(etu => {
         ws_data.push([
             { v: String(etu.nom).toUpperCase(), s: styleCelluleGauche }, { v: etu.prenom, s: styleCelluleGauche },
-            { v: etu.specialite || "", s: styleCellule }, { v: etu.tiers_temps ? "Oui" : "", s: styleCellule },
-            { v: etu.salle_attribuee || "", s: styleCellule }
+            { v: etu.specialite || "", s: styleCellule }, { v: etu.tiers_temps ? "Oui" : "", s: styleCellule }
         ]);
     });
     
@@ -169,7 +154,11 @@ function creer_feuille_complete(etudiants) {
     return ws;
 }
 
-// Génère une feuille d'émargement avec un design "Grille Officielle" aligné
+
+
+
+
+// FONCTION POUR GENERER LA FEUILLE D'EMARGEMENT ---------------------------------------------------------------------------------------------------------------------------
 function creer_feuille_emargement(salle, etudiants_salle, infos) {
     let ws_data = [];
 
@@ -234,6 +223,8 @@ function creer_feuille_emargement(salle, etudiants_salle, infos) {
         { v: "PRÉSENCE", s: styleEnteteTab },
         { v: "REMISE COPIE", s: styleEnteteTab }
     ]);
+    // On tri dans l'ordre croissant des numéros des places.
+    etudiants_salle.sort((a, b) => parseInt(a.place_attribuee) - parseInt(b.place_attribuee));
     
     // Remplissage des étudiants
     etudiants_salle.forEach(etu => {
@@ -284,6 +275,95 @@ function creer_feuille_emargement(salle, etudiants_salle, infos) {
     });
     
     return ws;
+}
+
+
+//FONCTION POUR GENERER LE PV d'EXAMEN ----------------------------------------------------------------------------------------------------------------------------------------
+function generer_pv_examen(donnees_placement, infos, salles, specialites) {
+    let annee_univ = infos.annee || (new Date().getFullYear() + "-" + (new Date().getFullYear() + 1));
+
+    // Étudiants tiers-temps avec des virgules (ex: Prénom Nom, Prénom Nom)
+    const etu_tiers = donnees_placement.filter(e => e.tiers_temps);
+    const texte_tiers = etu_tiers.length > 0 
+        ? etu_tiers.map(e => `${e.prenom} ${e.nom}`).join(", ") 
+        : "Aucun";
+
+    // Spécialités cochées 
+    const texte_options = specialites && specialites.length > 0 ? specialites.join(", ") : "Aucune";
+
+    const texte_legal = "L'usage de documents et matériels, notamment électroniques, lors des épreuves constitue un choix pédagogique, à la charge du responsable de l'enseignement. Cette information est portée à la connaissance des étudiants par tout moyen. Toute infraction à ces règles est signalée à la Présidence de l'Université en vue de poursuites disciplinaires devant la Section Disciplinaire de l'Université contre l'étudiant, auteur ou complice de la fraude ou tentative de fraude. Aux mêmes fins, le Directeur de la composante saisit la Présidence de l'Université lorsqu'une fraude ou tentative de fraude est commise à l'occasion d'une inscription ou lorsque l'étudiant est auteur ou complice d'un fait de nature à porter atteinte à l'ordre ou au bon fonctionnement de l'établissement, y inclus les infractions aux consignes de sécurité.";
+
+    // --- STYLES ET BORDURES DU TABLEAU ---
+    const bordure = {
+        top: { style: "thin", color: { auto: 1 } },
+        bottom: { style: "thin", color: { auto: 1 } },
+        left: { style: "thin", color: { auto: 1 } },
+        right: { style: "thin", color: { auto: 1 } }
+    };
+    
+    const styleTitre = { font: { bold: true, sz: 14 }, alignment: { horizontal: "center", vertical: "center" } };
+    const styleSSTitre = { font: { bold: true, sz: 11 }, alignment: { horizontal: "center", vertical: "center" } };
+    const styleLabel = { font: { bold: true }, border: bordure, alignment: { vertical: "center", horizontal: "left" }, fill: { fgColor: { rgb: "EFEFEF" } } };
+    const styleValeur = { border: bordure, alignment: { vertical: "center", horizontal: "left", wrapText: true } };
+    const styleVide = { border: bordure }; 
+    const styleTexteLegal = { font: { italic: true, sz: 9 }, alignment: { wrapText: true, vertical: "top", horizontal: "justify" } };
+
+    // --- CONSTRUCTION DE LA GRILLE EXCEL ---
+    let ws_data = [
+        ["", "", { v: "PROCES VERBAL D'EXAMEN", s: styleTitre }, "", ""], 
+        ["", "", { v: "Année universitaire " + annee_univ, s: styleSSTitre }, "", ""], 
+        [], 
+        [{ v: "DATE :", s: styleLabel }, { v: infos.date || "", s: styleValeur }, "", { v: "Composante :", s: styleLabel }, { v: "ENSCMu", s: styleValeur }], 
+        [{ v: "LISTE :", s: styleLabel }, { v: infos.liste || "", s: styleValeur }, "", { v: "Option :", s: styleLabel }, { v: texte_options, s: styleValeur }], 
+        [{ v: "EXAMEN :", s: styleLabel }, { v: infos.matiere || "", s: styleValeur }, "", { v: "", s: styleVide }, { v: "", s: styleVide }], 
+        [{ v: "ENSEIGNANT :", s: styleLabel }, { v: infos.prof || "", s: styleValeur }, "", { v: "Salle :", s: styleLabel }, { v: salles.join(" / "), s: styleValeur }], 
+        [{ v: "SURVEILLANT :", s: styleLabel }, { v: "", s: styleValeur }, "", { v: "", s: styleVide }, { v: "", s: styleVide }], 
+        [{ v: "LIEU :", s: styleLabel }, { v: "ENSCMu", s: styleValeur }, "", { v: "", s: styleVide }, { v: "", s: styleVide }], 
+        [{ v: "DEBUT :", s: styleLabel }, { v: infos.debut || "", s: styleValeur }, "", { v: "Durée :", s: styleLabel }, { v: infos.duree ? infos.duree + " min" : "", s: styleValeur }], 
+        [{ v: "Nbre d'étudiants présents :", s: styleLabel }, { v: donnees_placement.length.toString(), s: styleValeur }, "", { v: "", s: styleVide }, { v: "", s: styleVide }], 
+        [], 
+        // Emargement (Case vide)
+        [{ v: "Emargement surveillants :", s: styleLabel }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }], 
+        [{ v: "", s: styleLabel }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }], 
+        // Tiers-temps
+        [{ v: "Tiers temps :", s: styleLabel }, { v: texte_tiers, s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }], 
+        [], 
+        // Observations
+        [{ v: "Observations éventuelles :", s: styleLabel }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }], 
+        [{ v: "", s: styleLabel }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }], 
+        [{ v: "", s: styleLabel }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }], 
+        // Ligne légale
+        [{ v: texte_legal, s: styleTexteLegal }, "", "", "", ""]
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+    // --- FUSIONS DES CELLULES ---
+    if(!ws["!merges"]) ws["!merges"] = [];
+    ws["!merges"].push(
+        { s: { r: 0, c: 2 }, e: { r: 0, c: 4 } }, // Titre
+        { s: { r: 1, c: 2 }, e: { r: 1, c: 4 } }, // Sous-titre
+        { s: { r: 12, c: 0 }, e: { r: 13, c: 0 } }, // Label Emargement (Hauteur)
+        { s: { r: 12, c: 1 }, e: { r: 13, c: 4 } }, // Valeur Emargement (Grand espace)
+        { s: { r: 14, c: 1 }, e: { r: 14, c: 4 } }, // Tiers-temps largeur
+        { s: { r: 16, c: 0 }, e: { r: 18, c: 0 } }, // Label Observations (Hauteur)
+        { s: { r: 16, c: 1 }, e: { r: 18, c: 4 } }, // Valeur Observations (Grand espace)
+        { s: { r: 19, c: 0 }, e: { r: 24, c: 4 } }  // Texte légal en bas
+    );
+
+    // Ajuster la largeur des colonnes
+    ws['!cols'] = [ {wch: 28}, {wch: 35}, {wch: 5}, {wch: 15}, {wch: 25} ];
+
+    // Ajuster la hauteur des lignes
+    ws['!rows'] = [];
+    for(let i = 0; i < 25; i++) {
+        ws['!rows'].push({ hpt: (i === 13 || i === 17 || i === 18) ? 40 : 25 });
+    }
+    ws['!rows'][0] = { hpt: 35 }; // Titre plus haut
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "PV Examen");
+    return XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
 }
 
 

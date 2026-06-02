@@ -71,53 +71,42 @@ const CONFIG_IMPORT = {
     }
 };
 
-//FONCTION POUR IMPORTER UN FICHIER EXCEL ------------------------------------------------------------------------------------------------------------------
-
 const importFields = document.querySelectorAll(".import-field");
-const allowedExtensions = /(\.xlsx|\.xls|\.csv|\.json)$/i;
+const allowedExtensions = /(\.xlsx|\.xls|\.csv)$/i;
 
-importFields.forEach(field => {
+function maj_nom_fichier_import(input) {
+    const field = input.closest(".import-field");
+    const fileNameDisplay = field.querySelector(".file-name");
+    const file = input.files[0];
+    fileNameDisplay.textContent = file ? file.name : fileNameDisplay.dataset.defaultText || "Importer un fichier";
+}
+
+//FONCTION POUR REINITIALISER LE CHAMP D'IMPORT ----------------------------------------------------------------------------------------------------------------
+function reinitialiser_champ_import(field) {
+    const input = field.querySelector("input[type='file']");
+    const fileNameDisplay = field.querySelector(".file-name");
+    input.value = ""; 
+    fileNameDisplay.textContent = fileNameDisplay.dataset.defaultText || "Importer un fichier";
+}
+
+//FONCTION POUR VALIDER L'IMPORTATION DU FICHIER ------------------------------------------------------------------------------------------------------------
+function valider_champ_import(field) {
     const fileInput = field.querySelector("input[type='file']");
     const fileNameDisplay = field.querySelector(".file-name");
-    const btnReset = field.querySelector(".btn-reset");
-    const btnSubmit = field.querySelector(".btn-submit");
-
-    const text_defaut = fileNameDisplay.textContent;
-
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            fileNameDisplay.textContent = file.name; 
-        } else {
-            fileNameDisplay.textContent = text_defaut; 
-        }
-    });
-
-    btnReset.addEventListener('click', () => {
-        fileInput.value = ""; 
-        fileNameDisplay.textContent = text_defaut;
-    });
-
-    btnSubmit.addEventListener('click', () => {
-        const file = fileInput.files[0];
-        
-        if (!file) {
-            fileNameDisplay.textContent = "Veuillez mettre un fichier Excel";
-            return; 
-        }
-
-        if (!allowedExtensions.exec(file.name)) {
-            fileNameDisplay.textContent = "Format invalide (.xlsx, .xls, .csv, .json)";
-            fileInput.value = '';
-            return;
-        } 
-
-        conversionExcel(file, fileInput.id); 
-
-        fileInput.value = ""; 
-        fileNameDisplay.textContent = text_defaut; 
-    });
-});
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        fileNameDisplay.textContent = "Veuillez mettre un fichier Excel";
+        return; 
+    }
+    if (!allowedExtensions.exec(file.name)) { 
+        fileNameDisplay.textContent = "Format invalide";
+        fileInput.value = '';
+        return;
+    } 
+    conversionExcel(file, fileInput.id); 
+    fileInput.value = ""; 
+}
 
 //FONCTION POUR CONVERTIR LE FICHIER EXCEL EN JSON ------------------------------------------------------------------------------------------------------------------------
 function conversionExcel(file, inputId) {
@@ -151,7 +140,6 @@ const conteneur_selects = document.getElementById("conteneur_selects_mapping");
 const titre_menu_mapping = document.getElementById("titre_menu_mapping");
 
 // FONCTION POUR GERER LE MENU MAPPING DYNAMIQUE --------------------------------------------------------------------------------------------
-// FONCTION POUR GERER LE MENU MAPPING DYNAMIQUE --------------------------------------------------------------------------------------------
 function selection_colonnes(headers, rawData, fileName, inputId) {
     
     const config = CONFIG_IMPORT[inputId];
@@ -162,7 +150,7 @@ function selection_colonnes(headers, rawData, fileName, inputId) {
     const options_colonnes = '<option value="">-- Choisir --</option>' + 
                         headers.map(h => `<option value="${h}">${h}</option>`).join('');
     
-    const memoire_mapping = recuperer(`mapping_memoire_${inputId}`, {});
+    const memoire_mapping = recuperer(`Import_${inputId}`, {});
 
     config.champs_requis.forEach(champ => {
         const html = `
@@ -173,7 +161,7 @@ function selection_colonnes(headers, rawData, fileName, inputId) {
         `;
         conteneur_selects.insertAdjacentHTML("beforeend", html);
         
-        // 🌟 NOUVEAU : Si on a une mémoire pour ce champ, et que la colonne existe toujours dans ce fichier Excel, on la pré-sélectionne
+        // Si on a une mémoire pour ce champ, et que la colonne existe toujours dans ce fichier Excel, on la pré-sélectionne
         const select_cree = document.getElementById(`select_map_${champ.id}`);
         if (memoire_mapping[champ.id] && headers.includes(memoire_mapping[champ.id])) {
             select_cree.value = memoire_mapping[champ.id];
@@ -208,8 +196,7 @@ function selection_colonnes(headers, rawData, fileName, inputId) {
             return;
         }
 
-        // 🌟 NOUVEAU : On sauvegarde les sélections pour la prochaine fois !
-        sauvegarder(`mapping_memoire_${inputId}`, map_colonnes);
+        sauvegarder(`Import_${inputId}`, map_colonnes); //sauvegarde les séléctions pour une prochain importation
 
         const cleanData = rawData.map(ligne => config.formater_donnees(ligne, map_colonnes));
         config.sauvegarder(cleanData, fileName);

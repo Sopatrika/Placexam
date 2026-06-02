@@ -12,88 +12,7 @@ function getListeSalle(nom_cherche) {
     return tab_salles.find(salle => salle.nom_salle === nom_cherche);
 }
 
-// ECOUTEUR GLOBAL DES CLICS -----------------------------------------------------------
-document.addEventListener("click", (e) => {
-    
-    // OUVRIR UNE SOUS-LISTE
-    if (e.target.classList.contains("nom_texte")) {
-        const li = e.target.closest("li");
-        const type_liste = li.dataset.type;
-        section_precedente = e.target.closest("section"); 
-        ouvrir_details_liste(li.dataset.name, type_liste);
-    }
-    
-    // CLIC SUR BOUTON RETOUR
-    else if (e.target.closest(".return_sec")) {
-        fermer_formulaire(section_precedente);
-    }
 
-    // CLIC SUR SUPPRIMER
-    else if (e.target.closest(".trash_element")) {
-        supprimer(e.target.closest(".trash_element")); 
-    }
-
-    // CLIC SUR MODIFIER
-    else if (e.target.closest(".rename_element")) {
-        const bloc = e.target.closest(".bloc_element"); 
-        const liListe = e.target.closest(".menu_ul > li"); 
-        
-        if (bloc) {
-            index_edition = parseInt(bloc.dataset.index, 10);
-            mode_edition = "modifier";
-            edition_formulaire();
-        } else if (liListe) {
-            const isEtu = e.target.closest(".etu_sec") !== null;
-            type_edition = isEtu ? "nom_liste_etu" : "nom_liste_salle";
-            index_edition = Array.from(liListe.parentNode.children).indexOf(liListe);
-            ancien_nom_liste = liListe.dataset.name;
-            mode_edition = "modifier_liste";
-            edition_formulaire();
-        }
-    }
-
-    // CLIC POUR AJOUTER
-    else if (e.target.closest(".btn_ajouter")) {
-        mode_edition = "ajouter";
-        index_edition = -1;
-        edition_formulaire();
-    }
-
-    else if (e.target.closest(".load_element")) {
-        const bloc = e.target.closest(".bloc_element");
-        if (bloc) {
-            // On mémorise quel placement l'utilisateur veut charger
-            index_edition = parseInt(bloc.dataset.index, 10); 
-            
-            // On cache la liste et on ouvre la section de confirmation de chargement
-            document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => s.classList.remove("sec_open"));
-            document.querySelector(".charger_sec").classList.add("sec_open");
-        }
-    }
-
-    else if (e.target.dataset.action === "edition_annul") {
-        edition_erreur.textContent = "";
-        let selecteur_retour = (mode_edition === "modifier_liste") ? ".etu_sec" : CONFIG_SECTION[type_edition]?.section_retour;
-        fermer_formulaire(document.querySelector(selecteur_retour));
-    }
-    else if (e.target.dataset.action === "charger_annul") {
-        fermer_formulaire(document.querySelector(".sous_sec"));
-    }
-    else if (e.target.dataset.action === "import_annul") {
-        if (typeof fermer_mapping === "function") fermer_mapping();
-    }
-
-    // ------------------ ROUTEUR DES BOUTONS VALIDER ------------------
-    else if (e.target.dataset.action === "edition_valid") {
-        valider_edition();
-    }
-    else if (e.target.dataset.action === "charger_valid") {
-        charger_placement()
-    }
-    else if (e.target.dataset.action === "import_valid") {
-        if (typeof action_valider_import === "function") action_valider_import();
-    }
-});
 
 // FONCTION POUR GENERER LES BOUTONS ANNULER ET VALIDER -----------------------------------------------------------------------------------------------
 function injecter_boutons() {
@@ -116,62 +35,76 @@ const input_nbr_places = document.getElementById("nbr_places");
 const input_nbr_rangees = document.getElementById("nbr_rangees");
 const input_sieges_espaces = document.getElementById("sieges_espaces"); 
 
-// FONCTION POUR CREER UNE SALLE -------------------------------------------------------------------------------------------------------------------
-btn_creer_salle.addEventListener("click", () => {
+// FONCTION POUR CREER UNE SALLE -----------------------------------------------------------------------------------------------------------------------------------
+function creer_nouvelle_salle() {
+    const input_nom = document.getElementById("nom_salle");
+    const input_places = document.getElementById("nbr_places");
+    const input_rangees = document.getElementById("nbr_rangees");
+    const input_espaces = document.getElementById("sieges_espaces");
+    const verif_message = document.getElementById("verif_salle");
 
-        const input_nom = document.getElementById("nom_salle");
-        const input_places = document.getElementById("nbr_places");
-        const input_rangees = document.getElementById("nbr_rangees");
-        const input_espaces = document.getElementById("sieges_espaces");
-        const verif_message = document.getElementById("verif_salle");
+    let nom = input_nom.value.trim();
+    const places = parseInt(input_places.value);
+    const rangees = parseInt(input_rangees.value);
+    const espaces = parseInt(input_espaces.value) || 0; 
 
-        // nettoie les valeurs (trim enlève les espaces inutiles)
-        let nom = input_nom.value.trim();
-        const places = parseInt(input_places.value);
-        const rangees = parseInt(input_rangees.value);
-        const espaces = parseInt(input_espaces.value) || 0; // Si le champ d'espace est vide, on met 0 par défaut
+    if (!nom || isNaN(places) || isNaN(rangees) || places <= 0 || rangees <= 0 || espaces < 0) {
+        verif_message.textContent = "Veuillez remplir correctement les champs obligatoires.";
+        verif_message.style.color = "var(--rouge, red)";
+        return;
+    }
 
-        // Si les inputs ne sont pas rempli
-        if (!nom || isNaN(places) || isNaN(rangees) || places <= 0 || rangees <= 0) {
-            verif_message.textContent = "Veuillez remplir correctement les champs obligatoires.";
-            verif_message.style.color = "var(--rouge, red)";
-            return;
+    let nom_final = generer_nom_unique(nom, tab_salles, "nom_salle");
+
+    const nouvelle_salle = {
+        nom_salle: nom_final, capacite_max: places, nbr_rangees: rangees, sieges_espaces: espaces, places_banni: []
+    };
+
+    tab_salles.unshift(nouvelle_salle);
+    sauvegarder("tab_salles", tab_salles);
+
+    verif_message.textContent = `Salle "${nom_final}" a été générée avec succès !`;
+    input_nom.value = ""; input_places.value = ""; input_rangees.value = ""; input_espaces.value = "";
+
+    effacer_storage("form: nom_salle"); effacer_storage("form: nbr_places");
+    effacer_storage("form: nbr_rangees"); effacer_storage("form: sieges_espaces");
+
+    afficher_listes();
+    remplir_select();
+}
+
+//FONCTION POUR GERER LA FERMETURE OU LA VALIDATION DES PANNEAUX D'ACTIONS -------------------------------------------------------------------------------------------
+function gerer_boutons_action(e) {
+    const btn_groupe = e.target.closest(".groupe_btn > *"); 
+    const panneau_parent = e.target.closest(".supprimer_sec, .edition_sec, .charger_sec");
+    const panneau_import = e.target.closest(".menu_import"); 
+    const panneau_export = e.target.closest("#menu_exporter"); 
+    
+    e.preventDefault(); 
+    const texte_btn = btn_groupe.textContent.toLowerCase().trim();
+
+    if (panneau_parent) {
+        if (texte_btn.includes("annuler")) {
+            if (typeof fermer_panneaux_action === "function") fermer_panneaux_action();
+        } else {
+            if (typeof action_en_attente === "function") {
+                if (action_en_attente() !== false) fermer_panneaux_action();
+            } else fermer_panneaux_action();
         }
-
-        // Si une salle a le meme nom
-        let nom_final = generer_nom_unique(nom, tab_salles, "nom_salle");
-
-        // Création d'un nouvelle objet salle
-        const nouvelle_salle = {
-            nom_salle: nom_final,
-            capacite_max: places,
-            nbr_rangees: rangees,
-            sieges_espaces: espaces,
-            places_banni: []
-        };
-
-        tab_salles.unshift(nouvelle_salle);
-        sauvegarder("tab_salles", tab_salles)
-
-        // Message de confirmation
-        verif_message.textContent = `La salle "${nom_final}" a été générée avec succès !`;
-        verif_message.style.color = "var(--valide)";
-
-        // vide les champs pour la prochaine salle
-        input_nom.value = "";
-        input_places.value = "";
-        input_rangees.value = "";
-        input_espaces.value = "";
-
-        effacer_storage("form: nom_salle");
-        effacer_storage("form: nbr_places");
-        effacer_storage("form: nbr_rangees");
-        effacer_storage("form: sieges_espaces");
-
-        //  Mise à jour du menu gauche (si la fonction existe dans ce fichier)
-        afficher_listes();
-        remplir_select();
-    });
+    } 
+    else if (panneau_import) {
+        if (texte_btn.includes("annuler")) fermer_mapping();
+        else if (typeof action_valider_import === "function") action_valider_import();
+    }
+    else if (panneau_export) {
+        if (texte_btn.includes("annuler")) {
+            document.getElementById("menu_exporter").classList.add("menu_close");
+            document.querySelector(".fond_sombre").classList.add("menu_close");
+        } else {
+            valider_et_lancer_export();
+        }
+    }
+}
 
 
 //FONCTION POUR SAUVEGARDER LES INPUT COCHER ET LES SELECTIONS ----------------------------------------------------------------------------------
@@ -189,11 +122,7 @@ function EnregChoix() {
                 element.checked = (savedValue === true || savedValue === 'true');
             } else if (element.tagName === 'SELECT') {
                 const options = Array.from(element.options);
-                const optionTrouvee = options.find(opt => {
-                    return comparerNoms(opt.value, savedValue) || 
-                           opt.value.toLowerCase().includes(String(savedValue).toLowerCase()) ||
-                           String(savedValue).toLowerCase().includes(opt.value.toLowerCase());
-                });
+                const optionTrouvee = options.find(opt => comparerNoms(opt.value, savedValue));
                 
                 if (optionTrouvee) {
                     element.value = optionTrouvee.value;
@@ -222,9 +151,6 @@ const span_popup = document.querySelector("#nbr_absent");
 const croix_popup = document.querySelector(".remove_popup");
 
 let index_abs = null;
-croix_popup.addEventListener("click", () => { //Retire le popup
-        popup_absence.classList.remove("pop");
-    });
 
 
 //FONCTION POUR GERER LES ABSENCES (AFFICHER LES ABSENCES, POUVOIR METTRE ABSENTS ET ENREGISTRER LES ABSENCES) -------------------------------------------------------
@@ -262,29 +188,6 @@ function maj_absences() {
     if (typeof colorier_places === "function") colorier_places(placement_actuel_donnees);
 }
 
-document.addEventListener("change", (e) => {
-    if (e.target.classList.contains("check-absence")) {
-        maj_absences();
-    }
-});
-
-//Quand on coche depuis le plan (label_absence)
-const check_absence_plan = document.getElementById("check_absence");
-if (check_absence_plan) {
-    check_absence_plan.addEventListener("change", (e) => {
-        //récupère le nom et prénom de l'étudiant sélectionné sur le plan
-        const detail_nom = document.getElementById("detail_nom").textContent;
-        const detail_prenom = document.getElementById("detail_prenom").textContent;
-        
-        //trouve la case correspondante dans le tableau pour la cocher/decocher
-        const case_tableau = document.querySelector(`.check-absence[data-nom="${detail_nom}"][data-prenom="${detail_prenom}"]`);
-        
-        if (case_tableau) {
-            case_tableau.checked = e.target.checked;
-            maj_absences();
-        }
-    });
-}
 
 // FONCTION POUR RECUPERER LE PLACEMENT ACTUEL -----------------------------------------------------------------------------------------------------------------------
 function recup_placement_enreg() {
@@ -301,19 +204,6 @@ function recup_placement_enreg() {
     }
 }
 
-window.addEventListener('load', () => {
-    recup_placement_enreg();
-
-    setTimeout(() => {
-        if (typeof placement_actuel_donnees !== "undefined" && placement_actuel_donnees.length > 0) {
-            if (typeof colorier_places === "function") {
-                colorier_places(placement_actuel_donnees);
-            }
-        }
-    }, 300);
-
-});
-
 //FONCTION POUR RESET LE PLACEMENT QUI EST ACTUELLEMENT CHARGE ---------------------------------------------------------------------------------------------------------------
 function reset_placement(garder_salles = false) {
     effacer_storage("placer_actuel");
@@ -327,25 +217,17 @@ function reset_placement(garder_salles = false) {
 
 // FONCTION POUR CREER UNE LISTE DES ETUDIANTS ABSENT A LA LISTE DES ETUDIANTS ---------------------------------------------------------------------------------------------
 const btn_popup_absence = document.querySelector(".btn_absence");
-btn_popup_absence.addEventListener("click", () => {
-    // récupère les absents
+
+function creer_liste_absents() {
     const etudiants_absents = placement_actuel_donnees
         .filter(etu => etu.absent === true)
-        .map(etu => ({
-            nom: etu.nom,
-            prenom: etu.prenom,
-            specialite: etu.specialite,
-            tiers_temps: etu.tiers_temps,
-            infos_bonus: etu.infos_bonus || null
-        }));
+        .map(etu => ({ ...etu, absent: false })); 
 
     if (etudiants_absents.length === 0) return;
 
-    // 2. On génère un nom par défaut et on demande confirmation
     const nom_base = "Absents - " + (select_etu.value || "Examen");
     const nom_final = generer_nom_unique(nom_base, tab_etu, "nom_fichier");
 
-    // injecte la liste au début de tab_etu
     tab_etu.unshift({
         nom_fichier: nom_final.trim(),
         date_import: new Date().toLocaleDateString(),
@@ -353,37 +235,36 @@ btn_popup_absence.addEventListener("click", () => {
     });
 
     sauvegarder("tab_etu", tab_etu);
-
     afficher_listes();
     remplir_select();
+    document.querySelector(".popup_absence").classList.remove("pop");
+}
 
-    // 6. On ferme le popup
-    popup_absence.classList.remove("pop");
-});
+function synchro_absence_plan(estCoche) {
+    const detail_nom = document.getElementById("detail_nom").textContent;
+    const detail_prenom = document.getElementById("detail_prenom").textContent;
+    const case_tableau = document.querySelector(`.check-absence[data-nom="${detail_nom}"][data-prenom="${detail_prenom}"]`);
+    
+    if (case_tableau) {
+        case_tableau.checked = estCoche;
+        maj_absences();
+    }
+}
 
 
 
 //FONCTION POUR GENERER UN NOM UNIQUE (éviter les doublons) -----------------------------------------------------------------------------------------------------------------
-function generer_nom_unique(nom_base, tableau_recherche, cle_recherche) {
+function generer_nom_unique(nom_base, tableau_recherche, cle_recherche, index_a_ignorer = -1) {
     let nom_final = String(nom_base).trim();
     let compteur = 1;
     
-    // Tant qu'on trouve un élément avec le même nom, on incrémente
-    while (tableau_recherche.some(item => item[cle_recherche] === nom_final)) {
+    // Tant qu'on trouve un élément avec le même nom (et qui N'EST PAS l'élément qu'on modifie), on incrémente
+    while (tableau_recherche.some((item, idx) => item[cle_recherche] === nom_final && idx !== index_a_ignorer)) {
         nom_final = `${String(nom_base).trim()}_${compteur}`;
         compteur++;
     }
     return nom_final;
 }
-
-// Écouteur pour le bouton export
-document.querySelector("#btn-header-export").addEventListener("click", exporterDonnees);
-// Écouteur pour le bouton import (déclenche l'input file caché)
-document.querySelector("#btn-header-import").addEventListener("click", () => {
-    document.getElementById("import-json-input").click();
-});
-// Écouteur pour l'input file (quand un fichier est sélectionné)
-document.getElementById("import-json-input").addEventListener("change", importerDonnees);
 
 // INITIALISATION
 remplir_select();

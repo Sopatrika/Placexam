@@ -6,6 +6,7 @@
     <meta name="description" content="Outil de placement aléatoire des étudiants dans les salles d'examens" />
     <title>Placexam</title>
     <link rel="stylesheet" href="styles/style.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/Logo_placexam.svg">
 </head>
 <body>
     <!-- Fond sombre -->
@@ -87,7 +88,7 @@
                     <div class="nom_liste">amphi1</div>
                 </div>
                 <div class="search_bar">
-                    <input type="search" id="search_etu" placeholder="Rechercher un(e) étudiant(e)...">
+                    <input type="search" id="search_etu" placeholder="Rechercher...">
                     
                     <label for="search_etu">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -95,6 +96,7 @@
                         </svg>
                     </label>
                 </div>
+                <!-- Liste des éléments -->
                 <div class="liste_elements"></div>
                 <div class="btn_ajouter">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -117,7 +119,7 @@
                     
                     <div class="menu_message">Voulez vous supprimer ?</div>
                     
-                    <div class="groupe_btn" data-action="charger"></div>
+                    <div class="groupe_btn" data-action="supprimer"></div>
             </section>
 
             <!-------------- Section pour ajouter ou modifier un élément ----------------->
@@ -170,6 +172,7 @@
         <div class="accueil">
             <h1>Bienvenue sur Placexam</h1>
             <h2>L'outil de placement aléatoire des étudiants dans les salles d'examen</h2>
+            <a href="" target="_blank" class="notice_utile">Notice d'utilisation</a>
 
             <!---------------- Inporter fichiers -------------------->
             <form class="form_import">
@@ -242,7 +245,7 @@
     <!----------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
     <div class="section_matieres">
-        <h3>Importez des matières</h3>
+        <h3>Importer des matières</h3>
 
         <div class="section_import">
             <form class="form_import">
@@ -254,7 +257,7 @@
                             <path d="M36.2355 24.5C35.3209 24.5 34.5205 25.0594 33.8733 25.7066L27.7483 31.8316C27.3217 32.2582 26.8153 32.5966 26.258 32.8274C25.7006 33.0583 25.1033 33.1771 24.5 33.1771C23.8968 33.1771 23.2994 33.0583 22.7421 32.8274C22.1847 32.5966 21.6783 32.2582 21.2517 31.8316L15.1267 25.7066C14.4795 25.0594 13.6792 24.5 12.7645 24.5H8.16669C8.16669 28.8319 9.88752 32.9863 12.9506 36.0494C16.0137 39.1125 20.1682 40.8333 24.5 40.8333C28.8319 40.8333 32.9863 39.1125 36.0494 36.0494C39.1125 32.9863 40.8334 28.8319 40.8334 24.5H36.2355Z" fill="#1A365D"/>
                             </svg>
                             <input input type="file" id="import_matieres" hidden accept=".xlsx, .xls, .csv, .json">
-                            <span class="file-name">Importer une liste de places d'une salle d'examen</span>
+                            <span class="file-name">Importer des matières</span>
                         </label>
                         
                         <div class="actions">
@@ -327,7 +330,7 @@
                 <tr>
                     <th>Nom</th>
                     <th>Prénom</th>
-                    <th>Parcours</th>
+                    <th>Spécialité</th>
                     <th>Place</th>
                     <th>Tier Temps</th>
                     <th>Absence</th>
@@ -340,10 +343,10 @@
         <div class="plan_salle affichage_cache">
             <div class="panneau_details">
                 <div class="conteneur_details">
-                    <span class="info_col" id="detail_nom">NOM</span>
-                    <span class="info_col" id="detail_prenom">PRENOM</span>
-                    <span class="info_col" id="detail_parcours">PARCOURS</span>
-                    <span class="info_col" id="detail_place">PLACE</span>
+                    <span class="info_col" id="detail_nom"></span>
+                    <span class="info_col" id="detail_prenom"></span>
+                    <span class="info_col" id="detail_parcours"></span>
+                    <span class="info_col" id="detail_place"></span>
                     
                     <label class="badge-checkbox" id="label_absence" style="--checkcolor: transparent; display: none;">
                         <input type="checkbox" id="check_absence">
@@ -482,5 +485,6 @@
     <script src="js/placement.js"></script>
     <script src="js/exportation.js"></script>
     <script src="js/script.js"></script>
+    <script src="js/events.js"></script>
 </body>
 </html>
