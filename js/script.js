@@ -3,6 +3,7 @@
 // GESTION DE FONCTIONS GENERALES OU DIVERS
 //=================================================================================================================================================================
 
+// Trouver une liste d'étudiant(e)s par son nom
 function getListeEtu(nom_cherche) {
     return tab_etu.find(liste => liste.nom_fichier === nom_cherche);
 }
@@ -18,14 +19,12 @@ function getListeSalle(nom_cherche) {
 function injecter_boutons() {
     document.querySelectorAll(".groupe_btn[data-action]").forEach(zone => {
         const action = zone.dataset.action; 
-    
         zone.innerHTML = `
             <div class="btn_annuler" data-action="${action}_annul">Annuler</div>
             <div class="btn_valider" data-action="${action}_valid">Valider</div>
         `;
     });
 }
-
 injecter_boutons();
 
 
@@ -48,21 +47,32 @@ function creer_nouvelle_salle() {
     const rangees = parseInt(input_rangees.value);
     const espaces = parseInt(input_espaces.value) || 0; 
 
-    if (!nom || isNaN(places) || isNaN(rangees) || places <= 0 || rangees <= 0 || espaces < 0) {
+    if (!nom || isNaN(places) || isNaN(rangees) || places <= 0 || rangees <= 0 || espaces < 0) { //Si les champs ne sont pas rempli correctement
         verif_message.textContent = "Veuillez remplir correctement les champs obligatoires.";
-        verif_message.style.color = "var(--rouge, red)";
+        verif_message.style.color = "var(--rouge)";
         return;
     }
 
-    let nom_final = generer_nom_unique(nom, tab_salles, "nom_salle");
+    if (places >= 10000 || rangees >= 5000 || espaces > 10) {
+        verif_message.textContent = "Les valeurs dépassent la limite maximale";
+        verif_message.style.color = "var(--rouge)";
+        return;
+    }
+
+    let nom_final = generer_nom_unique(nom, tab_salles, "nom_salle"); //éviter que la salle a le meme nom qu'une autre
 
     const nouvelle_salle = {
-        nom_salle: nom_final, capacite_max: places, nbr_rangees: rangees, sieges_espaces: espaces, places_banni: []
+        nom_salle: nom_final, //Nom
+        capacite_max: places, //Nbr place
+        nbr_rangees: rangees, //Nbr rangées
+        sieges_espaces: espaces, //Espace entre étudiant
+        places_banni: [] //Place indisponible
     };
 
-    tab_salles.unshift(nouvelle_salle);
-    sauvegarder("tab_salles", tab_salles);
+    tab_salles.unshift(nouvelle_salle); //Ajoute la nouvelle salle
+    sauvegarder("tab_salles", tab_salles); //enregistre
 
+    verif_message.style.color = "var(--black)";
     verif_message.textContent = `Salle "${nom_final}" a été générée avec succès !`;
     input_nom.value = ""; input_places.value = ""; input_rangees.value = ""; input_espaces.value = "";
 
@@ -114,7 +124,7 @@ function EnregChoix() {
     formElements.forEach(element => {
         if (!element.id) return;
         
-        const storageKey = "form: "+ element.id;
+        const storageKey = "form:" + element.id; 
         const savedValue = recuperer(storageKey, "");
         
         if (savedValue !== null && savedValue !== "") {
@@ -138,7 +148,6 @@ function EnregChoix() {
             sauvegarder(storageKey, val);
         };
 
-        // On écoute 'input' pour les champs texte ET 'change' pour les selects et checkboxes
         element.addEventListener('input', enregistrerValeur);
         element.addEventListener('change', enregistrerValeur);
     });
@@ -148,7 +157,7 @@ const btn_absence_tab = document.querySelectorAll("td .badge-checkbox");
 const btn_absence_plan = document.querySelector("#label_absence");
 const popup_absence = document.querySelector(".popup_absence");
 const span_popup = document.querySelector("#nbr_absent");
-const croix_popup = document.querySelector(".remove_popup");
+const croix_popup_abs = document.querySelector("#remove_pop_absence");
 
 let index_abs = null;
 
@@ -266,8 +275,78 @@ function generer_nom_unique(nom_base, tableau_recherche, cle_recherche, index_a_
     return nom_final;
 }
 
+// FONCTION POUR METTRE À JOUR LES DÉPENDANCES LORS D'UN RENOMMAGE (Historique & Selects) -------------------------------------------------------------------------------------
+//Permet de mettre a jour les selects et l'historique des placements quand on renomme une liste d'étudiant, une salle ou une matière
+function maj_dependances_nom(type, ancien_nom, nouveau_nom) {
+    let historique_modifie = false;
+
+    // 1. Mise à jour dans TOUT l'historique des placements (tab_placer)
+    tab_placer.forEach(placement => {
+        // Renommage Liste Étudiants
+        if (type === "etu" && comparerNoms(placement.nom_liste_etu, ancien_nom)) {
+            placement.nom_liste_etu = nouveau_nom;
+            historique_modifie = true;
+        }
+        // Renommage Salles
+        else if (type === "salle") {
+            if (placement.salles_choisies) {
+                let idx = placement.salles_choisies.findIndex(s => comparerNoms(s, ancien_nom));
+                if (idx !== -1) {
+                    placement.salles_choisies[idx] = nouveau_nom;
+                    historique_modifie = true;
+                    
+                    // Met à jour le titre du placement si la salle y figurait !
+                    if (placement.titre && placement.titre.includes(ancien_nom)) {
+                        placement.titre = placement.titre.replace(ancien_nom, nouveau_nom);
+                    }
+                }
+            }
+            if (placement.donnees_placement) {
+                placement.donnees_placement.forEach(etu => {
+                    if (comparerNoms(etu.salle_attribuee, ancien_nom)) {
+                        etu.salle_attribuee = nouveau_nom;
+                        historique_modifie = true;
+                    }
+                });
+            }
+        }
+        // Renommage Matières
+        else if (type === "matiere" && comparerNoms(placement.nom_matiere, ancien_nom)) {
+            placement.nom_matiere = nouveau_nom;
+            historique_modifie = true;
+            
+            // Met à jour le titre du placement si la matière y figurait !
+            if (placement.titre && placement.titre.includes(ancien_nom)) {
+                placement.titre = placement.titre.replace(ancien_nom, nouveau_nom);
+            }
+        }
+    });
+
+    if (historique_modifie) sauvegarder("tab_placement", tab_placer);
+
+    // 2. Mise à jour du Placement en cours (si un placement est affiché à l'écran)
+    if (type === "salle" && typeof placement_actuel_donnees !== "undefined") {
+        let actualisation_requise = false;
+        placement_actuel_donnees.forEach(etu => {
+            if (comparerNoms(etu.salle_attribuee, ancien_nom)) {
+                etu.salle_attribuee = nouveau_nom;
+                actualisation_requise = true;
+            }
+        });
+        if (actualisation_requise && typeof actualiser_affichage_complet === "function") {
+            actualiser_affichage_complet();
+        }
+    }
+
+    // 3. Mise à jour automatique des Selects (<select>)
+    const storageKey = type === "etu" ? "form:select_etu" : (type === "salle" ? "form:select_salle" : "form:select_matiere");
+    
+    if (comparerNoms(recuperer(storageKey), ancien_nom)) {
+        sauvegarder(storageKey, nouveau_nom); // Une seule sauvegarde propre !
+        if (typeof remplir_select === "function") remplir_select();
+    }
+}
+
 // INITIALISATION
 remplir_select();
 EnregChoix();
-if (typeof generer_filtres === "function") generer_filtres();
-if (typeof verifier_capacite === "function") verifier_capacite();

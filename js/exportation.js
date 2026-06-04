@@ -10,8 +10,11 @@ const erreur_exporter = document.querySelector(".erreur_exporter");
 //OUVERTURE DU MENU MAPPING ----------------------------------------------------------------------------------------------------------------------------------------------
 function ouvrir_menu_export() {
     let titre_actuel = recuperer("placer_actuel");
-    if (!titre_actuel) {
-        alert("Aucun placement n'est actuellement affiché. Veuillez charger un placement.");
+    zero_etu_div.textContent = "";
+    zero_etu_div.classList.remove("message_visible");
+    if (!titre_actuel) { //Si il n'y a pas de placement actuellement chargé
+        zero_etu_div.textContent = "Aucun placement n'est actuellement affiché. Veuillez charger un placement.";
+        zero_etu_div.classList.add("message_visible");
         return;
     }
     const erreur_exporter = document.querySelector(".erreur_exporter");
@@ -27,7 +30,7 @@ function valider_et_lancer_export() {
     const debut = document.getElementById("export_debut").value.trim();
     const duree = document.getElementById("export_duree").value.trim();
 
-    if (!annee || !date || !debut || !duree) {
+    if (!annee || !date || !debut || !duree) { //Si des champs ne sont pas rempli
         if (erreur_exporter) erreur_exporter.textContent = "Veuillez remplir tous les champs.";
         return;
     }
@@ -45,14 +48,15 @@ function valider_et_lancer_export() {
 // FONCTION D'EXPORTATION ----------------------------------------------------------------------------------------------------------------------------------------------------
 function exporter_placement_final(annee_choisie, date_choisie, debut_choisi, duree_choisie) {
     let titre_actuel = recuperer("placer_actuel");
-    if (!titre_actuel) return;
+    if (!titre_actuel) return; //S'il existe pas on bloque
     
     titre_actuel = String(titre_actuel).replace(/^"|"$/g, '').trim();
     const historique_placements = recuperer("tab_placement") || [];
     const archive = historique_placements.find(p => String(p.titre).replace(/^"|"$/g, '').trim() === titre_actuel);
 
     if (!archive) {
-        alert("Les données du placement sont introuvables.");
+        zero_etu_div.textContent = "Les données du placement sont introuvables.";
+        zero_etu_div.classList.add("message_visible");
         return;
     }
 

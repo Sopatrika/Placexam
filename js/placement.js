@@ -9,9 +9,6 @@ const conteneur_badges = document.querySelector("#liste_salles_cumulees");
 const zone_ajout_salle = document.querySelector(".ajout_salle_sup");
 const select_salle_sup = document.querySelector("#select_salle_sup");
 
-// Par défaut, au chargement de la page, le bouton est bloqué
-btn_placement.classList.add("placement_disable");
-
 // RÉINITIALISATION DE L'INTERFACE ------------------------------------------------------------------------------------------------
 function reinitialiser_etat_ui() {
     boite_capacite.classList.remove("message_visible");
@@ -373,8 +370,14 @@ function dessiner_badges_salles() {
 function placement_aleatoire() {
     if (btn_placement.classList.contains("placement_disable")) return;
 
+    //mémorise les cases cochées avant de tout effacer
+    const etudiants_coches_absents = Array.from(document.querySelectorAll(".check-absence:checked")).map(cb => ({
+        nom: cb.dataset.nom,
+        prenom: cb.dataset.prenom
+    }));
+
     if (mode_indispo && mode_indispo.checked) {
-        mode_indispo.checked = false; //On décoche mode_indispo
+        mode_indispo.checked = false; //décoche mode_indispo
     }
 
     msg_capacite.textContent = "";
@@ -384,7 +387,7 @@ function placement_aleatoire() {
     let listeEtuObj = getListeEtu(nom_liste_etu);
     if (!listeEtuObj) return;
 
-    // 1. S'assurer que la salle principale est en tête
+    // S'assurer que la salle principale est en tête
     if (salles_choisies.length === 0 || salles_choisies[0] !== select_salle.value) {
         salles_choisies = [select_salle.value];
     }
@@ -394,7 +397,7 @@ function placement_aleatoire() {
         .filter(etu => specialites_actives.includes(etu.specialite))
         .map(etu => ({ ...etu }));
 
-    // 2. Calculer les places disponibles (en parcourant directement salles_choisies)
+    // Calculer les places disponibles en parcourant salles_choisies
     let places_dispos = [];
 
     salles_choisies.forEach(nom_salle => {
@@ -406,7 +409,7 @@ function placement_aleatoire() {
 
             let i = 1;
             while (i <= max) {
-                if (!bannis.includes(i)) {
+                if (!bannis.includes(i)) { //Sans inclure les places indisponible
                     places_dispos.push({
                         nom_salle_origine: nom_salle,
                         nom_de_la_place: i
@@ -507,15 +510,22 @@ function placement_aleatoire() {
     const titre_placement = `${nom_matiere} - ${titre_salles} (${date_jour})`;
     
     // On prépare les données
-    const donnees_sauvegarde = etudiants_a_placer.map(etu => ({
-        nom: etu.nom,
-        prenom: etu.prenom,
-        specialite: etu.specialite,
-        tiers_temps: etu.tiers_temps,
-        salle_attribuee: etu.salle_attribuee || "Non placé",
-        place_attribuee: etu.place_attribuee || "-",
-        absent: false // Par défaut, personne n'est absent au moment du placement
-    }));
+    const donnees_sauvegarde = etudiants_a_placer.map(etu => {
+        // vérifie si l'étudiant était dans les absents
+        const absent = etudiants_coches_absents.some(abs => 
+            comparerNoms(abs.nom, etu.nom) && comparerNoms(abs.prenom, etu.prenom)
+        );
+
+        return {
+            nom: etu.nom,
+            prenom: etu.prenom,
+            specialite: etu.specialite,
+            tiers_temps: etu.tiers_temps,
+            salle_attribuee: etu.salle_attribuee || "Non placé",
+            place_attribuee: etu.place_attribuee || "-",
+            absent: absent
+        };
+    });
 
     const spe_actives = Array.from(document.querySelectorAll(".check-specialite:checked")).map(cb => cb.value); //On récupère les filtres cochés
     const tiers_temps_actif = check_tiers_temps ? check_tiers_temps.checked : false; //Si le tier-temps est actif
@@ -562,7 +572,7 @@ function placement_aleatoire() {
     icon_attention.classList.add("svg_attention_invisible");
     boite_capacite.classList.add("message_visible");
 
-    // --- NOUVEAU CODE D'ACTUALISATION ---
+    // On actualise
     placement_actuel_donnees = donnees_sauvegarde; // Crucial pour l'affichage
     if (typeof actualiser_affichage_complet === "function") {
         actualiser_affichage_complet(); // Met à jour le tableau ET le plan proprement
@@ -578,11 +588,11 @@ function placement_aleatoire() {
     if (typeof maj_absences === "function") maj_absences();
 }
 
-//FONCTION POUR MELANGER UNE LISTE (Mélange de Fisher-Yates)
+//FONCTION POUR MÉLANGER UNE LISTE (Mélange de Fisher-Yates)
 function melanger(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
+    for (let i = array.length - 1; i > 0; i--) { //On commence à la toute dernière position
+        const j = Math.floor(Math.random() * (i + 1)); //choisit un nbr au hasard compris entre 0 et i
+        [array[i], array[j]] = [array[j], array[i]]; //Echange la position i avec j
     }
     return array;
 }

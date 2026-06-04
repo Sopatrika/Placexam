@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Outil de placement aléatoire des étudiants dans les salles d'examens" />
     <title>Placexam</title>
+    <link rel="preload" href="fonts/Interstate Mono Regular.otf" as="font" type="font/otf" crossorigin>
     <link rel="stylesheet" href="styles/style.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/Logo_placexam.svg">
 </head>
@@ -116,25 +117,15 @@
 
             <section class="supprimer_sec">
                     <div class="titre_sec">Supprimer</div>
-                    
                     <div class="menu_message">Voulez vous supprimer ?</div>
-                    
                     <div class="groupe_btn" data-action="supprimer"></div>
             </section>
 
             <!-------------- Section pour ajouter ou modifier un élément ----------------->
             <section class="edition_sec">
                 <div class="titre_edition_sec"></div>
-                
-                <div class="form_edition">
-                    <!-- <label class="champ_edition">
-                        <span class="label_texte">Nom</span>
-                        <input type="text" class="input_ligne" placeholder="">
-                    </label> -->
-                </div>
-                
+                <div class="form_edition"></div>
                 <div class="edition_erreur"></div>
-                
                 <div class="groupe_btn" data-action="edition"></div>
             </section>
 
@@ -142,9 +133,7 @@
 
             <section class="charger_sec">
                     <div class="titre_sec">Charger une place</div>
-                    
                     <div class="menu_message">Voulez vous chargez ce placement ?</div>
-                    
                     <div class="groupe_btn" data-action="charger"></div>
             </section>
 
@@ -153,6 +142,31 @@
         <!-- Bouton pour ouvrir/fermer le menu -->
         <button class="button_menu_gauche">Mes listes</button>
     </div>
+
+
+
+    <!-------------------------------------------------------------- Menu d'import des données JSON ------------------------------------------------------->
+    <div class="menu_import_donnees">
+        <svg class="remove_popup" id="remove_menujson" width="25" height="25" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g id="Croix" clip-path="url(#clip0_279_24)">
+            <g id="Vector">
+                <path d="M30 5L5 30ZM5 5L30 30Z" fill="#F12C2C"/>
+                <path d="M30 5L5 30M5 5L30 30" stroke="#EBF5FF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            <g id="Vector_2">
+                <path d="M30 5L5 30ZM5 5L30 30Z" fill="#F12C2C"/>
+                <path d="M30 5L5 30M5 5L30 30" stroke="#F12C2C" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+            </g>
+            <defs>
+                <clipPath id="clip0_279_24">
+                    <rect width="35" height="35" fill="white"/>
+                </clipPath>
+            </defs>
+        </svg>
+        <p>salut !</p>
+    </div>
+    
     <!--------------------------------------------------------------------------------------------------------------------------------------------->
     <!--------------------------------------------------------------------- Menu mapping ---------------------------------------------------------->
     <!--------------------------------------------------------------------------------------------------------------------------------------------->
@@ -164,7 +178,8 @@
         <div class="menu_erreur"></div>
         <div class="groupe_btn" data-action="import"></div>
     </div>
-    <!------------------------------------------------------------------------- Main -------------------------------------------------------------------->
+
+    <!------------------------------------------------------------------------- Main ---------------------------------------------------------------------->
     <main>
         <!------------------------------------------------------------------------------------------------------------------------------------------------->
         <!-------------------------------------------------------------------- Accueil -------------------------------------------------------------------->
@@ -188,7 +203,7 @@
                         </label>
                         
                         <div class="actions">
-                            <button type="button" class="btn-reset" id="reset-btn" title="Supprimer">
+                            <button type="button" class="btn-reset" title="Supprimer">
                                 <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M13.5 1.5L1.5 13.5M1.5 1.5L13.5 13.5" stroke="#F12C2C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
@@ -261,7 +276,7 @@
                         </label>
                         
                         <div class="actions">
-                            <button type="button" class="btn-reset" id="reset-btn" title="Supprimer">
+                            <button type="button" class="btn-reset" title="Supprimer">
                                 <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M13.5 1.5L1.5 13.5M1.5 1.5L13.5 13.5" stroke="var(--rouge)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
@@ -285,9 +300,9 @@
     <div class="section_options_table">
         <div class="options_table">
             <div class="selects_table">
-                <select name="" id="select_etu"></select>
-                <select name="" id="select_salle"></select>
-                <select name="" id="select_matiere"></select>
+                <select name="" id="select_etu"><option>Chargement...</option></select>
+                <select name="" id="select_salle"><option>Chargement...</option></select>
+                <select name="" id="select_matiere"><option>Chargement...</option></select>
             </div>
         </div>
         <div class="options_table">
@@ -300,17 +315,9 @@
                         <span class="custom-checkbox"></span>
                     </label>
                 </div>
-                <div class="filtres_spe">
-                    <!-- <div class="filtre_spe">
-                        <label class="badge-checkbox" style="--checkcolor: blue">
-                            <input type="checkbox" id="specialite1" checked>
-                            <span class="badge-text">Spécialité 1</span>
-                            <span class="custom-checkbox"></span>
-                        </label>
-                    </div> -->
-                </div>
+                <div class="filtres_spe"></div>
             </div>
-            <div class="btn-placement">
+            <div class="btn-placement placement_disable">
                 <span>Placement aléatoire</span>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M20.5613 10.7815C20.8422 11.0628 21 11.444 21 11.8415C21 12.239 20.8422 12.6203 20.5613 12.9015L14.9053 18.5605C14.6239 18.8419 14.2423 19 13.8443 19C13.4464 19 13.0647 18.8419 12.7833 18.5605C12.5019 18.2791 12.3438 17.8975 12.3438 17.4995C12.3438 17.1016 12.5019 16.7199 12.7833 16.4385L15.8793 13.3415H4.34432C3.9465 13.3415 3.56497 13.1835 3.28366 12.9022C3.00236 12.6209 2.84432 12.2393 2.84432 11.8415C2.84432 11.4437 3.00236 11.0622 3.28366 10.7809C3.56497 10.4996 3.9465 10.3415 4.34432 10.3415H15.8793L12.7833 7.24552C12.644 7.10619 12.5335 6.94078 12.4581 6.75873C12.3827 6.57668 12.3438 6.38157 12.3438 6.18452C12.3438 5.98747 12.3827 5.79236 12.4581 5.61031C12.5335 5.42826 12.644 5.26285 12.7833 5.12352C12.9227 4.98419 13.0881 4.87366 13.2701 4.79826C13.4522 4.72285 13.6473 4.68404 13.8443 4.68404C14.0414 4.68404 14.2365 4.72285 14.4185 4.79826C14.6006 4.87366 14.766 4.98419 14.9053 5.12352L20.5613 10.7815Z" fill="#FBFDFF"/>
@@ -445,7 +452,7 @@
     <!-- popup absence -->
     <div class="popup_absence">
         
-        <svg class="remove_popup" width="25" height="25" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg class="remove_popup" id="remove_pop_absence" width="25" height="25" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g id="Croix" clip-path="url(#clip0_279_24)">
             <g id="Vector">
                 <path d="M30 5L5 30ZM5 5L30 30Z" fill="#F12C2C"/>
@@ -473,7 +480,22 @@
     </main>
 
     <!-- Pied de page -->
-    <footer></footer>
+    <footer>
+        <div class="footer-container">
+            <div class="footer-section">
+                <h4>À propos</h4>
+                <p>Placexam est une solution de placement d'étudiants de salles d'examen développée par un étudiant MMI en stage au sein de l'ENSCMu à Mulhouse.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Liens</h4>
+                <a href="mailto:dimitri.knyazev@uha.fr">Support technique</a>
+                <a href="#">Documentation</a>
+            </div>
+            <div class="footer-section">
+                <p>Version 1.0.0 | ENSCMu © 2026</p>
+            </div>
+        </div>
+    </footer>
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>

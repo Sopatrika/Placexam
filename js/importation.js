@@ -60,12 +60,10 @@ const CONFIG_IMPORT = {
             });
             sauvegarder('tab_matiere', tab_matiere);
             
-            // On cible la div pour afficher le message au lieu de l'alert
+            // On cible la div pour afficher le message
             const verif_matiere = document.querySelector("#verif_matiere");
             if (verif_matiere) {
                 verif_matiere.textContent = `${nb_ajouts} nouvelles matières importées avec succès !`;
-                // Optionnel : on peut forcer la couleur verte de ton CSS
-                verif_matiere.style.color = "var(--valide)"; 
             }
         }
     }
@@ -203,7 +201,7 @@ function selection_colonnes(headers, rawData, fileName, inputId) {
 
         if (typeof afficher_listes === "function") afficher_listes(); 
         fermer_mapping();
-        if (typeof remplir_select === "function") remplir_select(); 
+        remplir_select() 
     };
 }
 
@@ -221,6 +219,10 @@ function importerDonnees(event) {
     const file = event.target.files[0];
     if (!file) return;
 
+    // On cible le popup JSON et son paragraphe
+    const popup_json = document.querySelector(".menu_import_donnees");
+    const texte_popup = popup_json.querySelector("p");
+
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
@@ -228,7 +230,8 @@ function importerDonnees(event) {
 
             // Vérifier que les clés existent
             if (!data.tab_etu || !data.tab_filtres_spe || !data.tab_matiere || !data.tab_placement || !data.tab_salles) {
-                alert("Le fichier JSON ne contient pas toutes les données nécessaires (tab_salles manquant).");
+                texte_popup.textContent = "Le fichier JSON ne contient pas toutes les données nécessaires.";
+                popup_json.classList.add("pop");
                 return;
             }
 
@@ -248,22 +251,28 @@ function importerDonnees(event) {
 
             // Rafraîchir l'interface
             if (typeof afficher_listes === "function") afficher_listes();
-            if (typeof remplir_select === "function") remplir_select();
+            remplir_select()
             if (typeof generer_filtres === "function") generer_filtres();
             if (typeof verifier_capacite === "function") verifier_capacite();
-            if (typeof actualiser_affichage_complet === "function") actualiser_affichage_complet();
+            actualiser_affichage_complet();
             if (typeof recup_placement_enreg === "function") recup_placement_enreg();
             
             // Réinitialiser le placement actuel
             effacer_storage("placer_actuel");
             placement_actuel_donnees = [];
 
-            alert("Import réussi !");
+            // Message de succès
+            texte_popup.textContent = "Import réussi !";
+            popup_json.classList.add("pop");
+            
         } catch (error) {
-            alert("Erreur lors de l'import : " + error.message);
+            // Message d'erreur s'il y a un problème de lecture
+            texte_popup.textContent = "Erreur lors de l'import : " + error.message;
+            popup_json.classList.add("pop");
         }
     };
     reader.readAsText(file);
+    
     // Réinitialiser l'input pour permettre de réimporter le même fichier
     event.target.value = "";
 }

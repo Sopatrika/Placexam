@@ -54,7 +54,7 @@ function rafraichir_menu_apres_maj(type_modifie) {
     if (conteneur_salle_ul) conteneur_salle_ul.innerHTML = "";
 
     if (tab_etu.length === 0) {
-        etu_sec.innerHTML = "<div class='message_vide_menu'>Aucune donnée disponible</div>";
+        if (conteneur_etu_ul) conteneur_etu_ul.innerHTML = "<div class='message_vide_menu'>Aucune donnée disponible</div>";
     } else {
         tab_etu.forEach(liste => {
             const li = bloc_listes(liste.nom_fichier || "Liste sans nom", "etu");
@@ -193,7 +193,7 @@ function memoriser_section_precedente() {
     }
 }
 
-// OUVRIR LA SECTION D'ACTION (Édition, Suppression, Chargement)
+// ouvre la section d'action (Édition, Suppression, Chargement)
 function ouvrir_panneau_action(selecteur_panneau, callback_valider) {
     const panneau = document.querySelector(selecteur_panneau);
     if (!panneau) return;
@@ -201,7 +201,7 @@ function ouvrir_panneau_action(selecteur_panneau, callback_valider) {
     memoriser_section_precedente(); 
     action_en_attente = callback_valider; 
 
-    // Cache TOUT (y compris etu_sec, historique_sec et sous_sec)
+    // Cache tout (y compris etu_sec, historique_sec et sous_sec)
     document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => {
         s.classList.remove("sec_open");
     });
@@ -218,12 +218,8 @@ function fermer_panneaux_action() {
     
     action_en_attente = null; 
 
-    // Force la réouverture stricte de la section d'origine
     if (section_precedente) {
         section_precedente.classList.add("sec_open");
-    } else {
-        const sec_etu = document.querySelector(".etu_sec");
-        if (sec_etu) sec_etu.classList.add("sec_open");
     }
 }
 
@@ -389,7 +385,7 @@ function valider_edition() {
     const edition_erreur = document.querySelector(".edition_erreur");
     if(edition_erreur) edition_erreur.textContent = ""; 
 
-    // CAS 1 : Renommer le titre d'une liste
+    //  Renommer le titre d'une liste
     if (mode_edition === "modifier_liste") {
         const input_nom = document.getElementById("input_nom_liste");
         let nouveau_nom_liste = input_nom ? input_nom.value.trim() : "";
@@ -407,22 +403,16 @@ function valider_edition() {
             tab_etu[index_edition].nom_fichier = nouveau_nom_liste;
             sauvegarder("tab_etu", tab_etu);
 
-            // Si cette liste était actuellement sélectionnée, on met à jour !
-            if (recuperer("select_etu") === ancien_nom) sauvegarder("select_etu", nouveau_nom_liste);
-            if (recuperer("form: select_etu") === ancien_nom) sauvegarder("form: select_etu", nouveau_nom_liste);
+            maj_dependances_nom("etu", ancien_nom, nouveau_nom_liste); //On met à jour les selects et placements
             
-            if (typeof remplir_select === "function") remplir_select();
             rafraichir_menu_principal(".etu_sec");
 
-        } else if (type_edition === "nom_liste_salle") {
-            tab_salles[index_edition].nom_liste = nouveau_nom_liste;
-            sauvegarder("tab_salles", tab_salles);
         }
         
-        return true; // Action réussie, le panneau peut se fermer
+        return true; // Action réussie
     } 
     
-    // CAS 2 : Modification d'un élément interne
+    // Modification d'un élément interne
     let nouvel_objet = {};
     const config = CONFIG_SECTION[type_edition];
 

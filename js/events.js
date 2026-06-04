@@ -16,91 +16,107 @@ const EventManager = {
             const target = e.target;
 
             switch (true) {
-                // --- MENU GAUCHE ---
+                // Ouvrir/fermer le menu gauche
                 case !!target.closest(".button_menu_gauche"):
                     document.querySelector(".menu_listes").classList.toggle("menu_open");
                     break;
-                
+                // Ouvrir une section
                 case !!target.closest(".btn-section-menu"):
                     gerer_onglets_menu_gauche(target.closest(".btn-section-menu"));
                     break;
-
+                // Ouvrir un sous menu
                 case !!target.closest(".nom_texte"):
                     const li = target.closest("li");
                     section_precedente = target.closest("section");
                     ouvrir_details_liste(li.dataset.name, li.dataset.type);
                     break;
-
+                // Revenir sur la section liste d'étudiant
                 case !!target.closest(".return_sec"):
                     fermer_formulaire(section_precedente);
                     break;
-
-                // --- ACTIONS CRUD ---
+                // Clic sur la corbeille ppour supprimer
                 case !!target.closest(".trash_element"):
                     supprimer(target.closest(".trash_element"));
                     break;
-
+                // Clic sur le crayon pour modifier
                 case !!target.closest(".rename_element"):
                     preparer_edition_element(target.closest(".rename_element"));
                     break;
-
-                // Ajoute le reste de tes cas ici avec la même logique : case !!target.closest(".ta_classe"):
-                // ...
+                // Clic sur Ajouter
                 case !!target.closest(".btn_ajouter"):
                     mode_edition = "ajouter";
                     index_edition = -1;
                     edition_formulaire();
                     break;
+                //Clic pour charger une sauvegarde
                 case !!target.closest(".load_element"):
                     preparer_chargement_placement(e.target.closest(".load_element"));
                     break;
+                // Clic pour vider l'histo des chargements
                 case !!target.closest(".btn_supp_historique"):
                     if (typeof supp_histo_placement === "function") supp_histo_placement();
                     break;
+                //Crée une salle
                 case !!target.closest(".btn_creer-salle"):
                     creer_nouvelle_salle();
                     break;
+                //Bouton annuler et valider
                 case !!target.closest(".groupe_btn > *"):
                     gerer_boutons_action(e);
                     break;
+                //Faire un placement
                 case !!target.closest(".btn-placement"):
                     if (typeof placement_aleatoire === "function") placement_aleatoire();
                     break;
+                //ouvrir tableau ou plan de salle
                 case !!target.closest(".btn_affichage"):
                     basculer_affichage(e.target.closest(".btn_affichage"));
                     break;
+                //Afficher un plan de salle de la salle cliqué
                 case !!target.closest(".btn-plan_salle"):
                     changer_salle_plan(e.target.closest(".btn-plan_salle"));
+                //Clic sur une place
                 case !!target.closest(".place"):
                     gerer_clic_place(e.target.closest(".place"));
                     break;
+                //Clic sur l'icone zoom
                 case !!target.closest(".icon_zoom"):
                 case !!target.closest(".fond_sombre"):
                 case !!target.closest(document.querySelector(".plan_salle").classList.contains("zoom_plan")):
                     plan_zoom();
                     break;
                 // --- HEADER & IMPORT/EXPORT ---
+                //Clic sur le bouton d'import dans le header
                 case !!target.closest("#btn-header-import"):
                     document.getElementById("import-json-input").click();
                     break;
-                case !!target.closest(".btn-exporter"): // <-- C'est lui qui manquait !
-                    ouvrir_menu_export();
-                    break;
-                case !!target.closest(".btn-reset"):
-                    reinitialiser_champ_import(e.target.closest(".import-field"));
-                    break;
-                case !!target.closest(".btn-submit"):
-                    valider_champ_import(e.target.closest(".import-field"));
-                    break;
+                //Clic sur le bouton d'export dans le header
                 case !!target.closest("#btn-header-export"):
                     exporterDonnees();
                     break;
-                // --- POPUP ABSENCE ---
-                case !!target.closest(".remove_popup"):
+                //Clic sur exporter
+                case !!target.closest(".btn-exporter"):
+                    ouvrir_menu_export();
+                    break;
+                //Clic pour reset l'import
+                case !!target.closest(".btn-reset"):
+                    reinitialiser_champ_import(e.target.closest(".import-field"));
+                    break;
+                //Valider
+                case !!target.closest(".btn-submit"):
+                    valider_champ_import(e.target.closest(".import-field"));
+                    break;
+                // Enlever le popup d'absence
+                case !!target.closest("#remove_pop_absence"):
                     document.querySelector(".popup_absence").classList.remove("pop");
                     break;
+                // Mettre absent 
                 case !!target.closest(".btn_absence"):
                     creer_liste_absents();
+                    break;
+                //Enlever le menu d'import JSON
+                case !!target.closest("#remove_menujson"):
+                    document.querySelector(".menu_import_donnees").classList.remove("pop");
                     break;
                 
             }
@@ -111,8 +127,9 @@ const EventManager = {
         document.addEventListener("change", (e) => {
             const target = e.target;
 
-            // 1. D'abord on gère les cas basés sur l'ID (Switch classique)
+            // gère les cas basés sur l'ID
             switch (target.id) {
+                //selection des listes étudiant(e)s et salle
                 case "select_etu":
                 case "select_salle":
                     sauvegarder(target.id, target.value);
@@ -126,8 +143,8 @@ const EventManager = {
                         maj_select_salles_sup();
                     }
                     verifier_capacite();
-                    return; // On arrête l'exécution ici
-
+                    return;
+                //selection dans salles supplémentaire
                 case "select_salle_sup":
                     if (target.value && !salles_choisies.includes(target.value)) {
                         salles_choisies.push(target.value);
@@ -135,32 +152,36 @@ const EventManager = {
                     }
                     target.value = "";
                     return;
-
+                    //Case tiers-temps
                 case "tri_tiers_temps":
                     reset_placement(true);
                     verifier_capacite();
                     return;
-
+                // Case absence
                 case "check_absence":
                     synchro_absence_plan(target.checked);
                     return;
-
+                    //Case import en json
                 case "import-json-input":
                     importerDonnees(e);
                     return;
             }
 
-            // 2. Ensuite on gère les classes avec un switch(true)
+            // gère les classes
             switch (true) {
+                //Filtre des spécialités
                 case target.classList.contains("check-specialite"):
                     maj_filtre_specialite(target);
                     break;
+                //Case pour absence
                 case target.classList.contains("check-absence"):
                     maj_absences();
                     break;
+                //Case pour place indisponible
                 case target.classList.contains("check_tier") || target.classList.contains("check_indispo"):
                     maj_option_etudiant(target);
                     break;
+                //Importation
                 case target.matches(".import-field input[type='file']"):
                     maj_nom_fichier_import(target);
                     break;
@@ -168,7 +189,7 @@ const EventManager = {
         });
     },
 
-    bindGlobalInputs() { //Input
+    bindGlobalInputs() { //Barre de recherche
         document.addEventListener("input", (e) => {
             if (e.target.id === "search_etu") {
                 rechercher_dans_menu(e.target.value);

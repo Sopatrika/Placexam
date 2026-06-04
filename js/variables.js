@@ -2,6 +2,9 @@
 //=================================================================================================================================================================
 // GESTION DES VARIABLES
 //=================================================================================================================================================================
+//=================================================================================================================================================================
+// GESTION DES VARIABLES
+//=================================================================================================================================================================
 const AppStorage = {
     master_key: "placexam_data",
     data: null,
@@ -14,20 +17,31 @@ const AppStorage = {
             catch (e) { console.error("Erreur, on repart à zéro", e); }
         }
         
-        // Si le localStorage est totalement vide (nouvel utilisateur)
+        // Si le localStorage est totalement vide ou incomplet
         if (!this.data) {
             this.data = {
                 imports: { etu: [], salles: [], matiere: [], raw_etu: "", raw_matiere: "" },
                 placements: [],
                 forms: {}, 
-                prefs: { filtres_spe: {}, placer_actuel: "" }
+                prefs: { filtres_spe: {}, placer_actuel: "" },
+                autres: {} // NOUVEAU : Fourre-tout pour les configurations d'imports, etc.
             };
-            this.saveAll();
+        } else if (!this.data.autres) {
+            this.data.autres = {}; // Rétrocompatibilité si l'utilisateur avait déjà placexam_data
         }
+
+        this.saveAll();
     },
 
     saveAll() {
-        localStorage.setItem(this.master_key, JSON.stringify(this.data));
+        try {
+            localStorage.setItem(this.master_key, JSON.stringify(this.data));
+        } catch (e) {
+            if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+                alert("⚠️ Attention : La mémoire de Placexam est pleine !\nVeuillez supprimer d'anciens placements ou listes pour pouvoir continuer à sauvegarder.");
+                console.error("Quota LocalStorage dépassé !");
+            }
+        }
     }
 };
 
@@ -36,56 +50,85 @@ AppStorage.init();
 
 // FONCTION POUR SAUVEGARDER DANS LE LOCALSTORAGE -----------------------------------------------------------------------------------------------------------------------------
 function sauvegarder(cle, donnees) {
-    if (cle === "tab_etu") AppStorage.data.imports.etu = donnees;
-    else if (cle === "tab_salles") AppStorage.data.imports.salles = donnees;
-    else if (cle === "tab_matiere") AppStorage.data.imports.matiere = donnees;
-    else if (cle === "tab_placement") AppStorage.data.placements = donnees;
-    else if (cle === "tab_filtres_spe") AppStorage.data.prefs.filtres_spe = donnees;
-    else if (cle === "placer_actuel") AppStorage.data.prefs.placer_actuel = donnees;
-    else if (cle.startsWith("form:")) {
-        const id = cle.replace("form: ", "").replace("form:", "").trim();
-        AppStorage.data.forms[id] = donnees;
-    } 
-    else {
-        // Si une clé inconnue est appelée
-        localStorage.setItem(cle, JSON.stringify(donnees));
-        return;
+    switch (cle) {
+        case "tab_etu": AppStorage.data.imports.etu = donnees; break;
+        case "tab_salles": AppStorage.data.imports.salles = donnees; break;
+        case "tab_matiere": AppStorage.data.imports.matiere = donnees; break;
+        case "tab_placement": AppStorage.data.placements = donnees; break;
+        case "tab_filtres_spe": AppStorage.data.prefs.filtres_spe = donnees; break;
+        case "placer_actuel": AppStorage.data.prefs.placer_actuel = donnees; break;
+        
+        // On fusionne intelligemment les selects avec les forms !
+        case "select_etu":
+        case "select_salle":
+        case "select_matiere":
+            AppStorage.data.forms[cle] = donnees;
+            break;
+
+        default:
+            if (cle.startsWith("form:")) {
+                const id = cle.replace("form:", "").trim();
+                AppStorage.data.forms[id] = donnees;
+            } else {
+                // Tout le reste (comme les configs Import_) va dans "autres"
+                AppStorage.data.autres[cle] = donnees;
+            }
     }
-    // Sauvegarde
+    
     AppStorage.saveAll();
 } 
+
 //FONCTION POUR RECUPERER DANS LE LOCALSTORAGE -----------------------------------------------------------------------------------------------------------------------------
 function recuperer(cle, default_value) { 
-    if (cle === "tab_etu") return AppStorage.data.imports.etu;
-    if (cle === "tab_salles") return AppStorage.data.imports.salles;
-    if (cle === "tab_matiere") return AppStorage.data.imports.matiere;
-    if (cle === "tab_placement") return AppStorage.data.placements;
-    if (cle === "tab_filtres_spe") return AppStorage.data.prefs.filtres_spe;
-    if (cle === "placer_actuel") return AppStorage.data.prefs.placer_actuel !== undefined ? AppStorage.data.prefs.placer_actuel : default_value;
-    if (cle.startsWith("form:")) {
-        const id = cle.replace("form: ", "").replace("form:", "").trim();
-        const val = AppStorage.data.forms[id];
-        return val !== undefined ? val : default_value;
-    }
+    switch (cle) {
+        case "tab_etu": return AppStorage.data.imports.etu;
+        case "tab_salles": return AppStorage.data.imports.salles;
+        case "tab_matiere": return AppStorage.data.imports.matiere;
+        case "tab_placement": return AppStorage.data.placements;
+        case "tab_filtres_spe": return AppStorage.data.prefs.filtres_spe;
+        case "placer_actuel": return AppStorage.data.prefs.placer_actuel !== undefined ? AppStorage.data.prefs.placer_actuel : default_value;
+        
+        case "select_etu":
+        case "select_salle":
+        case "select_matiere":
+            return AppStorage.data.forms[cle] !== undefined ? AppStorage.data.forms[cle] : default_value;
 
-    const data = localStorage.getItem(cle);
-    if (!data) return default_value;
-    try { return JSON.parse(data); } catch (erreur) { return data; }
+        default:
+            if (cle.startsWith("form:")) {
+                const id = cle.replace("form:", "").trim();
+                const val = AppStorage.data.forms[id];
+                return val !== undefined ? val : default_value;
+            }
+
+            // On vérifie dans la boîte "autres"
+            if (AppStorage.data.autres && AppStorage.data.autres[cle] !== undefined) {
+                return AppStorage.data.autres[cle];
+            }
+            return default_value;
+    }
 }
+
 //FONCTION POUR SUPPRIMER DANS LE LOCALSTORAGE -----------------------------------------------------------------------------------------------------------------------------
 function effacer_storage(cle) {
-    if (cle.startsWith("form:")) {
-        const id = cle.replace("form: ", "").replace("form:", "").trim();
-        delete AppStorage.data.forms[id];
-        AppStorage.saveAll();
-    } else if (cle === "placer_actuel") {
-        delete AppStorage.data.prefs.placer_actuel;
-        AppStorage.saveAll();
-    } else {
-        localStorage.removeItem(cle);
+    switch (cle) {
+        case "placer_actuel": 
+            delete AppStorage.data.prefs.placer_actuel; 
+            break;
+        case "select_etu":
+        case "select_salle":
+        case "select_matiere":
+            delete AppStorage.data.forms[cle];
+            break;
+        default:
+            if (cle.startsWith("form:")) {
+                const id = cle.replace("form:", "").trim();
+                delete AppStorage.data.forms[id];
+            } else if (AppStorage.data.autres) {
+                delete AppStorage.data.autres[cle];
+            }
     }
+    AppStorage.saveAll();
 }
-
 
 // *VARIABLES GLOBALES
 let tab_etu = AppStorage.data.imports.etu;
@@ -135,7 +178,7 @@ const CONFIG_SECTION = {
         format_affichage: (item, index) => {
             let lignes = Object.keys(item)
                 .filter(key => key !== "tiers_temps")
-                .map(key => item[key]); // Récupère toutes les infos (nom, prenom, etc.)
+                .map(key => item[key]); 
             
             const estCoche = item.tiers_temps ? "checked" : "";
             lignes.push(`
@@ -163,7 +206,6 @@ const CONFIG_SECTION = {
     "salle": {
         nom_liste: "Salles",
         storage_key: "tab_salles",
-        tableau: tab_salles,
         titres: { ajouter: "", modifier: "Modifier la salle" },
         affichage: { recherche: false, icon_tierstemps: false, bouton_ajout: false, supp_histo: false },
         section_retour: ".sous_sec",
@@ -182,34 +224,28 @@ const CONFIG_SECTION = {
         ],
         sauvegarder_element: (objet, mode, index, nom_liste) => {
             let ancien_nom = mode === "modifier" ? tab_salles[index].nom_salle : null;
-            // On s'assure que le nom est unique
             objet.nom_salle = generer_nom_unique(objet.nom_salle, tab_salles, "nom_salle", mode === "modifier" ? index : -1);
+
             if (mode === "modifier") {
                 objet.places_banni = tab_salles[index].places_banni || null; 
                 tab_salles[index] = objet; 
                 if (tab_salles[index].places_indispo) {
                     tab_salles[index].places_indispo = tab_salles[index].places_indispo.filter(p => p <= objet.capacite);
                 }
-                // --- MISE À JOUR DYNAMIQUE DES SALLES CHOISIES ---
+
                 if (ancien_nom && ancien_nom !== objet.nom_salle) {
                     let index_choisie = salles_choisies.indexOf(ancien_nom);
                     if (index_choisie !== -1) {
-                        salles_choisies[index_choisie] = objet.nom_salle; // On remplace par le nouveau nom
-                        
+                        salles_choisies[index_choisie] = objet.nom_salle;
                         if (salle_active === ancien_nom) salle_active = objet.nom_salle;
-                        
-                        // Mettre à jour le localStorage
-                        if (recuperer("select_salle") === ancien_nom) sauvegarder("select_salle", objet.nom_salle);
-                        if (recuperer("form: select_salle") === ancien_nom) sauvegarder("form: select_salle", objet.nom_salle);
-                        
-                        // Rafraîchir les badges et le select supplémentaire
                         if (typeof maj_select_salles_sup === "function") maj_select_salles_sup();
                         if (typeof dessiner_badges_salles === "function") dessiner_badges_salles();
                     }
+                    maj_dependances_nom("salle", ancien_nom, objet.nom_salle);
                 }
             }
             sauvegarder("tab_salles", tab_salles);
-            if (typeof remplir_select === "function") remplir_select();
+            remplir_select()
             if (typeof verifier_capacite === "function") verifier_capacite();
             fermer_et_recharger("Salles");
         }
@@ -217,7 +253,6 @@ const CONFIG_SECTION = {
     "matiere": {
         nom_liste: "Matières",
         storage_key: "tab_matiere",
-        tableau: tab_matiere, 
         titres: { ajouter: "Ajouter une matière", modifier: "Modifier la matière" },
         affichage: { recherche: true, icon_tierstemps: false, bouton_ajout: true, supp_histo: false },
         section_retour: ".sous_sec",
@@ -231,28 +266,34 @@ const CONFIG_SECTION = {
             `Professeur : ${item.prof || "Non renseigné"}`
         ],
         sauvegarder_element: (objet, mode, index, nom_liste) => {
-            // Unicité du nom de la matière
             objet.nom = generer_nom_unique(objet.nom, tab_matiere, "nom", mode === "modifier" ? index : -1);
+
             if (mode === "ajouter") {
                 tab_matiere.unshift({ nom: objet.nom, prof: objet.prof });
             } else {
                 let ancien_nom = tab_matiere[index].nom;
+                let ancien_prof = tab_matiere[index].prof || "Non renseigné";
+                let ancienne_valeur_select = `${ancien_nom} (${ancien_prof})`;
+
+                let nouveau_prof = objet.prof || "Non renseigné";
+                let nouvelle_valeur_select = `${objet.nom} (${nouveau_prof})`;
+
                 tab_matiere[index] = { nom: objet.nom, prof: objet.prof };
 
-                if (ancien_nom !== objet.nom) {
-                    if (recuperer("select_matiere") === ancien_nom) sauvegarder("select_matiere", objet.nom);
-                    if (recuperer("form: select_matiere") === ancien_nom) sauvegarder("form: select_matiere", objet.nom);
+                if (ancienne_valeur_select !== nouvelle_valeur_select) {
+                    if (typeof maj_dependances_nom === "function") {
+                        maj_dependances_nom("matiere", ancienne_valeur_select, nouvelle_valeur_select);
+                    }
                 }
             }
             sauvegarder("tab_matiere", tab_matiere);
             fermer_et_recharger(nom_liste);
-            if (typeof remplir_select === "function") remplir_select();
+            remplir_select()
         }
     },
     "historique": { 
         nom_liste: "Historique des placements",
         storage_key: "tab_placement",
-        tableau: tab_placer,
         titres: { ajouter: "", modifier: "Modifier l'historique" },
         affichage: { recherche: false, icon_tierstemps: false, bouton_ajout: false, supp_histo: true },
         section_retour: ".sous_sec",
@@ -263,13 +304,11 @@ const CONFIG_SECTION = {
         ],
         sauvegarder_element: (objet, mode, index, nom_liste) => {
             let ancien_titre = tab_placer[index].titre;
-            // Unicité du titre d'historique
             objet.titre = generer_nom_unique(objet.titre, tab_placer, "titre", mode === "modifier" ? index : -1);
 
             tab_placer[index].titre = objet.titre;
             
-            // Si le placement renommé est celui actuellement à l'écran, on met à jour placer_actuel
-            if (recuperer("placer_actuel") === ancien_titre) {
+            if (recuperer("form:select_etu") === ancien_titre) {
                 sauvegarder("placer_actuel", objet.titre);
             }
             
@@ -278,8 +317,6 @@ const CONFIG_SECTION = {
         }
     }
 };
-
-const edition_erreur = document.querySelector(".edition_erreur");
 
 // --- TITRES ET CONTENEURS (Menu Gauche) ---
 const label_nom_liste = document.querySelector(".nom_liste"); // Titre de la liste affichée
@@ -293,6 +330,7 @@ const btn_supp_histo = document.querySelector(".btn_supp_historique");
 // --- ELEMENTS DU MENU D'EDITION ---
 const form_edition = document.querySelector(".form_edition");
 const titre_edition_sec = document.querySelector(".titre_edition_sec");
+const edition_erreur = document.querySelector(".edition_erreur");
 
 // --- ELEMENTS DU MENU PRINCIPAL ---
 const conteneur_etu_ul = document.querySelector(".etu_sec .menu_ul");
