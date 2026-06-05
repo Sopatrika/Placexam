@@ -364,20 +364,20 @@ function dessiner_badges_salles() {
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// FONCTION POUR PLACER ALEATOIREMENT LES ETUDIANTS SUR LES PLACES D'EXAMENS -------------------------------------------------------------------------------------------------
+// FONCTION POUR PLACER ALEATOIREMENT LES ETUDIANTS SUR LES PLACES D'EXAMENS
 //----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function placement_aleatoire() {
     if (btn_placement.classList.contains("placement_disable")) return;
 
-    //mémorise les cases cochées avant de tout effacer
+    // Mémorise les cases cochées absents avant de tout effacer
     const etudiants_coches_absents = Array.from(document.querySelectorAll(".check-absence:checked")).map(cb => ({
         nom: cb.dataset.nom,
         prenom: cb.dataset.prenom
     }));
 
     if (mode_indispo && mode_indispo.checked) {
-        mode_indispo.checked = false; //décoche mode_indispo
+        mode_indispo.checked = false; // Décoche mode_indispo
     }
 
     msg_capacite.textContent = "";
@@ -387,7 +387,7 @@ function placement_aleatoire() {
     let listeEtuObj = getListeEtu(nom_liste_etu);
     if (!listeEtuObj) return;
 
-    // S'assurer que la salle principale est en tête
+    // S'assurer que la salle principale est bien en tête de liste
     if (salles_choisies.length === 0 || salles_choisies[0] !== select_salle.value) {
         salles_choisies = [select_salle.value];
     }
@@ -397,7 +397,7 @@ function placement_aleatoire() {
         .filter(etu => specialites_actives.includes(etu.specialite))
         .map(etu => ({ ...etu }));
 
-    // Calculer les places disponibles en parcourant salles_choisies
+    // Calculer les places disponibles
     let places_dispos = [];
 
     salles_choisies.forEach(nom_salle => {
@@ -409,7 +409,7 @@ function placement_aleatoire() {
 
             let i = 1;
             while (i <= max) {
-                if (!bannis.includes(i)) { //Sans inclure les places indisponible
+                if (!bannis.includes(i)) { 
                     places_dispos.push({
                         nom_salle_origine: nom_salle,
                         nom_de_la_place: i
@@ -422,45 +422,109 @@ function placement_aleatoire() {
         }
     });
 
-    // 3. Séparer, mélanger et assigner (le reste du code reste identique)
-    let etudiants_tiers = [];
-    let etudiants_standard = [];
+    // Trier tous les étudiants par ordre alphabétique A-Z (Tiers-temps en priorité si coché)
+    etudiants_a_placer.sort((a, b) => {
+        let nomA = String(a.nom).trim().toLowerCase();
+        let nomB = String(b.nom).trim().toLowerCase();
+        if (nomA < nomB) return -1;
+        if (nomA > nomB) return 1;
+        
+        let prenomA = String(a.prenom).trim().toLowerCase();
+        let prenomB = String(b.prenom).trim().toLowerCase();
+        if (prenomA < prenomB) return -1;
+        if (prenomA > prenomB) return 1;
+        
+        return 0;
+    });
 
+    let etudiants_prioritaires = [];
+    let etudiants_normaux = [];
+
+    // Séparation si Tiers-Temps est activé
     if (check_tiers_temps && check_tiers_temps.checked) {
-        etudiants_tiers = etudiants_a_placer.filter(e => e.tiers_temps);
-        etudiants_standard = etudiants_a_placer.filter(e => !e.tiers_temps);
+        etudiants_prioritaires = etudiants_a_placer.filter(e => e.tiers_temps);
+        etudiants_normaux = etudiants_a_placer.filter(e => !e.tiers_temps);
     } else {
-        etudiants_standard = [...etudiants_a_placer];
+        etudiants_normaux = [...etudiants_a_placer];
     }
 
-    melanger(etudiants_tiers);
-    melanger(etudiants_standard);
-    const etudiants_finaux = [...etudiants_tiers, ...etudiants_standard];
+    let index_prio = 0;
+    let index_norm = 0;
+    let etudiants_finaux = [];
 
-    etudiants_finaux.forEach((etu, index) => {
-        if (index < places_dispos.length) {
-            etu.salle_attribuee = places_dispos[index].nom_salle_origine;
-            etu.place_attribuee = places_dispos[index].nom_de_la_place;
+    // Découper par tranches de salles et mélanger
+    salles_choisies.forEach(nom_salle => {
+        let places_salle = places_dispos.filter(p => p.nom_salle_origine === nom_salle);
+        let places_utilisees = 0;
+
+        // Placement des Tiers-Temps (en premier dans la salle)
+        if (index_prio < etudiants_prioritaires.length && places_salle.length > places_utilisees) {
+            let places_restantes = places_salle.length - places_utilisees;
+            let nb_a_prendre = Math.min(places_restantes, etudiants_prioritaires.length - index_prio);
+            
+            let tranche = etudiants_prioritaires.slice(index_prio, index_prio + nb_a_prendre);
+            melanger(tranche); // On mélange les Tiers-Temps entre eux
+
+            tranche.forEach((etu, i) => {
+                etu.salle_attribuee = places_salle[places_utilisees + i].nom_salle_origine;
+                etu.place_attribuee = places_salle[places_utilisees + i].nom_de_la_place;
+                etudiants_finaux.push(etu);
+            });
+
+            index_prio += nb_a_prendre;
+            places_utilisees += nb_a_prendre;
+        }
+
+        // Placement des Standards (sur les places restantes)
+        if (index_norm < etudiants_normaux.length && places_salle.length > places_utilisees) {
+            let places_restantes = places_salle.length - places_utilisees;
+            let nb_a_prendre = Math.min(places_restantes, etudiants_normaux.length - index_norm);
+            
+            let tranche = etudiants_normaux.slice(index_norm, index_norm + nb_a_prendre);
+            melanger(tranche); // On mélange les standards entre eux
+
+            tranche.forEach((etu, i) => {
+                etu.salle_attribuee = places_salle[places_utilisees + i].nom_salle_origine;
+                etu.place_attribuee = places_salle[places_utilisees + i].nom_de_la_place;
+                etudiants_finaux.push(etu);
+            });
+
+            index_norm += nb_a_prendre;
+            places_utilisees += nb_a_prendre;
         }
     });
 
+    // étudiants restants s'il y a un problème de capacité
+    while (index_prio < etudiants_prioritaires.length) {
+         let etu = etudiants_prioritaires[index_prio];
+         etu.salle_attribuee = "Non placé";
+         etu.place_attribuee = "-";
+         etudiants_finaux.push(etu);
+         index_prio++;
+    }
+    while (index_norm < etudiants_normaux.length) {
+         let etu = etudiants_normaux[index_norm];
+         etu.salle_attribuee = "Non placé";
+         etu.place_attribuee = "-";
+         etudiants_finaux.push(etu);
+         index_norm++;
+    }
+
+    // 4. Mise à jour de l'affichage HTML (Tableau)
     const lignes_tableau = document.querySelectorAll(".exam-table tbody tr");
     
-    // On attribue les places
     Array.from(lignes_tableau).forEach(ligne => {
-        //trim() retire les espaces et toLowerCase() met en minuscule
-        const tdNom = ligne.cells[0].textContent.trim().toLowerCase(); //Le nom de l'étudiant
-        const tdPrenom = ligne.cells[1].textContent.trim().toLowerCase(); //Le prenom de l'étudiant
+        const tdNom = ligne.cells[0].textContent.trim().toLowerCase(); 
+        const tdPrenom = ligne.cells[1].textContent.trim().toLowerCase(); 
         const etu = etudiants_finaux.find(e => comparerNoms(e.nom, tdNom) && comparerNoms(e.prenom, tdPrenom));
 
         if (etu && etu.place_attribuee) {
-            // On sauvegarde les infos de tri
             ligne.dataset.indexSalle = salles_choisies.indexOf(etu.salle_attribuee);
             ligne.dataset.nom = tdNom;
             ligne.dataset.prenom = tdPrenom;
             ligne.dataset.isTiers = etu.tiers_temps ? 1 : 0;
 
-            let place_alpha = convertir_place_alpha(etu.place_attribuee, etu.salle_attribuee); // Conversion
+            let place_alpha = convertir_place_alpha(etu.place_attribuee, etu.salle_attribuee); 
 
             if (salles_choisies.length > 1) { 
                 ligne.cells[3].innerHTML = `
@@ -470,7 +534,6 @@ function placement_aleatoire() {
                 ligne.cells[3].innerHTML = `<span>${place_alpha}</span>`; 
             }
         } else {
-            // Étudiants non placés (sécurité)
             ligne.dataset.indexSalle = 999; 
             ligne.dataset.nom = tdNom;
             ligne.dataset.prenom = tdPrenom;
@@ -481,39 +544,35 @@ function placement_aleatoire() {
     const tbody = document.querySelector(".exam-table tbody");
     const lignes_array = Array.from(tbody.querySelectorAll("tr"));
 
-    //le script va classer les places en fonction de l'ordre des salles séléctionné (d'abord la 1ère salle, puis la 2ème, la 3ème...)
     lignes_array.sort((a, b) => {
         let salleA = parseInt(a.dataset.indexSalle);
         let salleB = parseInt(b.dataset.indexSalle);
 
-        if (salleA !== salleB) return salleA - salleB; // Grouper par salle (Amphi 1 avant Amphi 2, etc.)
+        if (salleA !== salleB) return salleA - salleB; 
 
-        // Si les tiers temps doivent être en premier
         if (check_tiers_temps && check_tiers_temps.checked) {
             let tiersA = parseInt(a.dataset.isTiers);
             let tiersB = parseInt(b.dataset.isTiers);
-            if (tiersA !== tiersB) return tiersB - tiersA; // Le 1 passe avant le 0
+            if (tiersA !== tiersB) return tiersB - tiersA; 
         }
 
-        // Tri Alphabétique par Nom
         if (a.dataset.nom !== b.dataset.nom) {
             return a.dataset.nom.localeCompare(b.dataset.nom);
         }
-        return a.dataset.prenom.localeCompare(b.dataset.prenom); // En cas d'homonyme, le tri sera par Prénom
+        return a.dataset.prenom.localeCompare(b.dataset.prenom); 
     });
-    //réinjecte les lignes dans le tableau
+    
     lignes_array.forEach(ligne => tbody.appendChild(ligne));
 
+    // 5. Sauvegarde de l'historique
     const val_matiere = select_matiere.value; 
     const nom_matiere = val_matiere ? val_matiere : nom_liste_etu;
-    const date_jour = new Date().toLocaleDateString(); //met la date et la convertie en chaine de caractère
+    const date_jour = new Date().toLocaleDateString(); 
          
     const titre_salles = salles_choisies.join(' + ');
     const titre_placement = `${nom_matiere} - ${titre_salles} (${date_jour})`;
     
-    // On prépare les données
     const donnees_sauvegarde = etudiants_a_placer.map(etu => {
-        // vérifie si l'étudiant était dans les absents
         const absent = etudiants_coches_absents.some(abs => 
             comparerNoms(abs.nom, etu.nom) && comparerNoms(abs.prenom, etu.prenom)
         );
@@ -529,10 +588,9 @@ function placement_aleatoire() {
         };
     });
 
-    const spe_actives = Array.from(document.querySelectorAll(".check-specialite:checked")).map(cb => cb.value); //On récupère les filtres cochés
-    const tiers_temps_actif = check_tiers_temps ? check_tiers_temps.checked : false; //Si le tier-temps est actif
+    const spe_actives = Array.from(document.querySelectorAll(".check-specialite:checked")).map(cb => cb.value); 
+    const tiers_temps_actif = check_tiers_temps ? check_tiers_temps.checked : false; 
 
-    // ajoute le placement dans tab_placer
     tab_placer.unshift({
         titre: titre_placement,
         date: date_jour,
@@ -546,44 +604,34 @@ function placement_aleatoire() {
         }
     });
     
-    // Garde uniquement les 15 derniers placements
-    if (tab_placer.length > 15) {
-        tab_placer.pop(); // Supprime le plus ancien
-    }
+    if (tab_placer.length > 15) tab_placer.pop(); 
+    
     sauvegarder('tab_placement', tab_placer);
     sauvegarder('placer_actuel', titre_placement);
-
-    // On définit l'index sur le nouveau placement
     index_edition = 0; 
 
+    // 6. Messages de succès et rafraichissement
     let detail_placement_array = [];
-    salles_choisies.forEach(nom_salle => { //affiche le nombre d'étudiants par salles.
+    salles_choisies.forEach(nom_salle => { 
         let nb_places_salle = etudiants_finaux.filter(etu => etu.salle_attribuee === nom_salle).length;
         if (nb_places_salle > 0) {
             detail_placement_array.push(`&bull; <b>${nom_salle}</b> : ${nb_places_salle} étudiant(s) placés`);
         }
     });
 
-    let detail_texte_placement = detail_placement_array.join("<br>");
-
-    // affiche le message de succès
-    msg_capacite.innerHTML = `${detail_texte_placement}`;
-    
+    msg_capacite.innerHTML = detail_placement_array.join("<br>");
     msg_capacite.classList.remove("texte_rouge");
     msg_capacite.classList.add("texte_vert"); 
     icon_attention.classList.add("svg_attention_invisible");
     boite_capacite.classList.add("message_visible");
 
-    // On actualise
-    placement_actuel_donnees = donnees_sauvegarde; // Crucial pour l'affichage
+    placement_actuel_donnees = donnees_sauvegarde; 
     if (typeof actualiser_affichage_complet === "function") {
-        actualiser_affichage_complet(); // Met à jour le tableau ET le plan proprement
+        actualiser_affichage_complet(); 
     } else {
         colorier_places(donnees_sauvegarde);
     }
-    // ------------------------------------
 
-    // on rafraîchit la section Historique des placements
     if (label_nom_liste.textContent === "Historique des placements") {
         ouvrir_details_liste("Historique des placements", "historique");
     }
