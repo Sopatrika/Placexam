@@ -1,4 +1,4 @@
-/* Police d'écriture utilisé */
+/* ------------------------------------------------------------------ Police d'écriture utilisé ------------------------------------------------------------------ */
 
 @font-face {
     font-family: "Mono"; 
@@ -8,7 +8,7 @@
     font-display: swap;
 }
 
-/* ---------------------- INITIALISATION DES VARIABLES CSS ---------------------- */
+/* ------------------------------------------------------------------ INITIALISATION DES VARIABLES CSS ------------------------------------------------------------------ */
 
 :root {
     /* Fond du site */
@@ -85,7 +85,7 @@ button:focus-visible {
 
 
 
-/* Entête de page */
+/* ----------------------------------------------------------------------- Entête de page ----------------------------------------------------------------------------- */
 
 header {
     background: var(--darkblue);
@@ -179,7 +179,7 @@ main {
     justify-content: center;
 }
 
-/* ----------------- MENU DEROULANT GAUCHE ---------------------------- */
+/* --------------------------------------------------------- MENU DEROULANT GAUCHE ----------------------------------------------------------------------------------- */
 
 .menu_listes {
     position: fixed;
@@ -207,7 +207,7 @@ main {
     align-items: center;
     gap: 20px;
     border-right: inset 5px var(--white);
-    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
 }
 
 .button_menu_gauche {
@@ -239,7 +239,7 @@ main {
 
 .btn-sections-menu {
     margin-top: 20px;
-    width: 100%; /* S'assure que ça prend toute la largeur du menu */
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -433,7 +433,7 @@ main {
     -webkit-appearance: none;
 }
 
-/* listes */
+/* -------------------------------- listes ---------------------------------- */
 
 .liste_elements {
     margin-top: 20px;
@@ -481,13 +481,11 @@ main {
     max-height: 10vh;
     
 }
-/* Nom de l'élement en gras */
 .bloc_element li:first-child {
     font-weight: bold;
     font-size: 1rem;
 }
 
-/* ligne simple est réservé à la liste des matières */
 .bloc_element.ligne_simple {
     flex-direction: row;
     justify-content: space-between;
@@ -551,7 +549,7 @@ main {
     font-size: 0.9em;
 }
 
-/* Section edition (ajouter ou modifier un élément) */
+/* ---------------------- Section edition (ajouter ou modifier un élément)----------------------  */
 
 .supprimer_sec.sec_open .edition_sec, .charger_sec {
     display: none;
@@ -653,7 +651,7 @@ main {
     transition: 0.4s ease;
 }
 
-/* ---------------------------- ACCUEIL ------------------------------- */
+/* --------------------------------------------------------------- ACCUEIL ------------------------------------------------------ */
 
 .accueil {
     padding-top: 90px;
@@ -801,7 +799,7 @@ h2 {
     justify-content: center;
 }
 
-/* -------------------- Menu Import étudiant -------------------------- */
+/* ----------------------- Menu Import étudiant ---------------------------------- */
 
 .menu_import {
     border: solid 2px var(--white);
@@ -884,7 +882,7 @@ hr {
     width: 100%;
     margin: 15vh 0;
 }
-/*---------------------------------- Section Salles d'exam ---------------------*/
+/*------------------------------------------------- Section Salles d'exam -------------------------------------------------------------*/
 
 h3 {
     color: var(--darkblue);
@@ -944,7 +942,7 @@ h3 {
 }
 
 .input_txt input:focus {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+    box-shadow: var(--shadow);
 }
 
 .input_txt input[type="number"]::-webkit-inner-spin-button, 
@@ -972,7 +970,9 @@ h3 {
     background: var(--hover);
 }
 
-/*--------------------- Options du tableau ----------------------*/
+/* ------------------------------------------------------------------ SECTION PLACEMENT ------------------------------------------------------------------ */
+
+/*---------------------- Options du tableau -----------------------------*/
 
 .options_table {
     margin-bottom: 20px;
@@ -1129,7 +1129,7 @@ select:focus, select:hover {
 }
 
 
-/* --------------------- Tableau et Plan Salle -------------------*/
+/* ------------------------------------------- Tableau et Plan Salle -----------------------------------------*/
 
 .choix_affichage {
     display: flex;
@@ -1170,7 +1170,7 @@ select:focus, select:hover {
     overflow-x: hidden;
 }
 
-/* ------- Tableau -------- */
+/* ----------------------------- Tableau ------------------------------ */
 
 .exam-table {
     width: 100%;
@@ -1235,7 +1235,7 @@ td .badge-checkbox:has(.check-absence:checked) {
     --checkcolor: var(--rouge);
 }
 
-/* ----- Plan de salle ------ */
+/* --------------------------- Plan de salle ---------------------------- */
 
 .plan_salle {
     background: var(--white);
@@ -1376,13 +1376,13 @@ td .badge-checkbox:has(.check-absence:checked) {
     max-width: 1400px;
     height: 90vh;
     max-height: 900px;
-    background-color: var(--white, #fff);
+    background-color: var(--white);
     border-radius: 12px;
     z-index: 1000;
     display: flex;
     flex-direction: column;
     padding: 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow);
     overflow: hidden;
 }
 
@@ -1567,7 +1567,7 @@ td .badge-checkbox:has(.check-absence:checked) {
     cursor: pointer;
 }
 
-/* ------------ Menu exporter -----------  */
+/* ---------------------------------- Menu exporter ---------------------------------  */
 
 #menu_exporter {
     position: fixed;
@@ -1639,7 +1639,7 @@ td .badge-checkbox:has(.check-absence:checked) {
     background: var(--light-grey);
 }
 
-/* ------------------ popup absence ------------ */
+/* ---------------------------------------- popup absence ---------------------------------- */
 
 .popup_absence {
     position: fixed;
@@ -1687,7 +1687,7 @@ td .badge-checkbox:has(.check-absence:checked) {
     transform: translateX(10px)
 }
 
-/* Pied de page */
+/*  --------------------------------------------Pied de page --------------------------------------------*/
 
 footer {
     margin-top: 20vh;
