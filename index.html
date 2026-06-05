@@ -187,7 +187,7 @@
         <div class="accueil">
             <h1>Bienvenue sur Placexam</h1>
             <h2>L'outil de placement aléatoire des étudiants dans les salles d'examen</h2>
-            <a href="" target="_blank" class="notice_utile">Notice d'utilisation</a>
+            <a href="/assets/Notice d'utilisation de Placexam.pdf" target="_blank" class="notice_utile">Notice d'utilisation</a>
 
             <!---------------- Inporter fichiers -------------------->
             <form class="form_import">
@@ -238,7 +238,7 @@
                 <input type="number" id="nbr_rangees" placeholder="">
             </div>
             <div class="input_txt">
-                <label for="espace_siege">Sièges espacés :</label>
+                <label for="sieges_espaces">Sièges espacés :</label>
                 <input type="number" id="sieges_espaces" placeholder="">
             </div>
         </div>
@@ -430,8 +430,6 @@
     <!-- menu exporter -->
     <div id="menu_exporter" class="menu_close">
         <h2>Configuration de l'export</h2>
-        
-        <div class="erreur_exporter"></div>
 
         <div class="groupe_inputs">
             <label for="export_annee">Année universitaire</label>
@@ -446,6 +444,8 @@
             <label for="export_duree">Durée de l'examen</label>
             <input type="text" id="export_duree" placeholder="ex: 120">
         </div>
+
+        <div class="erreur_exporter"></div>
 
         <div class="groupe_btn" data-action="export_placement"></div>
     </div>
@@ -487,9 +487,7 @@
                 <p>Placexam est une solution de placement d'étudiants de salles d'examen développée par un étudiant MMI en stage au sein de l'ENSCMu à Mulhouse.</p>
             </div>
             <div class="footer-section">
-                <h4>Liens</h4>
-                <a href="mailto:dimitri.knyazev@uha.fr">Support technique</a>
-                <a href="#">Documentation</a>
+                <a href="/assets/Notice d'utilisation de Placexam.pdf" target="_blank">Notice d'utilisation</a>
             </div>
             <div class="footer-section">
                 <p>Version 1.0.0 | ENSCMu © 2026</p>

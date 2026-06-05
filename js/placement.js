@@ -35,7 +35,7 @@ function verifier_capacite() {
     const nom_etu = select_etu.value;
     const salle_principale = select_salle.value;
 
-    if (!nom_etu || !salle_principale) {
+    if (!nom_etu || !salle_principale) { //Si il n'y a pas de valeur
         btn_placement.classList.add("placement_disable");
         boite_capacite.classList.remove("message_visible");
         zone_ajout_salle.classList.remove("message_visible");
@@ -64,7 +64,7 @@ function verifier_capacite() {
     let etudiants_a_placer = listeEtuObj.donnees.filter(etu => specialites_actives.includes(etu.specialite));
     let nb_etu = etudiants_a_placer.length;
 
-    if (nb_etu <= 0) {
+    if (nb_etu <= 0) { //Si il n'y a pas d'étudiant
         btn_placement.classList.add("placement_disable");
         return;
     }
@@ -99,7 +99,7 @@ function verifier_capacite() {
         }
     }
 
-    // On écrase l'ancienne liste par la liste épurée (les salles en trop sont ainsi supprimées)
+    // On écrase l'ancienne liste par la liste épurée (les salles en trop sont supprimées)
     salles_choisies = salles_necessaires;
 
     if (nb_etu > capa_totale) {
@@ -460,12 +460,14 @@ function placement_aleatoire() {
             ligne.dataset.prenom = tdPrenom;
             ligne.dataset.isTiers = etu.tiers_temps ? 1 : 0;
 
-            if (salles_choisies.length > 1) { //Si il y'a plusieurs salles, on affiche en plus le nom de la salle dans lequel la place appartient
+            let place_alpha = convertir_place_alpha(etu.place_attribuee, etu.salle_attribuee); // Conversion
+
+            if (salles_choisies.length > 1) { 
                 ligne.cells[3].innerHTML = `
                     <div class="place_attribue">${etu.salle_attribuee}</div>
-                    <div class="place-number">${etu.place_attribuee}</div>`;
+                    <div class="place-number">${place_alpha}</div>`;
             } else { 
-                ligne.cells[3].innerHTML = `<span>${etu.place_attribuee}</span>`; //Sinon on affiche que la place
+                ligne.cells[3].innerHTML = `<span>${place_alpha}</span>`; 
             }
         } else {
             // Étudiants non placés (sécurité)

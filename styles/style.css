@@ -297,9 +297,14 @@ main {
     display: block;
 }
 
+.etu_sec {
+    padding-right: 10px;
+}
+
 .menu_ul li {
     margin-bottom: 15px;
-    height: 30px;
+    min-height: 30px;
+    height: auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -318,7 +323,13 @@ main {
     display: inline-block; 
     cursor: pointer;
     width: 100px;
-    transition: 0.2s ease;
+}
+
+.menu_ul li:hover .nom_texte, .nom_liste:hover {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    word-break: break-word;
 }
 
 .ul_icons {
@@ -342,6 +353,10 @@ main {
 
 .sous_sec {
     margin-top: 0px;
+}
+
+.etu_sec, .sous_sec {
+    overflow-y: auto;
 }
 
 .first_sec {
@@ -460,6 +475,11 @@ main {
     margin: 0;
     padding: 0;
     font-size: 0.95rem;
+    overflow: hidden;
+    white-space: wrap;
+    text-overflow: ellipsis;
+    max-height: 10vh;
+    
 }
 /* Nom de l'élement en gras */
 .bloc_element li:first-child {
@@ -558,8 +578,10 @@ main {
 .menu_message {
     margin: 30px 20px;
     text-align: center;
-    max-height: 50px;
     overflow: hidden;
+    white-space: wrap;
+    text-overflow: ellipsis;
+    max-height: 20vh;
 }
 
 .form_edition {
@@ -567,6 +589,8 @@ main {
     flex-direction: column;
     gap: 25px;
     padding: 40px 30px;
+    max-height: 30vh;
+    overflow-y: auto;
 }
 
 /* Structure d'un champ */
@@ -585,6 +609,12 @@ main {
     color: var(--light-grey);
 }
 
+.obligatoire::after, .groupe_inputs label::after {
+    content: "*";
+    color: var(--rouge);
+    margin-left: 5px;
+}
+
 .input_ligne {
     background: transparent;
     border: none;
@@ -599,9 +629,14 @@ main {
 }
 
 .edition_erreur {
-    margin: 10px 25px;
+    display: flex;
+    justify-content: center;
     text-align: center;
+    width: 100%;
+    max-width: 250px;
     color: var(--rouge);
+    font-size: 0.9rem;
+    line-height: 1.2;
 }
 
 .menu_import_donnees {
@@ -772,9 +807,10 @@ h2 {
     border: solid 2px var(--white);
     border-radius: 16px;
     position: fixed;
-    top: 20%;
-    left: 35%;
-    z-index: 5;
+    inset: 0;
+    margin: auto;
+    height: fit-content;
+    z-index: 10;
     width: 500px;
     background: var(--darkblue);
     color: var(--white);
@@ -994,7 +1030,6 @@ h3 {
     cursor: pointer;
     font-family: sans-serif;
     user-select: none;
-    transition: 0.2s ease;
 }
 
 .badge-checkbox:hover {
@@ -1031,7 +1066,6 @@ h3 {
     border: solid var(--white);
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
-    transition: 0.1s ease;
 }
 
 .badge-checkbox input:checked + .badge-text + .custom-checkbox {
@@ -1283,6 +1317,7 @@ td .badge-checkbox:has(.check-absence:checked) {
     align-items: center;
     justify-content: center;
     color: var(--white);
+    font-size: 0.8rem;
 }
 
 .place_tiers_temps svg {

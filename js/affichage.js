@@ -212,10 +212,11 @@ function afficher_tableau() {
         // La place est déjà dans "etu" si c'est un placement
         let place_attribue = "";
         if (etu.place_attribuee && etu.place_attribuee !== "-") {
+            let place_alpha = convertir_place_alpha(etu.place_attribuee, etu.salle_attribuee); // Conversion !
             if (salles_choisies.length > 1 && etu.salle_attribuee !== "Non placé") {
-                place_attribue = `<div class="place_attribue">${etu.salle_attribuee}</div><div class="place-number">${etu.place_attribuee}</div>`;
+                place_attribue = `<div class="place_attribue">${etu.salle_attribuee}</div><div class="place-number">${place_alpha}</div>`;
             } else {
-                place_attribue = `<span>${etu.place_attribuee}</span>`;
+                place_attribue = `<span>${place_alpha}</span>`;
             }
         }
         //Ajout de l'étudiant dans le tableau
@@ -311,15 +312,16 @@ function creer_btn_plan(nom_salle) {
 
     //On crée les places
     for (let r = rangees - 1; r >= 0; r--) {
-        for (let c = 1; c <= nb_colonnes; c++) {
+        // part de nb_colonnes et descend jusqu'à 1 pour inverser le sens
+        for (let c = nb_colonnes; c >= 1; c--) {
             let num_place = (r * nb_colonnes) + c;
             
             const place = document.createElement("div");
-            place.innerText = num_place;
+            let place_alpha = convertir_place_alpha(num_place, nom_salle); // Conversion !
+            place.innerText = place_alpha;
 
             // Vérifie que la place ne dépasse pas la capacité max
             if (num_place > capacite) {
-                // On crée une case invisible pour maintenir la structure de la grille
                 place.classList.add("place");
                 place.style.visibility = "hidden";
                 grille_salle.appendChild(place);
@@ -327,7 +329,8 @@ function creer_btn_plan(nom_salle) {
             }
 
             place.classList.add("place");
-            place.dataset.num_place = num_place; //Numéro de la place
+            place.dataset.num_place = num_place; // On garde le nombre pour la logique des bannis
+            place.dataset.alpha = place_alpha;
 
             // Vérifie si la place est indisponible
             const place_indispo = salleObj.places_banni && Array.isArray(salleObj.places_banni) && salleObj.places_banni.includes(num_place);
@@ -400,11 +403,11 @@ function colorier_places(donnees_placement) {
     places.forEach(place => {
         if (place.dataset.etat !== "indispo") {
             place.dataset.etat = "vide";
-            // remet le numéro de la place
-            if (place.dataset.num_place) {
-                place.innerHTML = place.dataset.num_place;
+            // remet le numéro de la place avec la lettre !
+            if (place.dataset.alpha) {
+                place.innerHTML = place.dataset.alpha;
             } else {
-                place.innerHTML = ""; // Sécurité pour les cases invisibles
+                place.innerHTML = ""; 
             }
         }
     });
@@ -416,12 +419,13 @@ function colorier_places(donnees_placement) {
             const place = grille.querySelector(`.place[data-num_place="${item.place_attribuee}"]`);
             if (place) {
                 place.dataset.etat = "prise";
-                // 1. On garde le numéro de place propre
-                let contenuHTML = `<span>${item.place_attribuee}</span>`;
+                let place_alpha = convertir_place_alpha(item.place_attribuee, item.salle_attribuee); // Conversion !
+                let contenuHTML = `<span>${place_alpha}</span>`;
+                
                 // ajoute des badges selon l'état
-                if (item.absent) { //Si l'étudiant est absent
+                if (item.absent) { 
                     contenuHTML += `<span class="abs">ABS</span>`;
-                } else if (item.tiers_temps) { //Si létudiant a un tiers-temps
+                } else if (item.tiers_temps) { 
                     contenuHTML += `<span class="place_tiers_temps">${svg_tier_temps}</span>`;
                 }
                 
@@ -445,11 +449,11 @@ function gerer_clic_place(place) {
         ancienne_place.classList.remove("place_cliquer"); // retire la classe à l'ancienne place cliqué
     }
     place.classList.add("place_cliquer"); // ajoute la classe à la place cliqué
-    // ----------------------------------------------
 
     const grille = place.closest(".grille_salle");
     const nom_salle = grille.dataset.salle;
     const num_place = parseInt(place.dataset.num_place);
+    const num_alpha = convertir_place_alpha(num_place, nom_salle); // Conversion
 
     // "Mode Indisponible" activé (pour rendre indisponible des places)
     if (mode_indispo && mode_indispo.checked) {
@@ -481,7 +485,7 @@ function gerer_clic_place(place) {
     }
 
     //détails (si le mode indisponible est désactivé)
-    document.getElementById("detail_place").textContent = `PLACE ${num_place}`;
+    document.getElementById("detail_place").textContent = `PLACE ${num_alpha}`;
     const etu_trouve = placement_actuel_donnees.find(p => p.salle_attribuee === nom_salle && parseInt(p.place_attribuee) === num_place);
 
     if (etu_trouve && etu_trouve.nom) { //On met les informations de l'étudiant placé sur cette place

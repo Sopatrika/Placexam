@@ -5,12 +5,12 @@
 
 // Trouver une liste d'étudiant(e)s par son nom
 function getListeEtu(nom_cherche) {
-    return tab_etu.find(liste => liste.nom_fichier === nom_cherche);
+    return tab_etu.find(liste => comparerNoms(liste.nom_fichier, nom_cherche));
 }
 
 // Trouver une salle par son nom
 function getListeSalle(nom_cherche) {
-    return tab_salles.find(salle => salle.nom_salle === nom_cherche);
+    return tab_salles.find(salle => comparerNoms(salle.nom_salle, nom_cherche));
 }
 
 
@@ -115,6 +115,36 @@ function gerer_boutons_action(e) {
         }
     }
 }
+
+
+// FONCTION POUR CONVERTIR UN NUMERO DE PLACE EN FORMAT ALPHANUMERIQUE -----------------------------------------------------------------------------------------------------
+//Permet de convertir par exemple la place 1 en A1
+function convertir_place_alpha(num_place, nom_salle) {
+    if (!num_place || num_place === "-" || num_place === "Non placé") return num_place;
+    let num = parseInt(num_place);
+    if (isNaN(num)) return num_place; // Sécurité au cas où
+    
+    let salleObj = getListeSalle(nom_salle);
+    if (!salleObj) return num_place;
+    
+    let capacite = parseInt(salleObj.capacite_max);
+    let rangees = parseInt(salleObj.nbr_rangees);
+    if (!rangees || rangees <= 0) return num_place;
+    
+    let nb_colonnes = Math.ceil(capacite / rangees);
+    let row_idx = Math.floor((num - 1) / nb_colonnes);
+    let col_idx = ((num - 1) % nb_colonnes) + 1;
+    
+    // Génère la lettre (0 = A, 1 = B... 26 = AA)
+    let lettre = "";
+    let temp = row_idx;
+    while (temp >= 0) {
+        lettre = String.fromCharCode(65 + (temp % 26)) + lettre;
+        temp = Math.floor(temp / 26) - 1;
+    }
+    return lettre + col_idx;
+}
+
 
 
 //FONCTION POUR SAUVEGARDER LES INPUT COCHER ET LES SELECTIONS ----------------------------------------------------------------------------------

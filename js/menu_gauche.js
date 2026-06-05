@@ -105,16 +105,16 @@ function ouvrir_details_liste(nom_cible, typeListe) {
     if (!elementsArray) return;
 
     const regles = CONFIG_SECTION[typeListe];
-    if(sec_first) sec_first.style.display = (typeListe === "etu") ? "flex" : "none";
+    if(sec_first) sec_first.style.display = (typeListe === "etu") ? "flex" : "none"; //Afficher retour ?
 
-    if(conteneur_search_bar) conteneur_search_bar.style.display = regles.affichage.recherche ? "flex" : "none";
-    if (regles.affichage.recherche && search_input_etu) search_input_etu.value = "";
-    if(btn_supp_histo) {
+    if(conteneur_search_bar) conteneur_search_bar.style.display = regles.affichage.recherche ? "flex" : "none"; //Afficher barre de recherche ?
+    if (regles.affichage.recherche && search_input_etu) search_input_etu.value = ""; 
+    if(btn_supp_histo) { //Afficher bouton supprimer l'historique ?
         btn_supp_histo.style.display = regles.affichage.supp_histo ? "flex" : "none";
         if (tab_placer.length < 1) btn_supp_histo.style.display = "none";
     }
     
-    if(btn_ajouter) {
+    if(btn_ajouter) { //Afficher bouton ajouter ?
         btn_ajouter.dataset.source = nom_cible;
         btn_ajouter.style.display = regles.affichage.bouton_ajout ? "flex" : "none";
     }
@@ -163,14 +163,14 @@ function generer_contenu_element(item, typeListe, index) {
 
 //FONCTION POUR CREER LES ICONES POUR LES LISTES ET ELEMENT --------------------------------------------------------------------------------------------------------------
 function creer_icones(afficher_charger = false) {
-    let html = `<div class="ul_icons">`;
-    if (afficher_charger) {
-        html += `<svg class="load_element" title="Charger ce placement" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.6667 3.66667H3.66667C2.95942 3.66667 2.28115 3.94762 1.78105 4.44771C1.28095 4.94781 1 5.62609 1 6.33333V19.6667C1 20.3739 1.28095 21.0522 1.78105 21.5523C2.28115 22.0524 2.95942 22.3333 3.66667 22.3333H17C17.7072 22.3333 18.3855 22.0524 18.8856 21.5523C19.3857 21.0522 19.6667 20.3739 19.6667 19.6667V11.6667M10.3333 13L22.3333 1M22.3333 7.66667V1H15.6667" stroke="#EBF5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    let icon_ul = `<div class="ul_icons">`;
+    if (afficher_charger) { //L'icon "Charger" seulement pour l'historique de placements
+        icon_ul += `<svg class="load_element" title="Charger ce placement" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.6667 3.66667H3.66667C2.95942 3.66667 2.28115 3.94762 1.78105 4.44771C1.28095 4.94781 1 5.62609 1 6.33333V19.6667C1 20.3739 1.28095 21.0522 1.78105 21.5523C2.28115 22.0524 2.95942 22.3333 3.66667 22.3333H17C17.7072 22.3333 18.3855 22.0524 18.8856 21.5523C19.3857 21.0522 19.6667 20.3739 19.6667 19.6667V11.6667M10.3333 13L22.3333 1M22.3333 7.66667V1H15.6667" stroke="#EBF5FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     }
-    html += `<svg class="trash_element" title="supprimer l'élément" width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33333 9.33333H26.6667M13.3333 14.6667V22.6667M18.6667 14.6667V22.6667M6.66666 9.33333L7.99999 25.3333C7.99999 26.0406 8.28095 26.7189 8.78104 27.219C9.28114 27.719 9.95942 28 10.6667 28H21.3333C22.0406 28 22.7188 27.719 23.2189 27.219C23.719 26.7189 24 26.0406 24 25.3333L25.3333 9.33333M12 9.33333V5.33333C12 4.97971 12.1405 4.64057 12.3905 4.39052C12.6406 4.14048 12.9797 4 13.3333 4H18.6667C19.0203 4 19.3594 4.14048 19.6095 4.39052C19.8595 4.64057 20 4.97971 20 5.33333V9.33333" stroke="#FBFDFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    icon_ul += `<svg class="trash_element" title="supprimer l'élément" width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.33333 9.33333H26.6667M13.3333 14.6667V22.6667M18.6667 14.6667V22.6667M6.66666 9.33333L7.99999 25.3333C7.99999 26.0406 8.28095 26.7189 8.78104 27.219C9.28114 27.719 9.95942 28 10.6667 28H21.3333C22.0406 28 22.7188 27.719 23.2189 27.219C23.719 26.7189 24 26.0406 24 25.3333L25.3333 9.33333M12 9.33333V5.33333C12 4.97971 12.1405 4.64057 12.3905 4.39052C12.6406 4.14048 12.9797 4 13.3333 4H18.6667C19.0203 4 19.3594 4.14048 19.6095 4.39052C19.8595 4.64057 20 4.97971 20 5.33333V9.33333" stroke="#FBFDFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <svg class="rename_element" title="modifier l'élément" width="24" height="24" viewBox="0 0 50 41" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M31.25 24.3333L22.9167 32.6667H43.75V24.3333H31.25ZM25.125 5.97915L6.25 24.8541V32.6667H14.0625L32.9375 13.7916L25.125 5.97915ZM38.9792 7.74998C39.7917 6.93748 39.7917 5.58332 38.9792 4.81248L34.1042 -0.0625169C33.7138 -0.45054 33.1858 -0.668335 32.6354 -0.668335C32.085 -0.668335 31.557 -0.45054 31.1667 -0.0625169L27.3542 3.74998L35.1667 11.5625L38.9792 7.74998Z" fill="#FBFDFF"/></svg>
     </div>`;
-    return html;
+    return icon_ul;
 }
 
 // GESTION DES ACTIONS (Édition, Suppression, Chargement) ------------------------------------------------------------------------------------------------
@@ -201,7 +201,7 @@ function ouvrir_panneau_action(selecteur_panneau, callback_valider) {
     memoriser_section_precedente(); 
     action_en_attente = callback_valider; 
 
-    // Cache tout (y compris etu_sec, historique_sec et sous_sec)
+    // Cache tout (etu_sec, historique_sec et sous_sec)
     document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => {
         s.classList.remove("sec_open");
     });
@@ -211,7 +211,7 @@ function ouvrir_panneau_action(selecteur_panneau, callback_valider) {
 
 // FERMER LA SECTION D'ACTION --------------------------------------------------------------------------------------------------------------------------------------------------
 function fermer_panneaux_action() {
-    // Cache tous les panneaux d'actions possibles
+    // Cache tous les panneaux d'actions
     document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => {
         s.classList.remove("sec_open");
     });
@@ -223,9 +223,7 @@ function fermer_panneaux_action() {
     }
 }
 
-// -------------------------------------------------------------------------
-// RACCOURCIS
-// -------------------------------------------------------------------------
+// RACCOURCIS ------------------------------------------------------------------------------------------------------------------------------
 function ouvrir_menu_suppression(message_html, callback_action) {
     const msg_container = document.querySelector(".supprimer_sec .menu_message");
     if (msg_container) msg_container.innerHTML = message_html;
@@ -235,14 +233,13 @@ function ouvrir_menu_suppression(message_html, callback_action) {
 function ouvrir_menu_edition(titre_html, callback_action) {
     const titre_container = document.querySelector(".edition_sec .titre_edition_sec");
     if (titre_container) titre_container.innerHTML = titre_html;
-    // CRUCIAL : On connecte le bouton valider à l'action d'édition
     ouvrir_panneau_action(".edition_sec", callback_action);
 }
 
 // FONCTION POUR SUPPRIMER UNE LISTE OU UN ELEMENT --------------------------------------------------------------------------------------------------------------------------
 function supprimer(poubelle) {
     const liListe = poubelle.closest(".menu_ul > li");
-    if (liListe) {
+    if (liListe) { //Si on souhaite supprimer une liste
         const estListeEtu = poubelle.closest(".etu_sec") !== null;
         const numero_list = Array.from(liListe.parentNode.children).indexOf(liListe);
         const nom_liste_supp = liListe.dataset.name || "cette liste";
@@ -263,7 +260,7 @@ function supprimer(poubelle) {
     }
 
     const bloc_element = poubelle.closest(".bloc_element");
-    if (bloc_element) {
+    if (bloc_element) { //Si on souhaite supprimer un élement
         const element_supp = parseInt(bloc_element.dataset.index, 10);
         const list_el = document.querySelector(".nom_liste").textContent;
         const type_el = document.querySelector(".nom_liste").dataset.type;
@@ -282,7 +279,7 @@ function supprimer(poubelle) {
             }
         }
 
-        ouvrir_menu_suppression(`Voulez-vous vraiment supprimer <b>${nom_element_affiche}</b> ?`, () => {
+        ouvrir_menu_suppression(`Voulez-vous vraiment supprimer <b>${nom_element_affiche}</b> ?`, () => { //Message de confirmation
             if (config_speciale) {
                 let tableau_a_jour = config_speciale.get_donnees(); //récupère la référence
                 tableau_a_jour.splice(element_supp, 1); // On supprime dans le tableau
@@ -317,7 +314,7 @@ function supprimer(poubelle) {
     }
 }
 
-//FONCTION DE CLIC SUR L'ICONE MODIFIER ------------------------------------------------------------------------------------------------------------------------
+//FONCTION DE CLIC SUR L'ICONE CHARGER ------------------------------------------------------------------------------------------------------------------------
 function preparer_chargement_placement(cible) {
     const bloc = cible.closest(".bloc_element");
     if (bloc) {
@@ -330,44 +327,46 @@ function preparer_chargement_placement(cible) {
 }
 
 // FONCTION POUR AJOUTER/MODIFIER UNE LISTE/ELEMENT --------------------------------------------------------------------------------------------------------------------------
+// FONCTION POUR AJOUTER/MODIFIER UNE LISTE/ELEMENT --------------------------------------------------------------------------------------------------------------------------
 function edition_formulaire() {
-    const nom_liste = label_nom_liste ? label_nom_liste.textContent : ""; 
-    
+    const nom_liste = label_nom_liste ? label_nom_liste.textContent.trim() : ""; 
     if (mode_edition !== "modifier_liste") type_edition = label_nom_liste ? label_nom_liste.dataset.type : ""; 
 
     const texte_titre = (mode_edition === "modifier_liste") ? 
         "Renommer la liste" : (CONFIG_SECTION[type_edition] ? CONFIG_SECTION[type_edition].titres[mode_edition] : "Edition");
 
-    let objet_a_editer = {}; 
+    let objet_a_editer = null; 
+    
     if (mode_edition === "modifier") {
-        switch (type_edition) {
-            case "etu":
-                objet_a_editer = getListeEtu(nom_liste).donnees[index_edition];
-                break;
-            case "salle":
-                objet_a_editer = tab_salles[index_edition];
-                break;
-            case "matiere":
-                objet_a_editer = tab_matiere[index_edition];
-                break;
-            case "historique":
-                objet_a_editer = { titre: tab_placer[index_edition].titre };
-                break;
+        if (type_edition === "etu") {
+            let liste_trouvee = getListeEtu(nom_liste);
+            if (liste_trouvee) objet_a_editer = liste_trouvee.donnees[index_edition];
         }
+        else if (type_edition === "salle") objet_a_editer = tab_salles[index_edition];
+        else if (type_edition === "matiere") objet_a_editer = tab_matiere[index_edition];
+        else if (type_edition === "historique") objet_a_editer = { titre: tab_placer[index_edition].titre };
     }
 
     let html_formulaire = "";
     
-    // ON CRÉE LE CODE HTML DU FORMULAIRE (au lieu de le lire)
     if (mode_edition === "modifier_liste") {
         html_formulaire = generer_champ_input("Nouveau nom", "input_nom_liste", ancien_nom_liste);
     } else {
         const config = CONFIG_SECTION[type_edition];
-        if (config && config.champs) {
-            config.champs.forEach(champ => {
-                let valeur_champ = (mode_edition === "modifier" && objet_a_editer[champ.id] !== undefined) ? objet_a_editer[champ.id] : "";
-                html_formulaire += generer_champ_input(champ.label, `input_${champ.id}`, valeur_champ, champ.type);
-            });
+        if (config) {
+            let liste_champs = [];
+            if (typeof config.champs === "function") {
+                liste_champs = config.champs(objet_a_editer, nom_liste);
+            } else if (Array.isArray(config.champs)) {
+                liste_champs = config.champs;
+            }
+
+            if (liste_champs && liste_champs.length > 0) {
+                liste_champs.forEach(champ => {
+                    let valeur_champ = (mode_edition === "modifier" && objet_a_editer && objet_a_editer[champ.id] !== undefined) ? objet_a_editer[champ.id] : "";
+                    html_formulaire += generer_champ_input(champ.label, `input_${champ.id}`, valeur_champ, champ.type, champ.obligatoire);
+                });
+            }
         }
     }
 
@@ -377,65 +376,99 @@ function edition_formulaire() {
     if (form_edition) form_edition.innerHTML = html_formulaire;
     if (edition_erreur) edition_erreur.textContent = ""; 
 
-    ouvrir_menu_edition(texte_titre, valider_edition); // ouvre la section appropriée
+    ouvrir_menu_edition(texte_titre, valider_edition);
 }
 
+//FONCTION POUR VALIDER UN AJOUT/MODIFICATION D'UNE LISTE/ELEMENT --------------------------------------------------------------------------------------------------------
 //FONCTION POUR VALIDER UN AJOUT/MODIFICATION D'UNE LISTE/ELEMENT --------------------------------------------------------------------------------------------------------
 function valider_edition() {
     const edition_erreur = document.querySelector(".edition_erreur");
     if(edition_erreur) edition_erreur.textContent = ""; 
 
-    //  Renommer le titre d'une liste
+    // Renommer la liste
     if (mode_edition === "modifier_liste") {
         const input_nom = document.getElementById("input_nom_liste");
         let nouveau_nom_liste = input_nom ? input_nom.value.trim() : "";
         
         if (!nouveau_nom_liste) {
-            if(edition_erreur) edition_erreur.textContent = "Le nom ne peut pas être vide.";
-            return false; // Renvoie false pour bloquer la fermeture du panneau !
+            if(edition_erreur) edition_erreur.textContent = "Le nom de la liste ne peut pas être vide.";
+            return false;
         }
 
         if (type_edition === "nom_liste_etu") {
-            // Application de la vérification de nom unique
             nouveau_nom_liste = generer_nom_unique(nouveau_nom_liste, tab_etu, "nom_fichier", index_edition);
-
             let ancien_nom = tab_etu[index_edition].nom_fichier;
             tab_etu[index_edition].nom_fichier = nouveau_nom_liste;
             sauvegarder("tab_etu", tab_etu);
-
-            maj_dependances_nom("etu", ancien_nom, nouveau_nom_liste); //On met à jour les selects et placements
-            
+            if (typeof maj_dependances_nom === "function") maj_dependances_nom("etu", ancien_nom, nouveau_nom_liste);
             rafraichir_menu_principal(".etu_sec");
-
         }
-        
-        return true; // Action réussie
+        return true; 
     } 
     
     // Modification d'un élément interne
     let nouvel_objet = {};
     const config = CONFIG_SECTION[type_edition];
+    const nom_liste = document.querySelector(".nom_liste").textContent.trim(); 
 
-    config.champs.forEach(champ => {
+    let objet_a_editer = null;
+    if (mode_edition === "modifier") {
+        if (type_edition === "etu") {
+            let liste_trouvee = getListeEtu(nom_liste);
+            if (liste_trouvee) objet_a_editer = liste_trouvee.donnees[index_edition];
+        }
+        else if (type_edition === "salle") objet_a_editer = tab_salles[index_edition];
+        else if (type_edition === "matiere") objet_a_editer = tab_matiere[index_edition];
+        else if (type_edition === "historique") objet_a_editer = { titre: tab_placer[index_edition].titre };
+    }
+
+    let liste_champs = [];
+    if (typeof config.champs === "function") {
+        liste_champs = config.champs(objet_a_editer, nom_liste);
+    } else if (Array.isArray(config.champs)) {
+        liste_champs = config.champs;
+    }
+
+    //  GESTION DES ERREURS
+    let erreur_msg = "";
+    // On utilise for...of au lieu de forEach pour pouvoir lire proprement tous les champs un par un
+    for (let champ of liste_champs) {
         let input_element = document.getElementById(`input_${champ.id}`);
         if (input_element) {
-            let valeur = input_element.value.trim();
-            if (champ.type === "number") valeur = parseInt(valeur) || 0; 
+            let valeur_brute = input_element.value.trim();
+            // VERIFICATIONS DES CHAMPS VIDES
+            if (valeur_brute === "") {
+                if (type_edition === "etu" && (champ.id === "nom" || champ.id === "prenom")) {
+                    erreur_msg = "Le nom et prénom sont obligatoires.";
+                } else if (type_edition === "salle") {
+                    erreur_msg = "Tous les champs de la salle sont obligatoires.";
+                } else if (type_edition === "matiere" && champ.id === "nom") {
+                    erreur_msg = "Le nom de la matière est obligatoire.";
+                }
+            }
+
+            let valeur = champ.type === "number" ? (parseInt(valeur_brute) || 0) : valeur_brute;
             nouvel_objet[champ.id] = valeur;
         }
-    });
+    }
 
-    const nom_liste = document.querySelector(".nom_liste").textContent;
+    // Si on a capté une erreur pendant la boucle, on bloque la sauvegarde et on affiche le message !
+    if (erreur_msg !== "") {
+        if (edition_erreur) edition_erreur.textContent = erreur_msg;
+        return false;
+    }
+
     config.sauvegarder_element(nouvel_objet, mode_edition, index_edition, nom_liste);
-    
     fermer_et_recharger(nom_liste);
-
-    return true; // Action réussie
+    return true; 
 }
 
-function generer_champ_input(label, id, valeur = "", type = "text") {
+function generer_champ_input(label, id, valeur = "", type = "text", est_obligatoire = false) {
+    // Si c'est obligatoire, on ajoute la classe obligatoire, sinon on ne met rien
+    const classe_req = est_obligatoire ? " obligatoire" : "";
+    
     return `<label class="champ_edition">
-                <span class="label_texte">${label}</span>
+                <span class="label_texte ${classe_req}">${label}</span>
                 <input type="${type}" id="${id}" class="input_ligne" value="${valeur}">
             </label>`;
 }

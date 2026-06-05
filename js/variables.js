@@ -1,10 +1,8 @@
+//=================================================================================================================================================================
+// GESTION DES VARIABLES
+//=================================================================================================================================================================
 
-//=================================================================================================================================================================
-// GESTION DES VARIABLES
-//=================================================================================================================================================================
-//=================================================================================================================================================================
-// GESTION DES VARIABLES
-//=================================================================================================================================================================
+// OBJECT QUI S'OCCUPE DU LOCALSTORAGE ----------------------------------------------------------------------------------------------------------------------------------
 const AppStorage = {
     master_key: "placexam_data",
     data: null,
@@ -24,10 +22,22 @@ const AppStorage = {
                 placements: [],
                 forms: {}, 
                 prefs: { filtres_spe: {}, placer_actuel: "" },
-                autres: {} // NOUVEAU : Fourre-tout pour les configurations d'imports, etc.
+                autres: {} 
             };
         } else if (!this.data.autres) {
-            this.data.autres = {}; // Rétrocompatibilité si l'utilisateur avait déjà placexam_data
+            this.data.autres = {}; 
+        }
+
+        // 🌟 SÉCURITÉ MAGIQUE AMPHIS (Imparable !)
+        // On vérifie bien le tableau "salles", et s'il est vide on injecte tout
+        if (!this.data.imports.salles || this.data.imports.salles.length === 0) {
+            this.data.imports.salles = [
+                { nom_salle: "Amphi1", capacite_max: 174, nbr_rangees: 12, sieges_espaces: 2, places_banni: [] },
+                { nom_salle: "Amphi2", capacite_max: 126, nbr_rangees: 13, sieges_espaces: 2, places_banni: [] },
+                { nom_salle: "Amphi3", capacite_max: 110, nbr_rangees: 10, sieges_espaces: 2, places_banni: [] },
+                { nom_salle: "Amphi4", capacite_max: 90,  nbr_rangees: 8,  sieges_espaces: 2, places_banni: [] },
+                { nom_salle: "Amphi5", capacite_max: 110, nbr_rangees: 10, sieges_espaces: 2, places_banni: [] }
+            ];
         }
 
         this.saveAll();
@@ -38,8 +48,7 @@ const AppStorage = {
             localStorage.setItem(this.master_key, JSON.stringify(this.data));
         } catch (e) {
             if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-                alert("⚠️ Attention : La mémoire de Placexam est pleine !\nVeuillez supprimer d'anciens placements ou listes pour pouvoir continuer à sauvegarder.");
-                console.error("Quota LocalStorage dépassé !");
+                alert("⚠️ Attention : La mémoire est pleine !");
             }
         }
     }
@@ -170,11 +179,41 @@ const CONFIG_SECTION = {
         affichage: { recherche: true, icon_tierstemps: true, bouton_ajout: true, supp_histo: false },
         section_retour: ".sous_sec",
         get_donnees: (nom) => getListeEtu(nom).donnees,
-        champs: [
-            { id: "nom", label: "Nom", type: "text" },
-            { id: "prenom", label: "Prénom", type: "text" },
-            { id: "specialite", label: "Spécialité", type: "text" }
-        ],
+        champs: (objet_a_editer, nom_liste) => {
+            let champs_dynamiques = [];
+            let reference_etu = objet_a_editer;
+            
+            if (!reference_etu) {
+                let listeEtu = getListeEtu(nom_liste);
+                if (listeEtu && listeEtu.donnees && listeEtu.donnees.length > 0) {
+                    reference_etu = listeEtu.donnees[0];
+                }
+            }
+
+            if (reference_etu) {
+                const cles_interdites = ["tiers_temps", "absent"];
+                for (let key in reference_etu) {
+                    if (!cles_interdites.includes(key)) {
+                        champs_dynamiques.push({
+                            id: key,
+                            label: key.toUpperCase(),
+                            type: "text",
+                            // NOUVEAU : On dit que nom et prenom sont obligatoires
+                            obligatoire: (key === "nom" || key === "prenom") 
+                        });
+                    }
+                }
+            }
+            if (champs_dynamiques.length === 0) {
+                champs_dynamiques = [
+                    { id: "nom", label: "Nom", type: "text", obligatoire: true },
+                    { id: "prenom", label: "Prénom", type: "text", obligatoire: true },
+                    { id: "specialite", label: "Spécialité", type: "text", obligatoire: false }
+                ];
+            }
+
+            return champs_dynamiques;
+        },
         format_affichage: (item, index) => {
             let lignes = Object.keys(item)
                 .filter(key => key !== "tiers_temps")
@@ -192,11 +231,20 @@ const CONFIG_SECTION = {
         },
         sauvegarder_element: (objet, mode, index, nom_liste) => {
             let listeEtu = getListeEtu(nom_liste);
-            let etu_data = { nom: objet.nom, prenom: objet.prenom, specialite: objet.specialite, tiers_temps: false };
-            if (mode === "ajouter") listeEtu.donnees.unshift(etu_data);
-            else {
-                etu_data.tiers_temps = listeEtu.donnees[index].tiers_temps;
-                listeEtu.donnees[index] = etu_data;
+            
+            if (!listeEtu || !listeEtu.donnees) return; 
+
+            if (mode === "ajouter") {
+                let etu_data = { tiers_temps: false, ...objet }; // Fusionne tout
+                listeEtu.donnees.unshift(etu_data);
+            } else {
+                let etu_existant = listeEtu.donnees[index];
+                if (etu_existant) {
+                    for (let key in objet) {
+                        etu_existant[key] = objet[key]; // Met à jour chaque clé dynamiquement
+                    }
+                    listeEtu.donnees[index] = etu_existant;
+                }
             }
             sauvegarder("tab_etu", tab_etu);
             if (select_etu.value === nom_liste) generer_filtres(); 
@@ -211,10 +259,10 @@ const CONFIG_SECTION = {
         section_retour: ".sous_sec",
         get_donnees: () => tab_salles,
         champs: [
-            { id: "nom_salle", label: "Nom Salle", type: "text" },
-            { id: "capacite_max", label: "Capacité max", type: "number" },
-            { id: "nbr_rangees", label: "Nombre de rangées", type: "number" },
-            { id: "sieges_espaces", label: "Sièges espacés", type: "number" }
+            { id: "nom_salle", label: "Nom Salle", type: "text", obligatoire: true },
+            { id: "capacite_max", label: "Capacité max", type: "number", obligatoire: true },
+            { id: "nbr_rangees", label: "Nombre de rangées", type: "number", obligatoire: true },
+            { id: "sieges_espaces", label: "Sièges espacés", type: "number", obligatoire: true }
         ],
         format_affichage: (item, index) => [
             `<b>${item.nom_salle}</b>`,
@@ -224,15 +272,24 @@ const CONFIG_SECTION = {
         ],
         sauvegarder_element: (objet, mode, index, nom_liste) => {
             let ancien_nom = mode === "modifier" ? tab_salles[index].nom_salle : null;
-            objet.nom_salle = generer_nom_unique(objet.nom_salle, tab_salles, "nom_salle", mode === "modifier" ? index : -1);
+            
+            // Sécurité : On génère un nom unique si besoin
+            if (typeof generer_nom_unique === "function") {
+                objet.nom_salle = generer_nom_unique(objet.nom_salle, tab_salles, "nom_salle", mode === "modifier" ? index : -1);
+            }
 
             if (mode === "modifier") {
-                objet.places_banni = tab_salles[index].places_banni || null; 
-                tab_salles[index] = objet; 
+                // On conserve l'historique des places bannies et indisponibles
+                objet.places_banni = tab_salles[index].places_banni || []; 
                 if (tab_salles[index].places_indispo) {
-                    tab_salles[index].places_indispo = tab_salles[index].places_indispo.filter(p => p <= objet.capacite);
+                    // On filtre au cas où on a réduit la taille de la salle
+                    objet.places_indispo = tab_salles[index].places_indispo.filter(p => p <= objet.capacite_max);
+                } else {
+                    objet.places_indispo = [];
                 }
-
+                // On écrase l'ancienne salle avec les nouvelles valeurs
+                tab_salles[index] = objet; 
+                // Si on a changé le nom de la salle, on met à jour le tableau du milieu !
                 if (ancien_nom && ancien_nom !== objet.nom_salle) {
                     let index_choisie = salles_choisies.indexOf(ancien_nom);
                     if (index_choisie !== -1) {
@@ -241,13 +298,16 @@ const CONFIG_SECTION = {
                         if (typeof maj_select_salles_sup === "function") maj_select_salles_sup();
                         if (typeof dessiner_badges_salles === "function") dessiner_badges_salles();
                     }
-                    maj_dependances_nom("salle", ancien_nom, objet.nom_salle);
+                    if (typeof maj_dependances_nom === "function") {
+                        maj_dependances_nom("salle", ancien_nom, objet.nom_salle);
+                    }
                 }
             }
+            
             sauvegarder("tab_salles", tab_salles);
-            remplir_select()
+            if (typeof remplir_select === "function") remplir_select();
             if (typeof verifier_capacite === "function") verifier_capacite();
-            fermer_et_recharger("Salles");
+            fermer_et_recharger(nom_liste);
         }
     },
     "matiere": {
@@ -258,8 +318,8 @@ const CONFIG_SECTION = {
         section_retour: ".sous_sec",
         get_donnees: () => tab_matiere,
         champs: [ 
-            { id: "nom", label: "Nom de la matière", type: "text" } ,
-            { id: "prof", label: "Nom du professeur", type: "text" } 
+            { id: "nom", label: "Nom de la matière", type: "text", obligatoire: true } ,
+            { id: "prof", label: "Nom du professeur", type: "text", obligatoire: false } 
         ],
         format_affichage: (item, index) => [
             `<b>${item.nom}</b>`,
@@ -298,7 +358,7 @@ const CONFIG_SECTION = {
         affichage: { recherche: false, icon_tierstemps: false, bouton_ajout: false, supp_histo: true },
         section_retour: ".sous_sec",
         get_donnees: () => tab_placer,
-        champs: [ { id: "titre", label: "Titre du placement", type: "text" } ],
+        champs: [ { id: "titre", label: "Titre du placement", type: "text", obligatoire: true } ],
         format_affichage: (item, index) => [
             `${item.titre || "Placement n°" + (index+1)}`
         ],

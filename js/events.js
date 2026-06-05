@@ -31,8 +31,15 @@ const EventManager = {
                     ouvrir_details_liste(li.dataset.name, li.dataset.type);
                     break;
                 // Revenir sur la section liste d'étudiant
-                case !!target.closest(".return_sec"):
-                    fermer_formulaire(section_precedente);
+               case !!target.closest(".return_sec"):
+                    const label_type = document.querySelector(".nom_liste");
+                    if (label_type && label_type.dataset.type) {
+                        const type_l = label_type.dataset.type;
+                        const sec_cible = type_l === "salle" ? ".salle_sec" : (type_l === "matiere" ? ".matiere_sec" : (type_l === "historique" ? ".historique_sec" : ".etu_sec"));
+                        // Ferme tout et ouvre la bonne section racine
+                        document.querySelectorAll(".menu_deroulant_gauche section").forEach(s => s.classList.remove("sec_open"));
+                        document.querySelector(sec_cible).classList.add("sec_open");
+                    }
                     break;
                 // Clic sur la corbeille ppour supprimer
                 case !!target.closest(".trash_element"):
