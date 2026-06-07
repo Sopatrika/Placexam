@@ -198,7 +198,7 @@ const CONFIG_SECTION = {
                             id: key,
                             label: key.toUpperCase(),
                             type: "text",
-                            // NOUVEAU : On dit que nom et prenom sont obligatoires
+                            //nom et prenom sont obligatoires
                             obligatoire: (key === "nom" || key === "prenom") 
                         });
                     }
