@@ -82,13 +82,22 @@ function verifier_capacite() {
             let bannis = s_obj.places_banni || [];
             let max = parseInt(s_obj.capacite_max) || 0;
 
+            let places_par_rangee = Math.ceil(max / parseInt(s_obj.nbr_rangees));
             let i = 1;
-            while (i <= max) {
-                if (!bannis.includes(i)) {
-                    capa_totale++;
-                    i += espaces + 1;
-                } else {
-                    i++;
+
+            for (let r = 0; r < parseInt(s_obj.nbr_rangees); r++) {
+                let debut_rangee = r * places_par_rangee + 1;
+                let fin_rangee = Math.min(debut_rangee + places_par_rangee - 1, max);
+                
+                let siege = debut_rangee;
+                while (siege <= fin_rangee) {
+                    if (!bannis.includes(siege)) {
+                        capa_totale++;
+                        // Mettre ici le .push() pour placement_aleatoire
+                        siege += espaces + 1; // Fait le saut de sièges
+                    } else {
+                        siege++;
+                    }
                 }
             }
         }
@@ -397,7 +406,7 @@ function placement_aleatoire() {
         .filter(etu => specialites_actives.includes(etu.specialite))
         .map(etu => ({ ...etu }));
 
-    // Calculer les places disponibles
+    // Calculer les places disponibles (CORRIGÉ POUR ALIGNEMENT EN COLONNES)
     let places_dispos = [];
 
     salles_choisies.forEach(nom_salle => {
@@ -406,17 +415,26 @@ function placement_aleatoire() {
             let espaces = parseInt(s_obj.sieges_espaces) || 0;
             let bannis = s_obj.places_banni || [];
             let max = parseInt(s_obj.capacite_max) || 0;
+            let nbr_rangees = parseInt(s_obj.nbr_rangees) || 1; // On récupère le nombre de rangées
 
-            let i = 1;
-            while (i <= max) {
-                if (!bannis.includes(i)) { 
-                    places_dispos.push({
-                        nom_salle_origine: nom_salle,
-                        nom_de_la_place: i
-                    });
-                    i += espaces + 1;
-                } else {
-                    i++;
+            let places_par_rangee = Math.ceil(max / nbr_rangees);
+
+            // On boucle rangée par rangée
+            for (let r = 0; r < nbr_rangees; r++) {
+                let debut_rangee = r * places_par_rangee + 1;
+                let fin_rangee = Math.min(debut_rangee + places_par_rangee - 1, max);
+                
+                let siege = debut_rangee;
+                while (siege <= fin_rangee) {
+                    if (!bannis.includes(siege)) { 
+                        places_dispos.push({
+                            nom_salle_origine: nom_salle,
+                            nom_de_la_place: siege
+                        });
+                        siege += espaces + 1; // Fait le saut de sièges
+                    } else {
+                        siege++;
+                    }
                 }
             }
         }
