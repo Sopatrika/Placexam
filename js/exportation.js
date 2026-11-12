@@ -328,10 +328,10 @@ function generer_pv_examen(donnees_placement, infos, salles, specialites) {
     const etu_tiers = donnees_placement.filter(e => e.tiers_temps);
     const texte_tiers = etu_tiers.length > 0 
         ? etu_tiers.map(e => `${e.prenom} ${e.nom}`).join(", ") 
-        : "Aucun";
+        : "";
 
     // Spécialités cochées 
-    const texte_options = specialites && specialites.length > 0 ? specialites.join(", ") : "Aucune";
+    const texte_options = specialites && specialites.length > 0 ? specialites.join(", ") : "";
 
     const texte_legal = "L'usage de documents et matériels, notamment électroniques, lors des épreuves constitue un choix pédagogique, à la charge du responsable de l'enseignement. Cette information est portée à la connaissance des étudiants par tout moyen. Toute infraction à ces règles est signalée à la Présidence de l'Université en vue de poursuites disciplinaires devant la Section Disciplinaire de l'Université contre l'étudiant, auteur ou complice de la fraude ou tentative de fraude. Aux mêmes fins, le Directeur de la composante saisit la Présidence de l'Université lorsqu'une fraude ou tentative de fraude est commise à l'occasion d'une inscription ou lorsque l'étudiant est auteur ou complice d'un fait de nature à porter atteinte à l'ordre ou au bon fonctionnement de l'établissement, y inclus les infractions aux consignes de sécurité.";
 
