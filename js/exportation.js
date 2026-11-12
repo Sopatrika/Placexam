@@ -196,9 +196,9 @@ function creer_feuille_emargement(salle, etudiants_salle, infos) {
 
     // REMPLISSAGE DES TEXTES ET APPLICATION DES STYLES
     
-    // Lignes 1 & 2 : Titre et Sous-titre (Sur 7 colonnes maintenant)
-    ws_data.push([ { v: "FEUILLE D'ÉMARGEMENT", s: styleTitre }, "", "", "", "", "", "" ]);
-    ws_data.push([ { v: "École Nationale Supérieure de Chimie de Mulhouse (ENSCMu)", s: styleSSTitre }, "", "", "", "", "", "" ]);
+    // Lignes 1 & 2 : Titre et Sous-titre (Sur 6 colonnes maintenant suite à la suppression de la colonne Liste)
+    ws_data.push([ { v: "FEUILLE D'ÉMARGEMENT", s: styleTitre }, "", "", "", "", "" ]);
+    ws_data.push([ { v: "École Nationale Supérieure de Chimie de Mulhouse (ENSCMu)", s: styleSSTitre }, "", "", "", "", "" ]);
     ws_data.push([]); // Ligne 3 : Vide
     
     // GRILLE D'INFORMATIONS
@@ -211,7 +211,7 @@ function creer_feuille_emargement(salle, etudiants_salle, infos) {
         { v: "Date :", s: styleLabelInfo },     // Cellule D
         { v: infos.date, s: styleValeurInfo },  // Cellule E
         { v: "Début :", s: styleLabelInfo },    // Cellule F
-        { v: infos.debut, s: styleValeurInfo }  // Cellule G
+        { v: infos.debut, s: styleValeurInfo }  // Cellule G (devenue F dans la nouvelle grille si on enlève une colonne, mais pour l'entête on garde la même largeur)
     ]);
     
     // Ligne 5
@@ -224,25 +224,26 @@ function creer_feuille_emargement(salle, etudiants_salle, infos) {
         { v: infos.duree + " min", s: styleValeurInfo } 
     ]);
     
-    // Ligne 6 
+    // Ligne 6  - Suppression de la colonne Liste (D) pour le tableau principal, 
+    // mais dans l'entête on garde les mêmes fusions/colonnes pour ne pas casser la présentation,
+    // on va juste mettre "Étudiants" à la place de "Liste" et on laisse la dernière cellule vide ou fusionnée
     ws_data.push([ 
         { v: "Professeur :", s: styleLabelInfo }, { v: "", s: styleLabelInfo }, 
         { v: infos.prof, s: styleValeurInfo }, 
-        { v: "Liste :", s: styleLabelInfo }, 
-        { v: infos.liste, s: styleValeurInfo }, 
         { v: "Étudiants :", s: styleLabelInfo }, 
-        { v: etudiants_salle.length, s: styleValeurInfo } 
+        { v: etudiants_salle.length, s: styleValeurInfo }, 
+        { v: "", s: styleLabelInfo }, // Case vide car on a supprimé la case "Liste"
+        { v: "", s: styleValeurInfo } // Case vide
     ]);
     
     ws_data.push([]); // Ligne 7 : Vide avant le tableau
     
-    // Ligne 8 : En-têtes du tableau (avec la colonne N°)
+    // Ligne 8 : En-têtes du tableau (avec la colonne N°) - Suppression de la colonne Tiers-Temps
     ws_data.push([
         { v: "N°", s: styleEnteteTab },
         { v: "NOM", s: styleEnteteTab },
         { v: "PRÉNOM", s: styleEnteteTab },
         { v: "PLACE", s: styleEnteteTab },
-        { v: "TIERS-TEMPS", s: styleEnteteTab },
         { v: "PRÉSENCE", s: styleEnteteTab },
         { v: "REMISE COPIE", s: styleEnteteTab }
     ]);
@@ -261,8 +262,7 @@ function creer_feuille_emargement(salle, etudiants_salle, infos) {
             { v: String(etu.nom).toUpperCase(), s: styleCelluleGauche },
             { v: etu.prenom, s: styleCelluleGauche },
             { v: place_alpha, s: styleCellule },
-            { v: etu.tiers_temps ? "Oui" : "", s: styleCellule },
-            { v: "", s: styleCellule }, // Case pour signer
+            { v: "", s: styleCellule }, // Case pour signer (PRÉSENCE)
             { v: "", s: styleCellule }  // Case pour la copie
         ]);
     });
@@ -272,40 +272,49 @@ function creer_feuille_emargement(salle, etudiants_salle, infos) {
     // RÉGLAGES DES DIMENSIONS ET FUSIONS
     
     ws['!merges'] = [ 
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }, // Fusion du Titre sur les 7 colonnes
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 6 } }, // Fusion du Sous-titre sur les 7 colonnes
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Fusion du Titre sur les 6 colonnes restantes
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }, // Fusion du Sous-titre sur les 6 colonnes restantes
         // Fusions pour la grille d'information (Colonnes A et B)
         { s: { r: 3, c: 0 }, e: { r: 3, c: 1 } }, // Ligne 4
         { s: { r: 4, c: 0 }, e: { r: 4, c: 1 } }, // Ligne 5
-        { s: { r: 5, c: 0 }, e: { r: 5, c: 1 } }  // Ligne 6
+        { s: { r: 5, c: 0 }, e: { r: 5, c: 1 } },  // Ligne 6
+        { s: { r: 5, c: 5 }, e: { r: 5, c: 6 } }   // Ligne 6 : Fusion des cases vides à droite
     ];
 
-    // Largeur des 7 colonnes
+    // Largeur des 6 colonnes (Rétrécissement de A, D, F et élargissement de E et F pour les signatures)
     ws['!cols'] = [
-        { wch: 5 },  // Col A : N° (Étroite)
+        { wch: 4 },  // Col A : N° (Rétrécie)
         { wch: 22 }, // Col B : NOM
         { wch: 22 }, // Col C : PRÉNOM
-        { wch: 12 }, // Col D : PLACE
-        { wch: 18 }, // Col E : TIERS-TEMPS
-        { wch: 20 }, // Col F : PRÉSENCE
-        { wch: 20 }  // Col G : REMISE COPIE
+        { wch: 10 }, // Col D : PLACE (Rétrécie)
+        { wch: 25 }, // Col E : PRÉSENCE (Élargie pour la signature)
+        { wch: 20 }  // Col F : REMISE COPIE (Légèrement rétrécie, mais reste large)
     ];
 
-    // Hauteur des lignes
+    // Hauteur des lignes - Ajustement pour tenir sur 2 pages (R/V)
     ws['!rows'] = [
-        { hpt: 45 }, // Ligne 1 : Gros titre
-        { hpt: 20 }, // Ligne 2 : Sous-titre ENSCMu
-        { hpt: 15 }, // Ligne 3 : Vide
-        { hpt: 25 }, // Ligne 4 : Grille d'info
-        { hpt: 25 }, // Ligne 5 : Grille d'info
-        { hpt: 25 }, // Ligne 6 : Grille d'info
-        { hpt: 15 }, // Ligne 7 : Vide
-        { hpt: 35 }  // Ligne 8 : En-têtes du tableau
+        { hpt: 35 }, // Ligne 1 : Gros titre (Réduite de 45 à 35)
+        { hpt: 15 }, // Ligne 2 : Sous-titre ENSCMu (Réduite de 20 à 15)
+        { hpt: 10 }, // Ligne 3 : Vide (Réduite de 15 à 10)
+        { hpt: 20 }, // Ligne 4 : Grille d'info (Réduite de 25 à 20)
+        { hpt: 20 }, // Ligne 5 : Grille d'info (Réduite de 25 à 20)
+        { hpt: 20 }, // Ligne 6 : Grille d'info (Réduite de 25 à 20)
+        { hpt: 10 }, // Ligne 7 : Vide (Réduite de 15 à 10)
+        { hpt: 25 }  // Ligne 8 : En-têtes du tableau (Réduite de 35 à 25)
     ];
 
     etudiants_salle.forEach(() => {
-        ws['!rows'].push({ hpt: 45 }); // Hauteur généreuse pour pouvoir signer !
+        ws['!rows'].push({ hpt: 30 }); // Hauteur réduite de 45 à 30 pour tenir sur moins de pages, tout en laissant la place de signer
     });
+
+    // Configuration de l'impression (Mise en page)
+    ws['!pageSetup'] = {
+        paperSize: 9, // A4
+        orientation: 'portrait',
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 0 // Ne pas contraindre la hauteur pour permettre plusieurs pages
+    };
     
     return ws;
 }
@@ -334,18 +343,18 @@ function generer_pv_examen(donnees_placement, infos, salles, specialites) {
         right: { style: "thin", color: { auto: 1 } }
     };
     
-    const styleTitre = { font: { bold: true, sz: 14 }, alignment: { horizontal: "center", vertical: "center" } };
-    const styleSSTitre = { font: { bold: true, sz: 11 }, alignment: { horizontal: "center", vertical: "center" } };
+    const styleTitre = { font: { bold: true, sz: 12 }, alignment: { horizontal: "center", vertical: "center" } }; // Titre légèrement réduit
+    const styleSSTitre = { font: { bold: true, sz: 10 }, alignment: { horizontal: "center", vertical: "center" } }; // SS-titre légèrement réduit
     const styleLabel = { font: { bold: true }, border: bordure, alignment: { vertical: "center", horizontal: "left" }, fill: { fgColor: { rgb: "EFEFEF" } } };
     const styleValeur = { border: bordure, alignment: { vertical: "center", horizontal: "left", wrapText: true } };
     const styleVide = { border: bordure }; 
-    const styleTexteLegal = { font: { italic: true, sz: 9 }, alignment: { wrapText: true, vertical: "top", horizontal: "justify" } };
+    const styleTexteLegal = { font: { italic: true, sz: 8 }, alignment: { wrapText: true, vertical: "top", horizontal: "justify" } }; // Texte légal réduit (sz: 8)
 
     // CONSTRUCTION DE LA GRILLE EXCEL
     let ws_data = [
         ["", "", { v: "PROCES VERBAL D'EXAMEN", s: styleTitre }, "", ""], 
         ["", "", { v: "Année universitaire " + annee_univ, s: styleSSTitre }, "", ""], 
-        [], 
+        [], // Ligne 3 : Vide (On va la réduire en hauteur)
         [{ v: "DATE :", s: styleLabel }, { v: infos.date || "", s: styleValeur }, "", { v: "Composante :", s: styleLabel }, { v: "ENSCMu", s: styleValeur }], 
         [{ v: "LISTE :", s: styleLabel }, { v: infos.liste || "", s: styleValeur }, "", { v: "Option :", s: styleLabel }, { v: texte_options, s: styleValeur }], 
         [{ v: "EXAMEN :", s: styleLabel }, { v: infos.matiere || "", s: styleValeur }, "", { v: "", s: styleVide }, { v: "", s: styleVide }], 
@@ -354,13 +363,13 @@ function generer_pv_examen(donnees_placement, infos, salles, specialites) {
         [{ v: "LIEU :", s: styleLabel }, { v: "ENSCMu", s: styleValeur }, "", { v: "", s: styleVide }, { v: "", s: styleVide }], 
         [{ v: "DEBUT :", s: styleLabel }, { v: infos.debut || "", s: styleValeur }, "", { v: "Durée :", s: styleLabel }, { v: infos.duree ? infos.duree + " min" : "", s: styleValeur }], 
         [{ v: "Nbre d'étudiants présents :", s: styleLabel }, { v: donnees_placement.length.toString(), s: styleValeur }, "", { v: "", s: styleVide }, { v: "", s: styleVide }], 
-        [], 
+        [], // Ligne 12 : Vide
         // Emargement (Case vide)
         [{ v: "Emargement surveillants :", s: styleLabel }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }], 
         [{ v: "", s: styleLabel }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }], 
         // Tiers-temps
         [{ v: "Tiers temps :", s: styleLabel }, { v: texte_tiers, s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }], 
-        [], 
+        [], // Ligne 16 : Vide
         // Observations
         [{ v: "Observations éventuelles :", s: styleLabel }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }], 
         [{ v: "", s: styleLabel }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }, { v: "", s: styleValeur }], 
@@ -385,14 +394,28 @@ function generer_pv_examen(donnees_placement, infos, salles, specialites) {
     );
 
     // Ajuster la largeur des colonnes
-    ws['!cols'] = [ {wch: 28}, {wch: 35}, {wch: 5}, {wch: 15}, {wch: 25} ];
+    // Élartissement des cases C5 et C6 (qui correspondent aux colonnes B (index 1) et E (index 4) dans la grille globale)
+    // On élargit la colonne B (Intitulés/Enseignants)
+    ws['!cols'] = [ {wch: 28}, {wch: 45}, {wch: 5}, {wch: 15}, {wch: 25} ]; 
 
-    // Ajuster la hauteur des lignes
+    // Ajuster la hauteur des lignes - Optimisation pour tenir sur 1 page
     ws['!rows'] = [];
     for(let i = 0; i < 25; i++) {
-        ws['!rows'].push({ hpt: (i === 13 || i === 17 || i === 18) ? 40 : 25 });
+        ws['!rows'].push({ hpt: (i === 13 || i === 17 || i === 18) ? 30 : 20 }); // Hauteurs réduites
     }
-    ws['!rows'][0] = { hpt: 35 }; // Titre plus haut
+    ws['!rows'][0] = { hpt: 25 }; // Titre plus haut
+    ws['!rows'][2] = { hpt: 10 }; // Ligne vide 3 réduite
+    ws['!rows'][11] = { hpt: 10 }; // Ligne vide 12 réduite
+    ws['!rows'][15] = { hpt: 10 }; // Ligne vide 16 réduite
+
+    // Configuration de l'impression (Mise en page) pour forcer sur 1 page
+    ws['!pageSetup'] = {
+        paperSize: 9, // A4
+        orientation: 'portrait',
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 1 // Forcer à tenir sur 1 seule page en hauteur
+    };
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "PV Examen");
